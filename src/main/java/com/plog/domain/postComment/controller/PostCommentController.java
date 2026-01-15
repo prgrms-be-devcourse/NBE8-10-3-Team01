@@ -1,14 +1,13 @@
 package com.plog.domain.postComment.controller;
 
 import com.plog.domain.postComment.dto.PostCommentDto;
+import com.plog.domain.postComment.entity.PostComment;
 import com.plog.global.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
@@ -32,28 +31,50 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostCommentController {
 
-    private final PostService postservice;
+    private final PostCommentService postCommentService;
 
     record PostCommentWriteReqBody(
+            @NotBlank(message = "댓글을 입력해주세요")
+            @Size(min = 1, max = 100, message = "댓글은 100자 이내로 작성해야 합니다.")
             String content
     ) {
     }
 
     @PostMapping
     @Transactional
-    public CommonResponse<PostCommentDto> write(
-    )
-
-    public List<PostCommentDto> getItems(
-            @PathVariable int postId
+    public ResponseEntity<CommonResponse<PostCommentDto>> write(
+            @PathVariable int postId,
+            @Valid @RequestBody PostCommentWriteReqBody reqBody
     ){
-        Post post = postService.findById(postId).get();
 
-        //수정 필요
-        return post
-                .getComments()
-                .stream()
-                .map(PostCommentDto::new)
-                .toList();
+        Optional<Post> postOptional = postService.findById(postId);
+        if (postOptional.isEmpty()) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(CommonResponse.fail("게시글을 찾을 수 없습니다."));
+        }
+
+        Post post = postOptional.get();
+
+        PostComment postComment = postCommentService.writeComment(post, reqBody);
+
+        PostCommentDto dto = new PostCommentDto(postComment);
+
+        return ResponseEntity.ok(CommonResponse.success(dto));
     }
+
+    @DeleteMapping("/{commentId}")
+    @Transactional
+    @Operation(summary = "삭제")
+    public ResponseEntity<CommonResponse<Void>> delete(
+            @PathVariable int commentId
+    ){
+
+        PostComment postComment = postCommentService.findById(commentId).get();
+
+        postCommentService.delete(postComment);
+
+    }
+
+
 }
