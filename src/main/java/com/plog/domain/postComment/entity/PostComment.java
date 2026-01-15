@@ -1,6 +1,4 @@
-package com.plog.postComment.entity;
-
-import java.time.LocalDateTime;
+package com.plog.domain.postComment.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -21,30 +19,37 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-public class PostComment {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-
-    @Column(columnDefinition = "TEXT")
-    private String content;
-
-    private LocalDateTime created_date;
-    private LocalDateTime modified_date;
-
+public class PostComment extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "author_id", nullable = false)
     private Memeber author;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
     private Post post;
+
+    @Column(nullable = false, length = 1000)
+    private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private PostComment parent;
 
+    @Column(nullable = false)
     private int depth;
 
-    /*private boolean open;*/
+    @Column(nullable = false)
+    private boolean deleted = false;
+
+    public PostComment(Member author, Post post, String content){
+        this.author = author;
+        this.post = post;
+        this.content = content;
+    }
+
+    public void modify(String content){
+        this.content = content;
+    }
+
+
 }
