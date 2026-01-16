@@ -5,7 +5,7 @@ FROM openjdk:17-jdk-slim
 WORKDIR /app
 
 # Copy the build files
-COPY build/libs/studyPals-0.0.1-SNAPSHOT.jar ./app.jar
+COPY build/libs/plog-0.0.1-SNAPSHOT.jar ./app.jar
 
 # Expose the port the application runs on
 EXPOSE 8080

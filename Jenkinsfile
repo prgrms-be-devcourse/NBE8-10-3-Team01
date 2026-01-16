@@ -63,7 +63,7 @@ pipeline {
 
                     // prod 프로필로 컨테이너 실행. 모든 env 는 env‑file 로 전달
                     sh """
-                        docker run -d --name slog-container -p 8080:8080 \\
+                        docker run -d --name slog-container -p 8888:8080 \\
                           --env-file ${env.ENV_FILE_PATH} \\
                           --network docker_backend \\
                           ${DOCKER_IMAGE_NAME}
