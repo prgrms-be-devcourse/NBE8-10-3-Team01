@@ -23,7 +23,6 @@ import static lombok.AccessLevel.PROTECTED;
 public abstract class BaseEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
-    @Setter(PROTECTED)
     private Long id;
 
     @CreatedDate
