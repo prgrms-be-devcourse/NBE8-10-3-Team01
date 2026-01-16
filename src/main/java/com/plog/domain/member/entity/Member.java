@@ -3,14 +3,13 @@ package com.plog.domain.member.entity;
 import com.plog.global.jpa.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
-@Setter // 우선 허용
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Member extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String email;
