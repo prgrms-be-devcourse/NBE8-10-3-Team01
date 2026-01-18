@@ -1,6 +1,7 @@
 package com.plog.domain.member.service;
 
-import com.plog.domain.member.dto.FindMemberRes;
+import com.plog.domain.member.dto.MemberInfoRes;
+import com.plog.domain.member.dto.UpdateMemberReq;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.global.exception.errorCode.AuthErrorCode;
@@ -28,7 +29,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional(readOnly = true)
-    public FindMemberRes findMemberWithId(Long id) {
+    public MemberInfoRes findMemberWithId(Long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.USER_NOT_FOUND,
                         "[MemberServiceImpl#findMemberWithId] can't find user by id",
@@ -38,7 +39,8 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public FindMemberRes findMemberWithNickname(String nickname) {
+    @Transactional(readOnly = true)
+    public MemberInfoRes findMemberWithNickname(String nickname) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.USER_NOT_FOUND,
                         "[MemberServiceImpl#findMemberWithNickname] can't find user by nickname",
@@ -47,8 +49,24 @@ public class MemberServiceImpl implements MemberService {
         return toDto(member);
     }
 
-    private FindMemberRes toDto(Member member) {
-        return FindMemberRes.builder()
+    @Override
+    @Transactional
+    public MemberInfoRes updateMemberInfo(Long memberId, UpdateMemberReq dto) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new AuthException(AuthErrorCode.USER_NOT_FOUND,
+                        "[MemberServiceImpl#updateMemberInfo] can't find user by id",
+                        "존재하지 않는 사용자입니다."));
+
+        member = member.update(dto.nickname());
+
+        //코드의 흐름 상, save 를 일부로 명시하는 편을 좋아합니다.
+        memberRepository.save(member);
+
+        return toDto(member);
+    }
+
+    private MemberInfoRes toDto(Member member) {
+        return MemberInfoRes.builder()
                 .id(member.getId())
                 .email(member.getEmail())
                 .nickname(member.getNickname())

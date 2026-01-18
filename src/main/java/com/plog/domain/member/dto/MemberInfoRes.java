@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * @since 2026-01-18
  */
 @Builder
-public record FindMemberRes (
+public record MemberInfoRes(
         Long id,
         String email,
         String nickname,

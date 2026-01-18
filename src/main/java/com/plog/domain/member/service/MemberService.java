@@ -1,6 +1,7 @@
 package com.plog.domain.member.service;
 
-import com.plog.domain.member.dto.FindMemberRes;
+import com.plog.domain.member.dto.MemberInfoRes;
+import com.plog.domain.member.dto.UpdateMemberReq;
 
 /**
  * 사용자에 대한 비지니스 로직을 정의한 service 레이어의 인터페이스입니다.
@@ -16,7 +17,9 @@ import com.plog.domain.member.dto.FindMemberRes;
  */
 public interface MemberService {
 
-    FindMemberRes findMemberWithId(Long id);
+    MemberInfoRes findMemberWithId(Long id);
 
-    FindMemberRes findMemberWithNickname(String nickname);
+    MemberInfoRes findMemberWithNickname(String nickname);
+
+    MemberInfoRes updateMemberInfo(Long memberId, UpdateMemberReq dto);
 }
