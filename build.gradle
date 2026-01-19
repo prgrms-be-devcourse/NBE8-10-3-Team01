@@ -10,7 +10,7 @@ description = 'plog'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -48,7 +48,6 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    implementation 'org.commonmark:commonmark:0.21.0'
 
     // 6. Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
