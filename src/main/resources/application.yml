@@ -30,6 +30,6 @@ springdoc:
   default-produces-media-type: application/json;charset=UTF-8
 custom:
   jwt:
-    secretKey: abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789
+    secretKey: ${SECRET_KEY}
   accessToken:
     expirationSeconds: "#{60*20}"
