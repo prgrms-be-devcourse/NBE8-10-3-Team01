@@ -21,6 +21,11 @@ spring:
         format_sql: true
         highlight_sql: true
         use_sql_comments: true
+minio:
+  endpoint: http://localhost:9000
+  access_key: admin
+  secret_key: password1234
+  bucket: team-bucket
 springdoc:
   default-produces-media-type: application/json;charset=UTF-8
 logging:
