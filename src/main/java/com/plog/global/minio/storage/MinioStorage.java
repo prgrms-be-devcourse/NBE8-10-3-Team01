@@ -3,6 +3,7 @@ package com.plog.global.minio.storage;
 import io.minio.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,7 @@ import java.io.InputStream;
  */
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "minio", name = "enabled", havingValue = "true")
 public class MinioStorage implements ObjectStorage {
     private final MinioClient minioClient;
 

@@ -29,8 +29,8 @@ spring:
 minio:
   enabled: false
   endpoint: http://localhost:9000
-  access_key: admin
-  secret_key: password1234
+  access_key: ${MINIO_ACCESS_KEY}
+  secret_key: ${MINIO_SECRET_KEY}
   bucket: team-bucket
 springdoc:
   default-produces-media-type: application/json;charset=UTF-8
