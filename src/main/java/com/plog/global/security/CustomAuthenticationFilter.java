@@ -1,10 +1,11 @@
 package com.plog.global.security;
 
 
+import com.plog.global.exception.errorCode.AuthErrorCode;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -40,9 +41,9 @@ import java.util.List;
  * Spring Security Core 및 Servlet API를 사용합니다.
  *
  * @author minhee
- * @since 2026-01-16
  * @see SecurityContextHolder
  * @see JwtUtils
+ * @since 2026-01-16
  */
 
 @Component
@@ -62,32 +63,41 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-        if (token != null && jwtUtils.validateToken(token)) {
-            Claims claims = jwtUtils.parseToken(token);
-            Long id = claims.get("id", Long.class);
-            String email = claims.getSubject();
-            String nickname = claims.get("nickname", String.class);
-            if (nickname == null) nickname = "";
+        try {
+            if (token != null && jwtUtils.validateToken(token)) {
+                Claims claims = jwtUtils.parseToken(token);
+                Long id = claims.get("id", Long.class);
+                String email = claims.getSubject();
+                String nickname = claims.get("nickname", String.class);
+                if (nickname == null) nickname = "";
 
-            SecurityUser user = new SecurityUser(
-                    id,
-                    email,
-                    "",
-                    nickname,
-                    List.of()
-            );
-            Authentication auth = new UsernamePasswordAuthenticationToken(
-                    user,
-                    null,
-                    user.getAuthorities()
-            );
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                SecurityUser user = new SecurityUser(
+                        id,
+                        email,
+                        "",
+                        nickname,
+                        List.of()
+                );
+                Authentication auth = new UsernamePasswordAuthenticationToken(
+                        user,
+                        null,
+                        user.getAuthorities()
+                );
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
+        } catch (ExpiredJwtException e) {
+            request.setAttribute("exception", AuthErrorCode.TOKEN_EXPIRED);
+
+        } catch (Exception e) {
+            request.setAttribute("exception", AuthErrorCode.TOKEN_INVALID);
         }
+
         filterChain.doFilter(request, response);
     }
 
     /**
-     * 요청 객체(Header 또는 Cookie)에서 JWT 토큰을 추출합니다.
+     * Header 에서 JWT 토큰을 추출합니다.
+     *
      * @param request HTTP 요청 객체
      * @return 추출된 토큰 문자열, 없으면 null
      */
