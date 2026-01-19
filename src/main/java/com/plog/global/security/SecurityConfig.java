@@ -1,18 +1,18 @@
 package com.plog.global.security;
 
 
+import com.plog.global.exception.errorCode.AuthErrorCode;
 import com.plog.global.response.CommonResponse;
 import com.plog.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -85,29 +85,24 @@ public class SecurityConfig {
                                         (request, response, authException) -> {
                                             response.setContentType("application/json;charset=UTF-8");
 
-                                            response.setStatus(401);
-                                            response.getWriter().write(
-                                                    Ut.json.toString((
-                                                                    CommonResponse.fail(
-                                                                            "로그인 후 이용해주세요."
-                                                                    )
-                                                            )
-                                                    )
-                                            );
+                                            AuthErrorCode errorCode = (AuthErrorCode) request.getAttribute("exception");
+
+                                            if (errorCode == null) {
+                                                errorCode = AuthErrorCode.LOGIN_REQUIRED;
+                                            }
+                                            response.setStatus(errorCode.getHttpStatus().value());
+
+                                            CommonResponse<Void> errorResponse = CommonResponse.fail(errorCode.getMessage());
+                                            response.getWriter().write(Ut.json.toString(errorResponse));
                                         }
                                 )
                                 .accessDeniedHandler(
                                         (request, response, accessDeniedException) -> {
                                             response.setContentType("application/json;charset=UTF-8");
 
-                                            response.setStatus(403);
-                                            response.getWriter().write(
-                                                    Ut.json.toString(
-                                                            CommonResponse.fail(
-                                                                    "권한이 없습니다."
-                                                            )
-                                                    )
-                                            );
+                                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                                            CommonResponse<Void> errorResponse = CommonResponse.fail(AuthErrorCode.USER_AUTH_FAIL.getMessage());
+                                            response.getWriter().write(Ut.json.toString(errorResponse));
                                         }
                                 )
                 );
