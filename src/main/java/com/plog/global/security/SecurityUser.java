@@ -37,7 +37,7 @@ public class SecurityUser extends User {
     private final Long id;
     private final String nickname;
 
-    @Builder
+    @Builder(builderMethodName = "securityUserBuilder")
     public SecurityUser(
             Long id,
             String email,

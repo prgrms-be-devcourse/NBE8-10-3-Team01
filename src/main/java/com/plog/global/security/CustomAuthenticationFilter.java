@@ -68,13 +68,14 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                 String nickname = claims.get("nickname", String.class);
                 if (nickname == null) nickname = "";
 
-                SecurityUser user = new SecurityUser(
-                        id,
-                        email,
-                        "",
-                        nickname,
-                        List.of()
-                );
+                SecurityUser user = SecurityUser.securityUserBuilder()
+                        .id(id)
+                        .email(email)
+                        .password("")
+                        .nickname(nickname)
+                        .authorities(List.of())
+                        .build();
+
                 Authentication auth = new UsernamePasswordAuthenticationToken(
                         user,
                         null,

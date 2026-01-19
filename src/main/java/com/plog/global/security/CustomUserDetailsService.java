@@ -47,12 +47,12 @@ public class CustomUserDetailsService implements UserDetailsService {
         Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("해당 이메일의 사용자를 찾을 수 없습니다: " + email));
 
-        return new SecurityUser(
-                member.getId(),
-                member.getEmail(),
-                member.getPassword(),
-                member.getNickname(),
-                List.of() // 나중에 권한(Role)이 필요하면 여기에 추가
-        );
+        return SecurityUser.securityUserBuilder()
+                .id(member.getId())
+                .email(member.getEmail())
+                .password(member.getPassword())
+                .nickname(member.getNickname())
+                .authorities(List.of()) // 나중에 권한(Role)이 필요하면 여기에 추가
+                .build();
     }
 }
