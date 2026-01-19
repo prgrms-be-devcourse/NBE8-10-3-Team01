@@ -62,7 +62,7 @@ public class PostService {
     public Post getPostDetail(Long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND,
-                        "[PostService#getPostDetail] can't find user by id", "존재하지 않는 사용자입니다."));
+                        "[PostService#getPostDetail] can't find post by id", "존재하지 않는 게시물입니다."));
         post.incrementViewCount();
         return post;
     }
