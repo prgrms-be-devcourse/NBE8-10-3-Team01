@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
  * @since 2026-01-19
  */
 @RestController
-@RequestMapping("/members")
+@RequestMapping("/api/members")
 @AllArgsConstructor
 public class MemberController {
 
