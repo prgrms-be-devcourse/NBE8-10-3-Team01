@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -55,10 +56,19 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
     private final CustomAuthenticationFilter customAuthenticationFilter;
     private final ObjectMapper objectMapper;
+    private final List<String> allowedOrigins;
+
+    public SecurityConfig(
+            CustomAuthenticationFilter customAuthenticationFilter,
+            ObjectMapper objectMapper,
+            @Value("${custom.cors.allowed-origins}") List<String> allowedOrigins) {
+        this.customAuthenticationFilter = customAuthenticationFilter;
+        this.objectMapper = objectMapper;
+        this.allowedOrigins = allowedOrigins;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -142,13 +152,18 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-
+    /**
+     * CORS(Cross-Origin Resource Sharing) 설정을 정의하는 Bean입니다.
+     * 허용 오리진: 외부 설정 파일(application.yml)을 통해 주입받습니다.
+     * @return 설정이 완료된 CORS 구성 소스 객체
+     * @see CorsConfiguration
+     */
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 허용할 오리진 설정 -> 필요 시 수정
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
 
         // 자격 증명 허용 설정

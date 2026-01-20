@@ -33,3 +33,5 @@ custom:
     secretKey: ${SECRET_KEY}
     access-expiration: 1800000 # 30분
     refresh-expiration: 3153600000000 # 약 100년
+  cors:
+    allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}
