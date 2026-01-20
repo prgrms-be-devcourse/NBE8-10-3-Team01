@@ -44,4 +44,18 @@ public class MemberController {
 
         return ResponseEntity.ok(CommonResponse.success(response));
     }
+
+    @GetMapping("/check/email")
+    public ResponseEntity<Response<Boolean>> checkDuplicateEmail(@RequestParam(name = "email") String email) {
+        Boolean response = memberService.isDuplicateEmail(email);
+
+        return ResponseEntity.ok(CommonResponse.success(response));
+    }
+
+    @GetMapping("/check/nickname")
+    public ResponseEntity<Response<Boolean>> checkDuplicateNickname(@RequestParam(name = "nickname") String nickname) {
+        Boolean response = memberService.isDuplicateNickname(nickname);
+
+        return ResponseEntity.ok(CommonResponse.success(response));
+    }
 }

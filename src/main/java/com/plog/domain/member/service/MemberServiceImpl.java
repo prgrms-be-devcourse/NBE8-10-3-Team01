@@ -65,6 +65,18 @@ public class MemberServiceImpl implements MemberService {
         return toDto(member);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isDuplicateEmail(String email) {
+        return memberRepository.existsByEmail(email);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isDuplicateNickname(String nickname) {
+        return memberRepository.existsByNickname(nickname);
+    }
+
     private MemberInfoRes toDto(Member member) {
         return MemberInfoRes.builder()
                 .id(member.getId())

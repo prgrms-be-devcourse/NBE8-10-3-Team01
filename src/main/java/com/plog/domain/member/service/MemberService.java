@@ -53,4 +53,28 @@ public interface MemberService {
      *         해당 회원이 존재하지 않는 경우
      */
     MemberInfoRes updateMemberInfo(Long memberId, UpdateMemberReq dto);
+
+    /**
+     * 이메일 중복 여부를 확인합니다.
+     *
+     * <p>입력된 이메일이 이미 다른 회원에 의해
+     * 사용 중인 경우 {@code true}를 반환합니다.
+     *
+     * @param email 중복 여부를 확인할 이메일
+     * @return 이미 사용 중인 이메일이면 {@code true}, 아니면 {@code false}
+     * @throws IllegalArgumentException email 이 null 이거나 빈 값인 경우
+     */
+    boolean isDuplicateEmail(String email);
+
+    /**
+     * 닉네임 중복 여부를 확인합니다.
+     *
+     * <p>입력된 닉네임이 이미 다른 회원에 의해
+     * 사용 중인 경우 {@code true}를 반환합니다.
+     *
+     * @param nickname 중복 여부를 확인할 닉네임
+     * @return 이미 사용 중인 닉네임이면 {@code true}, 아니면 {@code false}
+     * @throws IllegalArgumentException nickname 이 null 이거나 빈 값인 경우
+     */
+    boolean isDuplicateNickname(String nickname);
 }
