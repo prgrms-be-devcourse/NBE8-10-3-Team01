@@ -11,7 +11,6 @@ import java.util.List;
  * <p>
  * Spring Data JPA의 {@link JpaRepository}를 상속하여
  * 댓글(PostComment) 엔티티에 대한 기본적인 CRUD 기능을 제공합니다.
- * 별도의 구현 클래스 없이도 저장, 조회, 수정, 삭제 기능을 사용할 수 있습니다.
  * </p>
  *
  * <p><b>주요 기능:</b></p>

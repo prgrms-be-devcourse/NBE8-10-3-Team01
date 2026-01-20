@@ -22,11 +22,6 @@ import java.time.LocalDateTime;
  * 댓글의 생성 및 수정 시점을 표현한다.
  * </p>
  *
- * <p><b>설계 의도:</b><br>
- * 조회 전용 DTO로서 수정이나 비즈니스 로직을 포함하지 않으며,
- * API 응답 구조의 안정성과 엔티티 캡슐화를 보장한다.
- * </p>
- *
  * @author njwwn
  * @see Comment
  * @since 2026-01-19

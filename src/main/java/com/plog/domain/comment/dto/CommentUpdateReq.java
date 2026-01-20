@@ -21,12 +21,6 @@ import jakarta.validation.constraints.NotBlank;
  * 댓글 내용에 대한 유효성 검증을 수행한다.
  * </p>
  *
- * <p><b>설계 의도:</b><br>
- * 본 DTO는 요청 데이터 전달만을 책임지며,
- * 댓글 존재 여부 확인, 삭제 여부 판단, 수정 권한 검증 등의
- * 비즈니스 로직은 서비스 계층에서 처리한다.
- * </p>
- *
  * @author njwwn
  * @since 2026-01-19
  */
