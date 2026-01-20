@@ -31,13 +31,18 @@ import java.util.Map;
 
 @Component
 public class JwtUtils {
-    @Value("${custom.jwt.secretKey}")
-    private String secretKey;
+    private final String secretKey;
+    private final long accessTokenExpiration; // 30분
+    private final long refreshTokenExpiration; // 약 100년 -> 추후 유효기간 로직 추가 시 수정
 
-    // AT: 30분, RT: 100년 -> 추후 유효기간 로직 추가 시 수정
-    private final long ACCESS_TOKEN_EXPIRATION = 30 * 60 * 1000L;
-    private final long REFRESH_TOKEN_EXPIRATION = 100L * 365 * 24 * 60 * 60 * 1000L;
-
+    public JwtUtils(
+            @Value("${custom.jwt.secretKey}") String secretKey,
+            @Value("${custom.jwt.access-expiration}") long accessTokenExpiration,
+            @Value("${custom.jwt.refresh-expiration}") long refreshTokenExpiration) {
+        this.secretKey = secretKey;
+        this.accessTokenExpiration = accessTokenExpiration;
+        this.refreshTokenExpiration = refreshTokenExpiration;
+    }
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
@@ -52,7 +57,7 @@ public class JwtUtils {
 
         Claims claims = claimsBuilder.build();
         Date issuedAt = new Date();
-        Date expiration = new Date(issuedAt.getTime() + ACCESS_TOKEN_EXPIRATION);
+        Date expiration = new Date(issuedAt.getTime() + accessTokenExpiration);
 
         return Jwts.builder()
                 .claims(claims)
@@ -64,7 +69,7 @@ public class JwtUtils {
 
     public String createRefreshToken(Long id) {
         Date issuedAt = new Date();
-        Date expiration = new Date(issuedAt.getTime() + REFRESH_TOKEN_EXPIRATION);
+        Date expiration = new Date(issuedAt.getTime() + refreshTokenExpiration);
 
         return Jwts.builder()
                 .claim("id", id)

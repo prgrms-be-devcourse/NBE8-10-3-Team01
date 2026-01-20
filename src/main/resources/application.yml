@@ -31,5 +31,5 @@ springdoc:
 custom:
   jwt:
     secretKey: ${SECRET_KEY}
-  accessToken:
-    expirationSeconds: "#{60*20}"
+    access-expiration: 1800000 # 30분
+    refresh-expiration: 3153600000000 # 약 100년
