@@ -5,6 +5,8 @@ import com.plog.domain.post.repository.PostRepository;
 import com.plog.domain.postComment.dto.GetPostCommentRes;
 import com.plog.domain.postComment.entity.PostComment;
 import com.plog.domain.postComment.repository.PostCommentRepository;
+import com.plog.global.exception.errorCode.PostCommentErrorCode;
+import com.plog.global.exception.exceptions.PostCommentException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +28,7 @@ public class PostCommentServiceImpl implements PostCommentService {
     @Transactional
     public Long createComment(Long postId, String content, Long parentCommentId){
 
+        //TODO: 추후 Post 예외처리 정책으로 수정 예정.
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글이 존재하지 않습니다."));
 
@@ -33,7 +36,11 @@ public class PostCommentServiceImpl implements PostCommentService {
 
         if(parentCommentId != null){
             parentComment = postCommentRepository.findById(parentCommentId)
-                    .orElseThrow(() -> new IllegalArgumentException("부모 댓글이 존재하지 않습니다."));;
+                    .orElseThrow(() -> new PostCommentException(
+                            PostCommentErrorCode.COMMENT_NOT_FOUND,
+                            "[PostCommentService#createComment] parent comment not found. parentCommentId=" + parentCommentId,
+                            "부모 댓글이 존재하지 않습니다."
+                    ));
         }
 
         PostComment comment = PostComment.builder()
@@ -68,7 +75,11 @@ public class PostCommentServiceImpl implements PostCommentService {
     @Override
     public PostComment updateComment(Long commentId, String content) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다."));
+                .orElseThrow(() -> new PostCommentException(
+                        PostCommentErrorCode.COMMENT_NOT_FOUND,
+                        "[PostCommentService#deleteComment] can't find comment by id : " + commentId,
+                        "존재하지 않는 댓글입니다."
+                ));
 
         comment.modify(content);
 
@@ -79,7 +90,11 @@ public class PostCommentServiceImpl implements PostCommentService {
     @Override
     public void deleteComment(Long commentId) {
         PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글이 존재하지 않습니다."));
+                .orElseThrow(() -> new PostCommentException(
+                        PostCommentErrorCode.COMMENT_NOT_FOUND,
+                        "[PostCommentService#deleteComment] can't find comment by id : " + commentId,
+                        "존재하지 않는 댓글입니다."
+                ));
 
         //멱등성의 의식한 로직
         if(comment.isDeleted()){
