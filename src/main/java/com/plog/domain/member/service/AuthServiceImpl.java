@@ -34,7 +34,7 @@ import java.util.Date;
  * <p><b>외부 모듈:</b><br>
  * 필요 시 외부 모듈에 대한 내용을 적습니다.
  *
- * @author yyj96
+ * @author minhee
  * @see
  * @since 2026-01-15
  */

@@ -74,7 +74,7 @@ public class AuthController {
                 req.nickname()
         );
 
-        return ResponseEntity.created(URI.create(("/api/posts/"+memberId))).build();
+        return ResponseEntity.created(URI.create(("/api/members/"+memberId))).build();
     }
 
     @PostMapping("/sign-in")
