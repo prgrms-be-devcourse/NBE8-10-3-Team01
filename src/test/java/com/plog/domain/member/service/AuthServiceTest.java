@@ -162,7 +162,7 @@ class AuthServiceTest {
         Member mockMember = mock(Member.class);
         Claims mockClaims = mock(Claims.class);
 
-        // 1. 토큰 파싱 및 클레임 추출 모킹
+        // 토큰 파싱 및 클레임 추출 모킹
         given(jwtUtils.parseToken(refreshToken)).willReturn(mockClaims);
         given(mockClaims.get("id", Long.class)).willReturn(memberId);
 

@@ -16,26 +16,29 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 
 /**
- * 코드에 대한 전체적인 역할을 적습니다.
+ * 사용자 인증 및 권한 관리를 담당하는 컨트롤러입니다.
  * <p>
- * 코드에 대한 작동 원리 등을 적습니다.
+ * 회원가입, 로그인, 로그아웃 및 토큰 재발급을 위한 엔드포인트를 제공하며,
+ * {@link Rq} 객체를 통해 HTTP 요청/응답 메시지의 헤더와 쿠키를 제어합니다.
  *
  * <p><b>상속 정보:</b><br>
- * 상속 정보를 적습니다.
+ * 상속 정보 없음.
  *
  * <p><b>주요 생성자:</b><br>
- * {@code ExampleClass(String example)}  <br>
- * 주요 생성자와 그 매개변수에 대한 설명을 적습니다. <br>
+ * {@code AuthController(AuthService authService, Rq rq)} <br>
+ * 생성자 주입을 통해 인증 서비스와 요청/응답 편의 객체를 주입받습니다. <br>
  *
  * <p><b>빈 관리:</b><br>
- * 필요 시 빈 관리에 대한 내용을 적습니다.
+ * {@code @RestController}를 사용하여 스프링 컨테이너의 빈으로 관리되며,
+ * 모든 응답은 {@link CommonResponse} 형태로 반환됩니다.
  *
  * <p><b>외부 모듈:</b><br>
- * 필요 시 외부 모듈에 대한 내용을 적습니다.
+ * Spring Web, Jakarta Validation, Jakarta Servlet API 등을 사용합니다.
  *
  * @author minhee
- * @see
  * @since 2026-01-20
+ * @see AuthService
+ * @see Rq
  */
 
 @RestController
@@ -45,8 +48,6 @@ public class AuthController {
     private final AuthService authService;
     private final Rq rq;
 
-    // TODO: Controller 설명 주석 수정
-
     /**
      * 새로운 회원을 등록(회원가입)합니다.
      * 인증/인가 도메인임을 고려하여 행위를 명시하는 경로를 예외적으로 사용합니다.
@@ -54,7 +55,7 @@ public class AuthController {
      * @param req 회원가입에 필요한 이메일, 비밀번호, 닉네임 데이터
      * @return 생성된 회원의 조회 경로를 Location 헤더에 포함한 공통 응답 객체 (201 Created)
      */
-    // TODO: sign-up 경로를 쓸지 말지 의논하기
+
     @PostMapping("/sign-up")
     public ResponseEntity<Void> signUp(
             @Valid @RequestBody AuthSignUpReq req

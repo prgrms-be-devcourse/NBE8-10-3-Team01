@@ -17,29 +17,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 
 /**
- * 코드에 대한 전체적인 역할을 적습니다.
+ * {@link AuthService} 인터페이스의 구현체로, 인증 및 인가와 관련된 실제 비즈니스 로직을 수행합니다.
  * <p>
- * 코드에 대한 작동 원리 등을 적습니다.
+ * {@code BCryptPasswordEncoder}를 이용한 비밀번호 암호화와 {@link JwtUtils}를 활용한
+ * 토큰 기반 인증 시스템을 구축합니다. 모든 예외 상황은 {@link AuthException}을 통해 관리됩니다.
  *
  * <p><b>상속 정보:</b><br>
- * 상속 정보를 적습니다.
- *
- * <p><b>주요 생성자:</b><br>
- * {@code ExampleClass(String example)}  <br>
- * 주요 생성자와 그 매개변수에 대한 설명을 적습니다. <br>
- *
- * <p><b>빈 관리:</b><br>
- * 필요 시 빈 관리에 대한 내용을 적습니다.
+ * {@code AuthService} 인터페이스의 자식 구현 클래스
  *
  * <p><b>외부 모듈:</b><br>
- * 필요 시 외부 모듈에 대한 내용을 적습니다.
+ * 1. Spring Security Crypto (PasswordEncoder) <br>
+ * 2. JJWT (io.jsonwebtoken)
  *
  * @author minhee
- * @see
+ * @see AuthService
  * @since 2026-01-15
  */
 
-// TODO: service 바로 쓰지 말고 implement로 만들기
+// TODO: MemberService 주입 받아서 중복 로직 리팩토링 필요
 
 @Service
 @Transactional(readOnly = true)
@@ -66,6 +61,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public Long signUp(String email, String password, String nickname) {
+        // TODO: 닉네임 중복 확인 로직 필요 -> MemberService 주입 시 같이 진행
         memberRepository.findByEmail(email)
                 .ifPresent(_member -> {
                             throw new AuthException(AuthErrorCode.USER_ALREADY_EXIST,
@@ -104,23 +100,49 @@ public class AuthServiceImpl implements AuthService {
             return new AuthSignInRes(member.getNickname(), newAccessToken);
 
         } catch (ExpiredJwtException e) {
-            // TODO: 수정 필요
-            throw new AuthException(AuthErrorCode.LOGIN_REQUIRED, "Refresh Token 만료", "세션이 만료되었습니다. 다시 로그인해 주세요.");
+            throw new AuthException(AuthErrorCode.LOGIN_REQUIRED,
+                    "[AuthServiceImpl#accessTokenReissue] Refresh Token expired",
+                    "세션이 만료되었습니다. 다시 로그인해 주세요.");
         } catch (Exception e) {
-            throw new AuthException(AuthErrorCode.TOKEN_INVALID);
+            throw new AuthException(
+                    AuthErrorCode.TOKEN_INVALID,
+                    "[AuthServiceImpl] Unexpected reissue error: " + e.getMessage(),
+                    "유효한 토큰이 아닙니다."
+            );
         }
     }
 
+    /**
+     * 고유 식별자(ID)를 통해 회원을 조회하며, 존재하지 않을 경우 예외를 발생시킵니다.
+     *
+     * @param id 회원 고유 식별자
+     * @return 조회된 회원 엔티티
+     * @throws AuthException 회원을 찾을 수 없는 경우 발생
+     */
     private Member findById(Long id) {
         return memberRepository.findById(id)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_CREDENTIALS));
     }
 
+    /**
+     * 이메일을 통해 회원을 조회하며, 존재하지 않을 경우 예외를 발생시킵니다.
+     *
+     * @param email 회원 이메일
+     * @return 조회된 회원 엔티티
+     * @throws AuthException 해당 이메일의 회원이 없는 경우 발생
+     */
     private Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_CREDENTIALS));
     }
 
+    /**
+     * 입력받은 평문 비밀번호와 DB에 저장된 암호화 비밀번호의 일치 여부를 검증합니다.
+     *
+     * @param member   검증 대상 회원 엔티티
+     * @param password 입력받은 평문 비밀번호
+     * @throws AuthException 비밀번호가 일치하지 않을 경우 발생
+     */
     private void checkPassword(Member member, String password) {
         if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new AuthException(AuthErrorCode.INVALID_CREDENTIALS);
