@@ -1,4 +1,4 @@
-package com.plog.domain.member.api;
+package com.plog.domain.member.controller;
 
 import com.plog.domain.member.dto.MemberInfoRes;
 import com.plog.domain.member.service.MemberService;
@@ -45,7 +45,7 @@ class MemberControllerTest extends WebMvcTestSupport {
         given(memberService.findMemberWithId(userId)).willReturn(res);
 
         //when
-        ResultActions result = mockMvc.perform(get("/members/id/{id}", userId)
+        ResultActions result = mockMvc.perform(get("/api/members/id/{id}", userId)
                 .contentType(MediaType.APPLICATION_JSON));
 
         //then
@@ -68,7 +68,7 @@ class MemberControllerTest extends WebMvcTestSupport {
         given(memberService.findMemberWithNickname(nickname)).willReturn(res);
 
         //when
-        ResultActions result = mockMvc.perform(get("/members/nickname/{nickname}", nickname)
+        ResultActions result = mockMvc.perform(get("/api/members/nickname/{nickname}", nickname)
                 .contentType(MediaType.APPLICATION_JSON));
 
         //then
@@ -76,13 +76,14 @@ class MemberControllerTest extends WebMvcTestSupport {
                 .andExpect(hasKey(expected));
     }
 
+    //추후 spring security 이후 수정 예정
 //    @Test
 //    @WithCustomMockUser(userId = 3L)
 //    void updateMember_success() throws Exception {
 //        // given
 //        Long memberId = 3L;
 //
-//        UpdateMemberReq request = new UpdateMemberReq("newNickname");
+//        MemberUpdaterReq request = new MemberUpdaterReq("newNickname");
 //
 //        MemberInfoRes res = MemberInfoRes.builder()
 //                .id(memberId)
@@ -118,7 +119,7 @@ class MemberControllerTest extends WebMvcTestSupport {
 
         // when
         ResultActions result = mockMvc.perform(
-                get("/members/check/email")
+                get("/api/members/check/email")
                         .param("email", email)
                         .contentType(MediaType.APPLICATION_JSON)
         );
@@ -139,7 +140,7 @@ class MemberControllerTest extends WebMvcTestSupport {
 
         // when
         ResultActions result = mockMvc.perform(
-                get("/members/check/email")
+                get("/api/members/check/email")
                         .param("email", email)
                         .contentType(MediaType.APPLICATION_JSON)
         );
@@ -160,7 +161,7 @@ class MemberControllerTest extends WebMvcTestSupport {
 
         // when
         ResultActions result = mockMvc.perform(
-                get("/members/check/nickname")
+                get("/api/members/check/nickname")
                         .param("nickname", nickname)
                         .contentType(MediaType.APPLICATION_JSON)
         );
@@ -181,7 +182,7 @@ class MemberControllerTest extends WebMvcTestSupport {
 
         // when
         ResultActions result = mockMvc.perform(
-                get("/members/check/nickname")
+                get("/api/members/check/nickname")
                         .param("nickname", nickname)
                         .contentType(MediaType.APPLICATION_JSON)
         );

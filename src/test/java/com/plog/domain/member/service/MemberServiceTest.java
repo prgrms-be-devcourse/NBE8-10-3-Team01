@@ -1,7 +1,7 @@
 package com.plog.domain.member.service;
 
 import com.plog.domain.member.dto.MemberInfoRes;
-import com.plog.domain.member.dto.UpdateMemberReq;
+import com.plog.domain.member.dto.MemberUpdaterReq;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.global.exception.errorCode.AuthErrorCode;
@@ -100,7 +100,7 @@ class MemberServiceTest {
     void updateMemberInfo_success() {
         // given
         Long memberId = 1L;
-        UpdateMemberReq dto = new UpdateMemberReq("newNick");
+        MemberUpdaterReq dto = new MemberUpdaterReq("newNick");
 
         // 조회는 기존 member로
         given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
@@ -130,7 +130,7 @@ class MemberServiceTest {
     void updateMemberInfo_fail_userNotFound() {
         // given
         Long memberId = 1L;
-        UpdateMemberReq dto = new UpdateMemberReq("newNick");
+        MemberUpdaterReq dto = new MemberUpdaterReq("newNick");
         given(memberRepository.findById(memberId)).willReturn(Optional.empty());
 
         // when

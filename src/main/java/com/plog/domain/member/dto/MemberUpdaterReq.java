@@ -10,7 +10,7 @@ import lombok.Builder;
  * @since 2026-01-18
  */
 @Builder
-public record UpdateMemberReq (
+public record MemberUpdaterReq(
         String nickname
 ) {
 }

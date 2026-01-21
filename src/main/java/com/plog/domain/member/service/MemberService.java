@@ -1,7 +1,7 @@
 package com.plog.domain.member.service;
 
 import com.plog.domain.member.dto.MemberInfoRes;
-import com.plog.domain.member.dto.UpdateMemberReq;
+import com.plog.domain.member.dto.MemberUpdaterReq;
 
 /**
  * 사용자에 대한 비지니스 로직을 정의한 service 레이어의 인터페이스입니다.
@@ -43,7 +43,7 @@ public interface MemberService {
      * 회원 정보를 수정합니다.
      *
      * <p>수정 대상은 회원 기본 정보이며,
-     * {@link UpdateMemberReq}에 포함된 값만 변경됩니다.
+     * {@link MemberUpdaterReq}에 포함된 값만 변경됩니다.
      *
      * @param memberId 수정할 회원의 고유 식별자
      * @param dto 수정할 회원 정보
@@ -52,7 +52,7 @@ public interface MemberService {
      * @throws com.plog.global.exception.exceptions.AuthException
      *         해당 회원이 존재하지 않는 경우
      */
-    MemberInfoRes updateMemberInfo(Long memberId, UpdateMemberReq dto);
+    MemberInfoRes updateMemberInfo(Long memberId, MemberUpdaterReq dto);
 
     /**
      * 이메일 중복 여부를 확인합니다.

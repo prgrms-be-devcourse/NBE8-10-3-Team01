@@ -1,7 +1,7 @@
-package com.plog.domain.member.api;
+package com.plog.domain.member.controller;
 
 import com.plog.domain.member.dto.MemberInfoRes;
-import com.plog.domain.member.dto.UpdateMemberReq;
+import com.plog.domain.member.dto.MemberUpdaterReq;
 import com.plog.domain.member.service.MemberService;
 import com.plog.global.response.CommonResponse;
 import com.plog.global.response.Response;
@@ -38,7 +38,7 @@ public class MemberController {
     }
 
     @PutMapping("/update")
-    public ResponseEntity<Response<MemberInfoRes>> updateMember(@RequestBody UpdateMemberReq request,
+    public ResponseEntity<Response<MemberInfoRes>> updateMember(@RequestBody MemberUpdaterReq request,
                                                                 @AuthenticationPrincipal Long memberId) {
         MemberInfoRes response = memberService.updateMemberInfo(memberId, request);
 

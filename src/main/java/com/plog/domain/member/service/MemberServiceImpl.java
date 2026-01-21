@@ -1,7 +1,7 @@
 package com.plog.domain.member.service;
 
 import com.plog.domain.member.dto.MemberInfoRes;
-import com.plog.domain.member.dto.UpdateMemberReq;
+import com.plog.domain.member.dto.MemberUpdaterReq;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.global.exception.errorCode.AuthErrorCode;
@@ -51,7 +51,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     @Transactional
-    public MemberInfoRes updateMemberInfo(Long memberId, UpdateMemberReq dto) {
+    public MemberInfoRes updateMemberInfo(Long memberId, MemberUpdaterReq dto) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.USER_NOT_FOUND,
                         "[MemberServiceImpl#updateMemberInfo] can't find user by id",
