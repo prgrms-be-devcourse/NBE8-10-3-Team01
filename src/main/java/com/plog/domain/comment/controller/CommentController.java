@@ -58,8 +58,16 @@ public class CommentController {
     private final CommentService commentService;
 
 
+
+    /**
+     * 해당 게시물의 루트 댓글들을 최대 10개씩 조회합니다.
+     *
+     * @param postId 해당 게시물 식별자
+     * @param pageable 페이징(Paging)과 정렬(Sorting)의 '기본값'을 설정하는 설정값
+     * @return 페이징된 댓글 정보와 조회 성공 메시지.
+     */
     //TODO 매핑 수정 필요
-    @GetMapping({"post/{postId}/comment"})
+    @GetMapping({"posts/{postId}/comments"})
     public ResponseEntity<Response<Slice<CommentInfoRes>>> getComments(
             @PathVariable Long postId,
             @PageableDefault(
@@ -73,7 +81,14 @@ public class CommentController {
         return ResponseEntity.ok(CommonResponse.success(commentList, "댓글 조회 성공"));
     }
 
-    @GetMapping({"post/comment/{commentId}/reply"})
+    /**
+     * 해당 댓글의 대댓글들을 최대 5개씩 조회합니다.
+     *
+     * @param commentId 해당 댓글 식별자
+     * @param pageable 페이징(Paging)과 정렬(Sorting)의 '기본값'을 설정하는 설정값
+     * @return 페이징된 대댓글 정보와 조회 성공 메시지.
+     */
+    @GetMapping({"posts/comments/{commentId}/replies"})
     public ResponseEntity<Response<Slice<ReplyInfoRes>>> getReplies(
             @PathVariable Long commentId,
             @PageableDefault(size = CommentConstants.REPLY_PAGE_SIZE,
@@ -86,7 +101,14 @@ public class CommentController {
         return ResponseEntity.ok(CommonResponse.success(replyList, "댓글 조회 성공"));
     }
 
-    @PostMapping("/post/{postId}/comments")
+
+    /**
+     * 해당 게시글에 새로운 댓글을 생성합니다.
+     *
+     * @param req 댓글 내용, 부모 댓글 식별자, 작성자 식별자
+     * @return 해당 게시물과 생성된 댓글의 식별자를 포함하여 응답
+     */
+    @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<Void> createComment(
             @PathVariable Long postId,
             @Valid @RequestBody CommentCreateReq req
@@ -99,6 +121,13 @@ public class CommentController {
                 .build();
     }
 
+    /**
+     * 기존의 댓글을 수정합니다.
+     *
+     * @param commentId 수정할 댓글의 식별자
+     * @param req 수정될 댓글의 내용
+     * @return 댓글 수정 성공의 상태 코드
+     */
     @PutMapping("/comments/{commetId}")
     public ResponseEntity<Void> updateComment(
             @PathVariable Long commentId,
@@ -109,6 +138,12 @@ public class CommentController {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * 기존의 댓글을 삭제합니다.
+     *
+     * @param commentId 삭제할 댓글의 식별자
+     * @return 해당 댓글 식별자와 댓글 삭제 완료 메시지
+     */
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<CommonResponse<Long>> deleteComment(
             @PathVariable Long commentId
