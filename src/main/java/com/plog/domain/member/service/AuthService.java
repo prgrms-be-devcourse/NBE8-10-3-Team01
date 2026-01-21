@@ -37,6 +37,12 @@ public interface AuthService {
     /** accessToken 생성 */
     String genAccessToken(Member member);
 
+    /** refreshToken 생성 */
+    String genRefreshToken(Member member);
+
     /** 회원가입 로직 */
     Long signUp(String email, String password, String nickname);
+
+    /** 로그인 로직 */
+    Member signIn(String email, String password);
 }

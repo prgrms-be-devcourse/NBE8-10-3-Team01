@@ -5,16 +5,13 @@ import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.global.exception.errorCode.AuthErrorCode;
 import com.plog.global.exception.exceptions.AuthException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
+import com.plog.global.security.JwtUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.util.Map;
 
 /**
  * 코드에 대한 전체적인 역할을 적습니다.
@@ -43,31 +40,24 @@ import java.util.Date;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
-    private final SecretKey cachedKey;
-    private final long accessTokenExpiration;
     private final MemberRepository memberRepository;
-
-    public AuthServiceImpl(
-            @Value("${custom.jwt.secretKey}") String secretKey,
-            @Value("${custom.jwt.access-expiration}") long accessTokenExpiration,
-            MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
-        this.cachedKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-        this.accessTokenExpiration = accessTokenExpiration;
-        this.memberRepository = memberRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
 
     @Override
     public String genAccessToken(Member member) {
-        return Jwts.builder()
-                .claim("id", member.getId())
-                .claim("email", member.getEmail())
-                .claim("nickname", member.getNickname())
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
-                .signWith(cachedKey)
-                .compact();
+        return jwtUtils.createAccessToken(Map.of(
+                "id", member.getId(),
+                "email", member.getEmail(),
+                "nickname", member.getNickname()
+        ));
+    }
+
+    @Override
+    public String genRefreshToken(Member member) {
+        return jwtUtils.createRefreshToken(member.getId());
     }
 
     @Override
@@ -90,5 +80,21 @@ public class AuthServiceImpl implements AuthService {
         return memberRepository.save(member).getId();
     }
 
-    private final PasswordEncoder passwordEncoder;
+    @Override
+    public Member signIn(String email, String password) {
+        Member member = findByEmail(email);
+        checkPassword(member, password);
+        return member;
+    }
+
+    private Member findByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_CREDENTIALS));
+    }
+
+    private void checkPassword(Member member, String password) {
+        if (!passwordEncoder.matches(password, member.getPassword())) {
+            throw new AuthException(AuthErrorCode.INVALID_CREDENTIALS);
+        }
+    }
 }

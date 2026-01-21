@@ -1,6 +1,8 @@
 package com.plog.domain.member.controller;
 
+import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.service.AuthService;
+import com.plog.global.response.CommonResponse;
 import com.plog.global.rq.Rq;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -45,16 +47,28 @@ public class AuthController {
     // TODO: created일 때 URI 연결해서 내보내기 body 없이
     // TODO: api 당 주석달기
 
-    record MemberSignUpReq(
+    public record MemberSignUpReq(
             @NotBlank @Email String email,
             @NotBlank String password,
             @NotBlank String nickname
     ) {}
 
-    record MemberSignInReq(
+    public record MemberSignInReq(
             @NotBlank @Email String email,
             @NotBlank String password
     ) {}
+
+    /**
+     * 로그인에 사용되는 DTO입니다.<br>
+     * accessToken을 헤더로 설정했는데도 반환하는 이유는 프론트 작업을 원활하게 하기 위함입니다.
+     *
+     * @param nickname
+     * @param accessToken
+     */
+    public record MemberSignInRes(
+            @NotBlank String nickname,
+            @NotBlank String accessToken
+    ) {};
 
     /**
      * 새로운 회원을 등록(회원가입)합니다.
@@ -77,8 +91,37 @@ public class AuthController {
         return ResponseEntity.created(URI.create(("/api/members/"+memberId))).build();
     }
 
+    /**
+     * 인증/인가 도메인임을 고려하여 행위를 명시하는 경로를 예외적으로 사용합니다.
+     * <p>
+     * 입력받은 이메일과 비밀번호를 검증하여 일치할 경우,
+     * 서비스 이용을 위한 Access Token과 보안 유지를 위한 Refresh Token을 생성합니다.
+     * Access Token은 응답 헤더와 바디에, Refresh Token은 보안 쿠키(apiKey)에 설정됩니다.
+     *
+     * @param req 로그인 요청 데이터 (email, password)
+     * @return 로그인 성공 메시지와 사용자 닉네임, Access Token을 포함한 공통 응답 객체 (200 OK)
+     */
     @PostMapping("/sign-in")
-    public void signIn() {}
+    public ResponseEntity<CommonResponse<MemberSignInRes>> signIn(
+            @Valid @RequestBody MemberSignInReq req
+    ) {
+        Member member = authService.signIn(
+                req.email(),
+                req.password()
+        );
+
+        String accessToken = authService.genAccessToken(member);
+        String refreshToken = authService.genRefreshToken(member);
+        rq.setHeader("Authorization", accessToken);
+        rq.setCookie("apiKey", refreshToken);
+
+        String nickname = member.getNickname();
+        MemberSignInRes res = new MemberSignInRes(nickname, accessToken);
+
+        return ResponseEntity.ok(
+                CommonResponse.success(res, "%s님 환영합니다.".formatted(nickname))
+        );
+    }
 
     @GetMapping("/logout")
     public void logout() {}

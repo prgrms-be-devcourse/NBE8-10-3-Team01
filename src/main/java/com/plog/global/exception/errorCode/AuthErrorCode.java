@@ -30,6 +30,7 @@ public enum AuthErrorCode implements ErrorCode {
     SIGNUP_FAIL(HttpStatus.BAD_REQUEST, "failed to sign up"),
     LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "failed to login"),
     USER_ALREADY_EXIST(HttpStatus.CONFLICT, "user already exists."),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "invalid email or password"),
 
     // 인증 및 권한
     USER_AUTH_FAIL(HttpStatus.FORBIDDEN, "user authorization failed"),
