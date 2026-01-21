@@ -1,19 +1,24 @@
 package com.plog.domain.comment.controller;
 
+import com.plog.domain.comment.constant.CommentConstants;
 import com.plog.domain.comment.dto.CommentCreateReq;
 import com.plog.domain.comment.dto.CommentInfoRes;
 import com.plog.domain.comment.dto.CommentUpdateReq;
+import com.plog.domain.comment.dto.ReplyInfoRes;
 import com.plog.domain.comment.entity.Comment;
 import com.plog.domain.comment.service.CommentService;
 import com.plog.global.response.CommonResponse;
 import com.plog.global.response.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.List;
 
 /**
  * 게시물 댓글(Comment)에 대한 REST 컨트롤러.
@@ -22,13 +27,9 @@ import java.util.List;
  * 특정 게시물(postId)에 종속된 댓글의 조회, 생성, 수정, 삭제 기능을 제공한다.
  * 댓글 삭제는 물리 삭제가 아닌 논리 삭제(soft delete) 방식으로 처리되며,
  * 삭제된 댓글은 "[삭제된 댓글입니다.]"라는 대체 메시지로 관리된다.
- * </p>
  *
- * <p><b>작동 원리:</b><br>
- * 본 컨트롤러는 HTTP 요청을 받아 요청 데이터를 검증한 뒤,
- * 실제 비즈니스 로직은 {@link CommentService}에 위임한다.
- * 트랜잭션 경계는 Service 계층에서 관리하며,
- * 컨트롤러에서는 엔티티를 직접 노출하지 않는다.
+ * 댓글 조회 : 최대 10개의 댓글이 페이징되어 조회된다.
+ * 대댓글 조회 : 최대 5개의 댓글이 페이징되어 조회된다.
  * </p>
  *
  * <p><b>주요 생성자:</b><br>
@@ -56,15 +57,34 @@ import java.util.List;
 public class CommentController {
     private final CommentService commentService;
 
-    @GetMapping
-    public ResponseEntity<Response<List<CommentInfoRes>>> getComments(
-            @PathVariable Long postId
+
+    //TODO 매핑 수정 필요
+    @GetMapping({"post/{postId}/comment"})
+    public ResponseEntity<Response<Slice<CommentInfoRes>>> getComments(
+            @PathVariable Long postId,
+            @PageableDefault(
+                    size = CommentConstants.COMMENT_PAGE_SIZE,
+                    sort = CommentConstants.DEFAULT_SORT_FIELD,
+                    direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        List<CommentInfoRes> commentList = commentService.getCommentsByPostId(postId);
+
+        Slice<CommentInfoRes> commentList = commentService.getCommentsByPostId(postId, pageable);
 
         return ResponseEntity.ok(CommonResponse.success(commentList, "댓글 조회 성공"));
     }
 
+    @GetMapping({"post/comment/{commentId}/reply"})
+    public ResponseEntity<Response<Slice<ReplyInfoRes>>> getReplies(
+            @PathVariable Long commentId,
+            @PageableDefault(size = CommentConstants.REPLY_PAGE_SIZE,
+                    sort = CommentConstants.DEFAULT_SORT_FIELD,
+                    direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+
+        Slice<ReplyInfoRes> replyList = commentService.getRepliesByCommentId(commentId, pageable);
+
+        return ResponseEntity.ok(CommonResponse.success(replyList, "댓글 조회 성공"));
+    }
 
     @PostMapping("/post/{postId}/comments")
     public ResponseEntity<Void> createComment(

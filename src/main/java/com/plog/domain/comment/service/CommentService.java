@@ -2,7 +2,10 @@ package com.plog.domain.comment.service;
 
 import com.plog.domain.comment.dto.CommentCreateReq;
 import com.plog.domain.comment.dto.CommentInfoRes;
+import com.plog.domain.comment.dto.ReplyInfoRes;
 import com.plog.domain.comment.entity.Comment;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 import java.util.List;
 
@@ -38,6 +41,7 @@ import java.util.List;
 
 public interface CommentService {
 
+
     /**
      * 단일 게시글(Post)에 새로운 댓글 또는 대댓글을 작성한다.
      *
@@ -54,18 +58,34 @@ public interface CommentService {
      */
     Long createComment(Long postId, CommentCreateReq req);
 
+
     /**
      * 특정 게시글(Post)에 작성된 댓글 목록을 조회한다.
-     * 페이징 기능은 작업 중이다.
+     * 페이징 기능: 최대 10개씩 조회
      *
      * <p>
-     * 댓글과 대댓글을 함께 조회된다.
+     * 댓글만 조회된다.
      * </p>
      *
      * @param postId 게시글 식별자
-     * @return 댓글 목록 응답 DTO 리스트
+     * @return 댓글 목록 응답 DTO 슬라이스
      */
-    List<CommentInfoRes> getCommentsByPostId(Long postId);
+    Slice<CommentInfoRes> getCommentsByPostId(Long postId, Pageable pageable);
+
+
+    /**
+     * 특정 루트 댓글(Comment)에 작성된 대댓글 목록을 조회한다.
+     * 페이징 기능: 최대 5개씩 조회
+     *
+     * <p>
+     * 이벤트 발생 시에만 대댓글이 조회되도록 한다.
+     * </p>
+     *
+     * @param commentId 부모 댓글 식별자
+     * @return 대댓글 목록 응답 DTO 슬라이스
+     */
+    Slice<ReplyInfoRes> getRepliesByCommentId(Long commentId, Pageable pageable);
+
 
     /**
      * 이미 작성된 댓글(Comment)의 내용을 수정한다.
@@ -83,11 +103,11 @@ public interface CommentService {
      */
     void updateComment(Long commentId, String content);
 
+
     /**
      * 댓글(Comment)을 삭제 처리한다.
      *
      * <p>
-     * 대댓글의 대댓글의 기능은 구현하지 않았다.
      * 현재 댓글의 자식 댓글이 있는 경우에만 소프트 삭제를 기능하도록 하였다.
      * </p>
      *

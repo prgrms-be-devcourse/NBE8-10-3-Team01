@@ -1,17 +1,18 @@
 package com.plog.domain.comment.service;
 
 import com.plog.domain.comment.dto.CommentCreateReq;
+import com.plog.domain.comment.dto.ReplyInfoRes;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.repository.PostRepository;
 import com.plog.domain.comment.dto.CommentInfoRes;
 import com.plog.domain.comment.entity.Comment;
 import com.plog.domain.comment.repository.CommentRepository;
 import com.plog.global.exception.errorCode.CommentErrorCode;
+import com.plog.global.exception.errorCode.PostErrorCode;
 import com.plog.global.exception.exceptions.CommentException;
+import com.plog.global.exception.exceptions.PostException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,15 +58,35 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommentInfoRes> getCommentsByPostId(Long postId) {
+    public Slice<CommentInfoRes> getCommentsByPostId(Long postId, Pageable pageable) {
 
-        //TODO: 페이징 기능과 게시물 예외처리 추가 예정
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostException(
+                        PostErrorCode.POST_NOT_FOUND,
+                        "[CommentService#getCommentsByPostId] can't find post by id : " + postId,
+                        "존재하지 않는 게시물입니다."
+                ));
 
-        List<Comment> comments = commentRepository.findAllByPostIdOrderByCreateDateDesc(postId);
+        Slice<Comment> comments = commentRepository.findByPostIdAndParentIsNull(postId, pageable);
 
-        return comments.stream()
-                .map(CommentInfoRes::new)
-                .toList();
+        return comments.map(CommentInfoRes::new);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Slice<ReplyInfoRes> getRepliesByCommentId(Long commentId, Pageable pageable) {
+
+        if (!commentRepository.existsById(commentId)) {
+            throw new CommentException(
+                    CommentErrorCode.COMMENT_NOT_FOUND,
+                    "[CommentService#getRepliesByCommentId] 부모 댓글이 존재하지 않음: " + commentId,
+                    "존재하지 않는 댓글입니다."
+            );
+        }
+
+        Slice<Comment> replies = commentRepository.findByParentId(commentId, pageable);
+
+        return replies.map(ReplyInfoRes::new);
     }
 
     @Override

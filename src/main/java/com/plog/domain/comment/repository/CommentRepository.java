@@ -3,6 +3,8 @@ package com.plog.domain.comment.repository;
 import com.plog.domain.comment.entity.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -27,7 +29,12 @@ import java.util.List;
  */
 public interface CommentRepository extends JpaRepository<Comment, Long>{
 
-    List<Comment> findAllByPostIdOrderByCreateDateDesc(Long postId);
+    @EntityGraph(attributePaths = {"author"}) // N+1 방지
+    Slice<Comment> findByPostIdAndParentIsNull(Long postId, Pageable pageable);
+
+    // 대댓글 조회용 (추가)
+    @EntityGraph(attributePaths = {"author"})
+    Slice<Comment> findByParentId(Long parentId, Pageable pageable);
 
     boolean existsByParent(Comment parent);
 }
