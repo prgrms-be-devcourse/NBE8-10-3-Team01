@@ -3,9 +3,10 @@ package com.plog.domain.comment.dto;
 import com.plog.domain.comment.entity.Comment;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * 게시물 댓글 조회 시 클라이언트에게 전달되는 댓글 응답 DTO.
+ * 게시물 댓글 조회 시 클라이언트에게 전달되는 댓글 응답 DTO입니다.
  * <p>
  * 게시물에 속한 댓글의 식별 정보와 내용을 포함하여
  * 댓글 목록 조회 API의 응답 데이터로 사용된다.
@@ -30,18 +31,22 @@ public record CommentInfoRes(
         long id,
         String content,
         long authorId,
+        String authorNickname,
         long postId,
         LocalDateTime createDate,
-        LocalDateTime modifyDate
+        LocalDateTime modifyDate,
+        long replyCount
 ) {
     public CommentInfoRes(Comment comment){
         this(
                 comment.getId(),
                 comment.getContent(),
                 comment.getAuthor().getId(),
+                comment.getAuthor().getNickname(),
                 comment.getPost().getId(),
                 comment.getCreateDate(),
-                comment.getModifyDate()
+                comment.getModifyDate(),
+                (long) comment.getChildren().size()
         );
     }
 }

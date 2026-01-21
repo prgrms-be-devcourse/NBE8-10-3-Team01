@@ -5,6 +5,10 @@ import com.plog.global.jpa.entity.BaseEntity;
 import com.plog.domain.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 게시글에 작성되는 댓글(Comment) 및 대댓글(Reply)을 표현하는 엔티티 클래스이다.
@@ -32,6 +36,7 @@ import lombok.*;
 @Getter
 @Entity
 @Builder
+//@SuperBuilder 테스트용
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class Comment extends BaseEntity {
@@ -51,6 +56,10 @@ public class Comment extends BaseEntity {
     @JoinColumn(name = "parent_id")
     private Comment parent;
 
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<Comment> children = new ArrayList<>();
+
     @Column(nullable = false)
     @Builder.Default
     private boolean deleted = false;
@@ -63,5 +72,4 @@ public class Comment extends BaseEntity {
         this.deleted = true;
         this.content = "[삭제된 댓글입니다.]";
     }
-
 }
