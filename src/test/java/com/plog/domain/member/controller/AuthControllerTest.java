@@ -1,6 +1,7 @@
 package com.plog.domain.member.controller;
 
 
+import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.service.AuthService;
 import com.plog.global.rq.Rq;
 import com.plog.global.security.JwtUtils;
@@ -12,11 +13,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  *  {@link AuthController} 에 대한 슬라이스 테스트 입니다.
@@ -36,7 +38,7 @@ public class AuthControllerTest extends WebMvcTestSupport {
     private JwtUtils jwtUtils;
 
     @Test
-    @DisplayName("회원가입 성공 시 201 상태코드와 Location 헤더를 반환한다.")
+    @DisplayName("회원가입 성공 - 201, Location 헤더를 반환")
     void signUp_success() throws Exception {
         // given
         Long memberId = 1L;
@@ -59,7 +61,7 @@ public class AuthControllerTest extends WebMvcTestSupport {
     }
 
     @Test
-    @DisplayName("이메일 형식이 올바르지 않으면 400 에러를 반환한다.")
+    @DisplayName("회원가입 실패 - 이메일 형식 올바르지 않음, 400 에러 반환.")
     void signUp_fail_invalidEmail() throws Exception {
         // given
         AuthController.MemberSignUpReq req = new AuthController.MemberSignUpReq(
@@ -75,5 +77,55 @@ public class AuthControllerTest extends WebMvcTestSupport {
 
         // then
         result.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("로그인 성공 - 200, AccessToken을 반환")
+    void signIn_success() throws Exception {
+        // given
+        String email = "test@plog.com";
+        String password = "password123!";
+        String nickname = "plogger";
+        String accessToken = "mock-access-token";
+        String refreshToken = "mock-refresh-token";
+
+        Member mockMember = Member.builder()
+                .email(email)
+                .nickname(nickname)
+                .build();
+
+        AuthController.MemberSignInReq req = new AuthController.MemberSignInReq(email, password);
+
+        given(authService.signIn(anyString(), anyString())).willReturn(mockMember);
+        given(authService.genAccessToken(any(Member.class))).willReturn(accessToken);
+        given(authService.genRefreshToken(any(Member.class))).willReturn(refreshToken);
+
+        // when
+        ResultActions result = mockMvc.perform(post("/api/members/sign-in")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)));
+
+        // then
+        result.andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.nickname").value(nickname))
+                .andExpect(jsonPath("$.data.accessToken").value(accessToken));
+
+        // Rq를 통해 헤더와 쿠키가 설정되었는지 검증
+        verify(rq).setHeader("Authorization", accessToken);
+        verify(rq).setCookie("apiKey", refreshToken);
+    }
+
+    @Test
+    @DisplayName("로그인 실패 - 이메일 공백, 400 에러 반환")
+    void signIn_fail_emptyEmail() throws Exception {
+        // given
+        AuthController.MemberSignInReq req = new AuthController.MemberSignInReq("", "password123!");
+
+        // when & then
+        mockMvc.perform(post("/api/members/sign-in")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
     }
 }
