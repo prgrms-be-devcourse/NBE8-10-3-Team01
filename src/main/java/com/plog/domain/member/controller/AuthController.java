@@ -1,12 +1,14 @@
 package com.plog.domain.member.controller;
 
+import com.plog.domain.member.dto.AuthSignInReq;
+import com.plog.domain.member.dto.AuthSignInRes;
+import com.plog.domain.member.dto.AuthSignUpReq;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.service.AuthService;
 import com.plog.global.response.CommonResponse;
+import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.rq.Rq;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,32 +45,7 @@ public class AuthController {
     private final AuthService authService;
     private final Rq rq;
 
-    // TODO: recode 따로 빼서 Dto에 넣기 -> 사이즈 지정 필요
-    // TODO: created일 때 URI 연결해서 내보내기 body 없이
-    // TODO: api 당 주석달기
-
-    public record MemberSignUpReq(
-            @NotBlank @Email String email,
-            @NotBlank String password,
-            @NotBlank String nickname
-    ) {}
-
-    public record MemberSignInReq(
-            @NotBlank @Email String email,
-            @NotBlank String password
-    ) {}
-
-    /**
-     * 로그인에 사용되는 DTO입니다.<br>
-     * accessToken을 헤더로 설정했는데도 반환하는 이유는 프론트 작업을 원활하게 하기 위함입니다.
-     *
-     * @param nickname
-     * @param accessToken
-     */
-    public record MemberSignInRes(
-            @NotBlank String nickname,
-            @NotBlank String accessToken
-    ) {};
+    // TODO: Controller 설명 주석 수정
 
     /**
      * 새로운 회원을 등록(회원가입)합니다.
@@ -80,7 +57,7 @@ public class AuthController {
     // TODO: sign-up 경로를 쓸지 말지 의논하기
     @PostMapping("/sign-up")
     public ResponseEntity<Void> signUp(
-            @Valid @RequestBody MemberSignUpReq req
+            @Valid @RequestBody AuthSignUpReq req
     ) {
         Long memberId = authService.signUp(
                 req.email(),
@@ -102,8 +79,8 @@ public class AuthController {
      * @return 로그인 성공 메시지와 사용자 닉네임, Access Token을 포함한 공통 응답 객체 (200 OK)
      */
     @PostMapping("/sign-in")
-    public ResponseEntity<CommonResponse<MemberSignInRes>> signIn(
-            @Valid @RequestBody MemberSignInReq req
+    public ResponseEntity<CommonResponse<AuthSignInRes>> signIn(
+            @Valid @RequestBody AuthSignInReq req
     ) {
         Member member = authService.signIn(
                 req.email(),
@@ -116,13 +93,21 @@ public class AuthController {
         rq.setCookie("apiKey", refreshToken);
 
         String nickname = member.getNickname();
-        MemberSignInRes res = new MemberSignInRes(nickname, accessToken);
+        AuthSignInRes res = new AuthSignInRes(nickname, accessToken);
 
         return ResponseEntity.ok(
                 CommonResponse.success(res, "%s님 환영합니다.".formatted(nickname))
         );
     }
 
+    /**
+     * 로그아웃을 수행합니다.
+     * <p>
+     * 브라우저에 저장된 인증용 쿠키(apiKey)를 삭제하며, 세션 상태를 무효화합니다.
+     * 클라이언트 측에서도 보관 중인 Access Token을 삭제해야 완벽한 로그아웃이 이루어집니다.
+     *
+     * @return 로그아웃 완료 메시지를 포함한 공통 응답 객체 (200 OK)
+     */
     @GetMapping("/logout")
     public ResponseEntity<CommonResponse<Void>> logout() {
         rq.deleteCookie("apiKey");
@@ -131,14 +116,23 @@ public class AuthController {
         );
     }
 
+    /**
+     * 만료된 Access Token을 재발급합니다.
+     * <p>
+     * 쿠키에 담긴 Refresh Token(apiKey)의 유효성을 검증하고,
+     * 새로운 Access Token을 생성하여 헤더와 응답 바디를 통해 반환합니다.
+     *
+     * @return 갱신된 Access Token을 포함한 공통 응답 객체 (200 OK)
+     * @throws AuthException Refresh Token이 유효하지 않거나 만료된 경우 발생
+     */
     @GetMapping("/reissue")
-    public ResponseEntity<CommonResponse<MemberSignInRes>> accessTokenReissue() {
+    public ResponseEntity<CommonResponse<AuthSignInRes>> accessTokenReissue() {
         String refreshToken = rq.getCookieValue("apiKey", null);
-        String newAccessToken = authService.accessTokenReissue(refreshToken);
-        rq.setHeader("Authorization", newAccessToken);
+        AuthSignInRes reissuedRes = authService.accessTokenReissue(refreshToken);
 
-        // TODO: 멤버, 토큰 둘 다 반환 받은 후, nickname 부분 변경하기
-        MemberSignInRes res = new MemberSignInRes("reissued", newAccessToken);
+        rq.setHeader("Authorization", reissuedRes.accessToken());
+        AuthSignInRes res = new AuthSignInRes(reissuedRes.nickname(), reissuedRes.accessToken());
+
         return ResponseEntity.ok(
                 CommonResponse.success(res, "토큰이 재발급되었습니다.")
         );
