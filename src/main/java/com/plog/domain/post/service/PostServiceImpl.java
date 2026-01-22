@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.text.TextContentRenderer;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,12 +103,10 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PostInfoRes> getPostsByMember(Long memberId) {
-        // PostRepository가 명명 규칙에 따라 Member 엔티티의 ID를 참조하여 조회합니다.
-        return postRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId)
-                .stream()
-                .map(PostInfoRes::from)
-                .collect(Collectors.toList());
+    public Slice<PostInfoRes> getPostsByMember(Long memberId, Pageable pageable) {
+        Slice<Post> postSlice = postRepository.findAllByMemberId(memberId, pageable);
+
+        return postSlice.map(PostInfoRes::from);
     }
 
     /**

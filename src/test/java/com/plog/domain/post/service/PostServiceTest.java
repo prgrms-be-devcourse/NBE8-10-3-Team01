@@ -10,6 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
@@ -164,9 +168,9 @@ public class PostServiceTest {
     void getPostsByMemberSuccess() {
         // [Given]
         Long memberId = 1L;
-        LocalDateTime now = LocalDateTime.now();
+        // 페이징 정보 설정 (0페이지, 10개씩 조회)
+        Pageable pageable = PageRequest.of(0, 10);
 
-        // PostInfoRes의 모든 필드에 대응하는 데이터를 가진 Post 엔티티 생성
         Post post = Post.builder()
                 .title("테스트 제목")
                 .content("테스트 본문")
@@ -174,24 +178,28 @@ public class PostServiceTest {
                 .viewCount(10)
                 .build();
 
-        // BaseEntity 필드(id, createDate, modifyDate)는 Mockito로 시뮬레이션하거나
-        // 테스트용 별도 setter/reflection을 사용해야 하지만, 여기서는 필드 매핑 로직 확인에 집중합니다.
-        given(postRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId))
-                .willReturn(List.of(post));
+        // SliceImpl을 사용하여 리포지토리 반환값 모킹 (데이터 1개, 다음 페이지 없음)
+        Slice<Post> mockSlice = new SliceImpl<>(List.of(post), pageable, false);
+
+        given(postRepository.findAllByMemberId(memberId, pageable))
+                .willReturn(mockSlice);
 
         // [When]
-        List<PostInfoRes> result = postService.getPostsByMember(memberId);
+        Slice<PostInfoRes> result = postService.getPostsByMember(memberId, pageable);
 
         // [Then]
-        assertThat(result).hasSize(1);
-        PostInfoRes dto = result.get(0);
+        // 1. Slice 자체에 대한 검증
+        assertThat(result.getContent()).hasSize(1); // 실제 데이터 개수 확인
+        assertThat(result.hasNext()).isFalse();    // 다음 페이지 여부 확인
 
-        // PostInfoRes 레코드의 필드 접근자(Accessor)를 사용하여 검증
+        // 2. DTO 필드 매핑 검증 (첫 번째 요소 추출)
+        PostInfoRes dto = result.getContent().get(0);
         assertThat(dto.title()).isEqualTo("테스트 제목");
         assertThat(dto.content()).isEqualTo("테스트 본문");
         assertThat(dto.summary()).isEqualTo("테스트 요약");
         assertThat(dto.viewCount()).isEqualTo(10);
 
-        verify(postRepository).findAllByMemberIdOrderByCreatedAtDesc(memberId);
+        // 3. 리포지토리 호출 확인 (새로운 메서드와 파라미터 기준)
+        verify(postRepository).findAllByMemberId(memberId, pageable);
     }
 }

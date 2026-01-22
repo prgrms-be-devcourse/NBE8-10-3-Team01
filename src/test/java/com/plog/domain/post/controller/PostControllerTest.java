@@ -11,6 +11,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -169,22 +173,30 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("특정 회원의 게시글 목록 조회 시 상세한 DTO 필드들이 JSON에 포함되어야 한다")
+    @DisplayName("특정 회원의 게시글 목록 조회 시 Slice 구조와 상세 DTO 필드들이 JSON에 포함되어야 한다")
     void getPostsByMemberApiSuccess() throws Exception {
         // [Given]
         Long memberId = 1L;
         LocalDateTime now = LocalDateTime.now();
+        Pageable pageable = PageRequest.of(0, 10); // 테스트용 페이징 정보
 
-        // PostInfoRes의 표준 생성자를 사용한 데이터 준비
+        // PostInfoRes 데이터 준비
         PostInfoRes res = new PostInfoRes(
                 100L, "제목", "본문", "요약", 5, now, now
         );
 
-        given(postService.getPostsByMember(memberId)).willReturn(List.of(res));
+        // SliceImpl을 사용하여 서비스 반환값 모킹 (데이터 1개, 다음 페이지 없음)
+        Slice<PostInfoRes> sliceResponse = new SliceImpl<>(List.of(res), pageable, false);
+
+        // 서비스 메서드 호출 시 Pageable 파라미터를 포함하도록 설정
+        given(postService.getPostsByMember(eq(memberId), any(Pageable.class)))
+                .willReturn(sliceResponse);
 
         // [When]
         ResultActions resultActions = mvc.perform(
                 get("/api/posts/members/{memberId}", memberId)
+                        .param("page", "0")
+                        .param("size", "10")
                         .contentType(MediaType.APPLICATION_JSON)
         ).andDo(print());
 
@@ -192,16 +204,21 @@ class PostControllerTest {
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data").isArray())
-                // 레코드 필드명 기반 JSON 경로 검증
-                .andExpect(jsonPath("$.data[0].id").value(100))
-                .andExpect(jsonPath("$.data[0].title").value("제목"))
-                .andExpect(jsonPath("$.data[0].content").value("본문"))
-                .andExpect(jsonPath("$.data[0].summary").value("요약"))
-                .andExpect(jsonPath("$.data[0].viewCount").value(5))
-                .andExpect(jsonPath("$.data[0].createDate").exists())
-                .andExpect(jsonPath("$.data[0].modifyDate").exists());
+                // Slice 구조에서는 데이터가 'content' 필드 안에 배열로 들어갑니다.
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].id").value(100))
+                .andExpect(jsonPath("$.data.content[0].title").value("제목"))
+                .andExpect(jsonPath("$.data.content[0].content").value("본문"))
+                .andExpect(jsonPath("$.data.content[0].summary").value("요약"))
+                .andExpect(jsonPath("$.data.content[0].viewCount").value(5))
+                .andExpect(jsonPath("$.data.content[0].createDate").exists())
+                .andExpect(jsonPath("$.data.content[0].modifyDate").exists())
+                // Slice 메타데이터 검증 (다음 페이지 여부 등)
+                .andExpect(jsonPath("$.data.last").value(true))
+                .andExpect(jsonPath("$.data.first").value(true))
+                .andExpect(jsonPath("$.message").value("사용자 게시글 목록 조회 성공"));
 
-        verify(postService).getPostsByMember(memberId);
+        // 서비스 계층으로 정확한 인자가 전달되었는지 확인합니다.
+        verify(postService).getPostsByMember(eq(memberId), any(Pageable.class));
     }
 }
