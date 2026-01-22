@@ -1,13 +1,14 @@
-package com.plog.domain.postComment.entity;
+package com.plog.domain.comment.entity;
 
 import com.plog.domain.post.entity.Post;
 import com.plog.global.jpa.entity.BaseEntity;
 import com.plog.domain.member.entity.Member;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 게시글에 작성되는 댓글(Comment) 및 대댓글(Reply)을 표현하는 엔티티 클래스이다.
@@ -31,11 +32,14 @@ import lombok.Setter;
  * @see Post
  * @see Member
  */
+
 @Getter
-@Setter
 @Entity
+@Builder
+//@SuperBuilder 테스트용
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PostComment extends BaseEntity {
+@AllArgsConstructor
+public class Comment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
@@ -50,35 +54,22 @@ public class PostComment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
-    private PostComment parent;
+    private Comment parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<Comment> children = new ArrayList<>();
 
     @Column(nullable = false)
-    private int depth;
-
-    @Column(nullable = false)
+    @Builder.Default
     private boolean deleted = false;
-
-    public static PostComment create(
-            Member author, Post post, String content, PostComment parent) {
-
-        PostComment comment = new PostComment();
-        comment.author = author;
-        comment.post = post;
-        comment.content = content;
-        comment.parent = parent;
-        comment.depth = parent == null ? 0 : parent.depth + 1;
-        comment.deleted = false;
-
-        return comment;
-    }
 
     public void modify(String content){
         this.content = content;
     }
 
-    public void delete(){
+    public void softDelete(){
         this.deleted = true;
         this.content = "[삭제된 댓글입니다.]";
     }
-
 }
