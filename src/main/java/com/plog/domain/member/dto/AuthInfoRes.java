@@ -1,7 +1,7 @@
 package com.plog.domain.member.dto;
 
 
-import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 
 /**
  * 인증 성공 시 사용자에게 반환되는 데이터 구조입니다.
@@ -12,8 +12,16 @@ import jakarta.validation.constraints.NotBlank;
  * @param nickname 인증된 사용자의 닉네임
  * @param accessToken 이후 요청에 사용될Bearer 인증 토큰
  */
-public record AuthSignInRes(
-        @NotBlank String nickname,
-        @NotBlank String accessToken
+
+@Builder
+public record AuthInfoRes(
+        String nickname,
+        String accessToken
 ) {
+    public static AuthInfoRes from(AuthLoginResult res) {
+        return AuthInfoRes.builder()
+                .nickname(res.nickname())
+                .accessToken(res.accessToken())
+                .build();
+    }
 }
