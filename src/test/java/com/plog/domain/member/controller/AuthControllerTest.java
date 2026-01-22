@@ -142,7 +142,7 @@ public class AuthControllerTest extends WebMvcTestSupport {
 
     @Test
     @DisplayName("토큰 재발급 성공 - 200, 새 AccessToken 반환")
-    void accessTokenReissue_success() throws Exception {
+    void tokenReissue_success() throws Exception {
         // given
         String refreshToken = "mock-refresh-token";
         String newAccessToken = "new-access-token";

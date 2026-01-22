@@ -87,7 +87,7 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             Claims claims = jwtUtils.parseToken(refreshToken);
-            Long memberId = claims.get("id", Long.class);
+            Long memberId = Long.valueOf(claims.getSubject());
 
             MemberInfoRes member = findMemberWithId(memberId);
             String newAccessToken = createAccessToken(member);
@@ -132,7 +132,7 @@ public class AuthServiceImpl implements AuthService {
      * @return 이미 사용 중인 이메일이면 {@code true}, 아니면 {@code false}
      * @throws IllegalArgumentException email 이 null 이거나 빈 값인 경우
      */
-    public boolean isDuplicateEmail(String email) {
+    private boolean isDuplicateEmail(String email) {
         return memberRepository.existsByEmail(email);
     }
 
@@ -143,7 +143,7 @@ public class AuthServiceImpl implements AuthService {
      * @return 이미 사용 중인 닉네임이면 {@code true}, 아니면 {@code false}
      * @throws IllegalArgumentException nickname 이 null 이거나 빈 값인 경우
      */
-    public boolean isDuplicateNickname(String nickname) {
+    private boolean isDuplicateNickname(String nickname) {
         return memberRepository.existsByNickname(nickname);
     }
 
@@ -155,7 +155,7 @@ public class AuthServiceImpl implements AuthService {
      * @throws IllegalArgumentException id가 null 인 경우
      * @throws AuthException 해당 ID에 대한 회원이 존재하지 않는 경우
      */
-    public MemberInfoRes findMemberWithId(Long id) {
+    private MemberInfoRes findMemberWithId(Long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.USER_NOT_FOUND,
                         "[MemberServiceImpl#findMemberWithId] can't find user by id",
