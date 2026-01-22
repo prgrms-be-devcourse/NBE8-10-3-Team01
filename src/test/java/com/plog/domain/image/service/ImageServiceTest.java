@@ -1,5 +1,8 @@
 package com.plog.domain.image.service;
 
+
+import com.plog.domain.image.entity.Image;
+import com.plog.domain.image.dto.ImageUploadRes;
 import com.plog.domain.image.repository.ImageRepository;
 import com.plog.global.exception.errorCode.ImageErrorCode;
 import com.plog.global.exception.exceptions.ImageException;
@@ -67,58 +70,79 @@ public class ImageServiceTest {
         MockMultipartFile file = new MockMultipartFile(
                 "file", originalFilename, "image/jpeg", "content".getBytes()
         );
-
+        String mockUrl = "http://minio-url/bucket/uuid-filename.jpg";
         given(objectStorage.upload(any(MultipartFile.class), anyString()))
-                .willReturn("http://minio-url/bucket/uuid-filename.jpg");
+                .willReturn(mockUrl);
 
         // [When]
-        imageService.uploadImage(file);
+        ImageUploadRes result = imageService.uploadImage(file);  // ← 타입 변경
 
-        // [Then] - 팀원분 스타일: ArgumentCaptor 사용
-        // objectStorage.upload(InputStream, String filename)의 두 번째 인자인 filename을 캡처
+        // [Then]
+        assertThat(result.successUrls()).hasSize(1);
+        assertThat(result.successUrls().get(0)).isEqualTo(mockUrl);
+        assertThat(result.failedFilenames()).isEmpty();
+
+        // 파일명 변환 검증 (기존 로직 유지)
         ArgumentCaptor<String> filenameCaptor = ArgumentCaptor.forClass(String.class);
-
         verify(objectStorage).upload(any(MultipartFile.class), filenameCaptor.capture());
-
         String savedFilename = filenameCaptor.getValue();
-
-        // 검증 1: 원본 파일명이 그대로 쓰이지 않고 변환되었는가? (UUID 적용 확인)
         assertThat(savedFilename).isNotEqualTo(originalFilename);
-        // 검증 2: 확장자는 유지되었는가?
         assertThat(savedFilename).endsWith(".jpg");
+
+        // DB 저장 검증
+        verify(imageRepository).save(any(Image.class));
     }
 
     @Test
-    @DisplayName("다중 이미지 업로드 시 각 파일마다 별도의 저장소 호출이 발생한다")
+    @DisplayName("다중 이미지 업로드 성공 시 모든 파일의 URL을 반환한다")
     void uploadImagesSuccess() {
         // [Given]
         List<MultipartFile> files = List.of(
                 new MockMultipartFile("f1", "a.png", "image/png", "d1".getBytes()),
                 new MockMultipartFile("f2", "b.jpg", "image/jpeg", "d2".getBytes())
         );
-
+        String mockUrl = "http://mock-url/img";
         given(objectStorage.upload(any(MultipartFile.class), anyString()))
-                .willReturn("http://mock-url/img");
+                .willReturn(mockUrl);
 
         // [When]
-        List<String> results = imageService.uploadImages(files);
+        ImageUploadRes result = imageService.uploadImages(files);  // ← 타입 변경
 
         // [Then]
-        assertThat(results).hasSize(2);
+        assertThat(result.successUrls()).hasSize(2);
+        assertThat(result.failedFilenames()).isEmpty();
 
-        // 호출 횟수 검증
+        // 호출 횟수 검증 (기존 로직 유지)
         verify(objectStorage, times(2)).upload(any(MultipartFile.class), anyString());
+        verify(imageRepository, times(2)).save(any(Image.class));
+    }
+
+    @Test
+    @DisplayName("다중 이미지 업로드 부분 실패 시 성공/실패 파일을 구분하여 반환한다")
+    void uploadImagesPartialFailure() {
+        // [Given]
+        MockMultipartFile validFile = new MockMultipartFile("f1", "ok.jpg", "image/jpeg", "data".getBytes());
+        MockMultipartFile invalidFile = new MockMultipartFile("f2", "bad.exe", "app/exe", "bad".getBytes());
+
+        given(objectStorage.upload(any(MultipartFile.class), anyString()))
+                .willReturn("http://mock.jpg");
+
+        // [When]
+        ImageUploadRes result = imageService.uploadImages(List.of(validFile, invalidFile));
+
+        // [Then]
+        assertThat(result.successUrls()).hasSize(1);
+        assertThat(result.failedFilenames()).containsExactly("bad.exe");
+        verify(objectStorage, times(1)).upload(any(MultipartFile.class), anyString());  // 1개만 성공
     }
 
     @Test
     @DisplayName("지원하지 않는 확장자는 예외가 발생한다")
     void uploadImageInvalidExtension() {
-        // [Given]
         MockMultipartFile txtFile = new MockMultipartFile(
                 "file", "danger.exe", "application/x-msdownload", "content".getBytes()
         );
 
-        // [When & Then]
         assertThatThrownBy(() -> imageService.uploadImage(txtFile))
                 .isInstanceOf(ImageException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ImageErrorCode.INVALID_FILE_EXTENSION);
@@ -127,12 +151,10 @@ public class ImageServiceTest {
     @Test
     @DisplayName("빈 파일 업로드 시 예외가 발생한다")
     void uploadImageEmptyFile() {
-        // [Given]
         MockMultipartFile emptyFile = new MockMultipartFile(
                 "file", "empty.jpg", "image/jpeg", new byte[0]
         );
 
-        // [When & Then]
         assertThatThrownBy(() -> imageService.uploadImage(emptyFile))
                 .isInstanceOf(ImageException.class);
     }

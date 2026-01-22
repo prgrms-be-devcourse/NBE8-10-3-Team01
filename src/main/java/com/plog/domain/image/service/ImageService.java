@@ -1,5 +1,6 @@
 package com.plog.domain.image.service;
 
+import com.plog.domain.image.dto.ImageUploadRes;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -24,12 +25,12 @@ public interface ImageService {
      * 단일 이미지를 업로드하고 URL을 반환합니다.
      * DB에 이미지 정보를 저장합니다.
      */
-    String uploadImage(MultipartFile file);
+    ImageUploadRes uploadImage(MultipartFile file);
 
 
     /**
      * 다중 이미지를 업로드하고 URL 리스트를 반환합니다.
      */
-    List<String> uploadImages(List<MultipartFile> files);
+    ImageUploadRes uploadImages(List<MultipartFile> files);
 
 }

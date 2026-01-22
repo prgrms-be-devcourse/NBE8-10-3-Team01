@@ -1,5 +1,6 @@
 package com.plog.domain.image.service;
 
+import com.plog.domain.image.dto.ImageUploadRes;
 import com.plog.domain.image.entity.Image;
 import com.plog.domain.image.repository.ImageRepository;
 import com.plog.global.exception.errorCode.ImageErrorCode;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,7 +51,7 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     @Transactional
-    public String uploadImage(MultipartFile file) {
+    public ImageUploadRes uploadImage(MultipartFile file) {
         if (file.isEmpty() || file.getOriginalFilename() == null) {
             throw new ImageException(
                     ImageErrorCode.EMPTY_FILE,
@@ -77,7 +79,7 @@ public class ImageServiceImpl implements ImageService {
                 .build();
 
         imageRepository.save(image);
-        return accessUrl;
+        return new ImageUploadRes(List.of(accessUrl), List.of());
 
     }
 
@@ -98,13 +100,28 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     @Transactional
-    public List<String> uploadImages(List<MultipartFile> files) {
+    public ImageUploadRes uploadImages(List<MultipartFile> files) {
         if (files == null || files.isEmpty()) {
-            return List.of();
+            return new ImageUploadRes(List.of(), List.of());
         }
 
-        return files.stream()
-                .map(this::uploadImage)
-                .toList();
+        List<String> successUrls = new ArrayList<>();
+        List<String> failedFilenames = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            try {
+                // uploadImage 결과에서 successUrls만 추출
+                ImageUploadRes singleResult = uploadImage(file);
+                successUrls.addAll(singleResult.successUrls());
+            } catch (Exception e) {
+                // 실패한 파일명 기록
+                String filename = file.getOriginalFilename() != null
+                        ? file.getOriginalFilename()
+                        : "unknown-file";
+                failedFilenames.add(filename);
+            }
+        }
+
+        return new ImageUploadRes(successUrls, failedFilenames);
     }
 }

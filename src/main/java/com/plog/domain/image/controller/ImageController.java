@@ -28,7 +28,7 @@ import java.util.List;
  * @since 2026-01-20
  */
 @RestController
-@RequestMapping("/api/images")
+@RequestMapping(value = "/api/images", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 public class ImageController {
 
@@ -48,15 +48,12 @@ public class ImageController {
     public ResponseEntity<CommonResponse<ImageUploadRes>> uploadImage(
             @RequestPart("file") MultipartFile file
     ) {
-        String imageUrl = imageService.uploadImage(file);
+        ImageUploadRes result = imageService.uploadImage(file);  // ← 이거
 
-        ImageUploadRes resDto = new ImageUploadRes(List.of(imageUrl));
-
-        return ResponseEntity
-                .ok(CommonResponse.success(resDto, "이미지 업로드 성공"));
-
+        return ResponseEntity.ok(
+                CommonResponse.success(result, "이미지 업로드 성공")
+        );
     }
-
     /**
      * 다중 이미지를 업로드합니다.
      * <p>
@@ -64,18 +61,21 @@ public class ImageController {
      * <b>Content-Type:</b> multipart/form-data
      *
      * @param files 업로드할 이미지 파일 리스트 (key: "files")
-     * @return 200 OK 상태 코드와 함께 업로드된 이미지 URL 리스트를 반환
+     * @return 200 OK 상태 코드와 함께 성공 URL 및 실패 파일명 목록을 반환
      */
     @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<ImageUploadRes>> uploadImages(
             @RequestParam("files") List<MultipartFile> files
     ) {
-        List<String> imageUrls = imageService.uploadImages(files);
+        ImageUploadRes result = imageService.uploadImages(files);  // ← 변경1: 직접 받음
 
-        ImageUploadRes resDto = new ImageUploadRes(imageUrls);
+        // 변경2: 부분 실패 메시지 추가
+        String message = result.failedFilenames().isEmpty()
+                ? "다중 이미지 업로드 성공"
+                : String.format("다건 업로드 완료 (성공: %d건, 실패: %d건)",
+                result.successUrls().size(),
+                result.failedFilenames().size());
 
-        return ResponseEntity
-                .ok(CommonResponse.success(resDto, "다중 이미지 업로드 성공"));
-
+        return ResponseEntity.ok(CommonResponse.success(result, message));
     }
 }

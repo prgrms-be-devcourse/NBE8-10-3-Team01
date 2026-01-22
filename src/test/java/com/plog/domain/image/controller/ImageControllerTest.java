@@ -1,5 +1,6 @@
 package com.plog.domain.image.controller;
 
+import com.plog.domain.image.dto.ImageUploadRes;
 import com.plog.domain.image.service.ImageService;
 import com.plog.global.security.JwtUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -46,15 +47,18 @@ class ImageControllerTest {
     private JwtUtils jwtUtils;
 
     @Test
-    @DisplayName("이미지 업로드 성공 시 URL을 포함한 응답을 반환한다")
+    @DisplayName("이미지 업로드 성공 시 successUrls를 포함한 응답을 반환한다")
     void uploadImageSuccess() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "test.jpg", "image/jpeg", "test data".getBytes()
         );
-        String mockUrl = "http://minio/bucket/images/uuid.jpg";
 
-        given(imageService.uploadImage(any())).willReturn(mockUrl);
-
+        // ✅ ImageUploadRes Mock
+        ImageUploadRes mockResult = new ImageUploadRes(
+                List.of("http://minio/bucket/images/uuid.jpg"),
+                List.of()
+        );
+        given(imageService.uploadImage(any())).willReturn(mockResult);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -64,16 +68,17 @@ class ImageControllerTest {
                 )
                 .andDo(print());
 
-
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data.imageUrls[0]").value(mockUrl)) // List 형태 확인
+                .andExpect(jsonPath("$.data.successUrls[0]").value("http://minio/bucket/images/uuid.jpg"))
+                .andExpect(jsonPath("$.data.successUrls").isArray())
+                .andExpect(jsonPath("$.data.failedFilenames").isEmpty())
                 .andExpect(jsonPath("$.message").value("이미지 업로드 성공"));
     }
 
     @Test
-    @DisplayName("다중 이미지 업로드 성공 시 URL 리스트를 반환한다")
+    @DisplayName("다중 이미지 업로드 성공 시 successUrls 리스트를 반환한다")
     void uploadImagesSuccess() throws Exception {
         MockMultipartFile file1 = new MockMultipartFile(
                 "files", "test1.jpg", "image/jpeg", "data1".getBytes()
@@ -82,12 +87,15 @@ class ImageControllerTest {
                 "files", "test2.jpg", "image/jpeg", "data2".getBytes()
         );
 
-        List<String> mockUrls = List.of(
-                "http://minio/bucket/images/uuid1.jpg",
-                "http://minio/bucket/images/uuid2.jpg"
+        // ✅ ImageUploadRes Mock
+        ImageUploadRes mockResult = new ImageUploadRes(
+                List.of(
+                        "http://minio/bucket/images/uuid1.jpg",
+                        "http://minio/bucket/images/uuid2.jpg"
+                ),
+                List.of()
         );
-
-        given(imageService.uploadImages(anyList())).willReturn(mockUrls);
+        given(imageService.uploadImages(anyList())).willReturn(mockResult);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -101,20 +109,39 @@ class ImageControllerTest {
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data.imageUrls").isArray())
-                .andExpect(jsonPath("$.data.imageUrls[0]").value(mockUrls.get(0)))
-                .andExpect(jsonPath("$.data.imageUrls[1]").value(mockUrls.get(1)))
+                .andExpect(jsonPath("$.data.successUrls").isArray())
+                .andExpect(jsonPath("$.data.successUrls.length()").value(2))
+                .andExpect(jsonPath("$.data.successUrls[0]").value("http://minio/bucket/images/uuid1.jpg"))
+                .andExpect(jsonPath("$.data.successUrls[1]").value("http://minio/bucket/images/uuid2.jpg"))
+                .andExpect(jsonPath("$.data.failedFilenames").isEmpty())
                 .andExpect(jsonPath("$.message").value("다중 이미지 업로드 성공"));
+    }
+
+    @Test
+    @DisplayName("다중 이미지 업로드 부분 실패 시 실패 파일명도 포함하여 반환한다")
+    void uploadImagesPartialFailure() throws Exception {
+        MockMultipartFile file1 = new MockMultipartFile("files", "test1.jpg", "image/jpeg", "data1".getBytes());
+
+        ImageUploadRes mockResult = new ImageUploadRes(
+                List.of("http://minio/uuid1.jpg"),
+                List.of("invalid.txt")
+        );
+        given(imageService.uploadImages(anyList())).willReturn(mockResult);
+
+        mvc.perform(multipart("/api/images/bulk").file(file1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.successUrls").isArray())
+                .andExpect(jsonPath("$.data.successUrls.length()").value(1))
+                .andExpect(jsonPath("$.data.failedFilenames[0]").value("invalid.txt"))
+                .andExpect(jsonPath("$.message").value("다건 업로드 완료 (성공: 1건, 실패: 1건)"));
     }
 
     @Test
     @DisplayName("지원하지 않는 파일 형식이면 서비스 예외를 400으로 처리한다")
     void uploadImageInvalidExtension() throws Exception {
-
         MockMultipartFile txtFile = new MockMultipartFile(
                 "file", "test.txt", "text/plain", "content".getBytes()
         );
-
 
         given(imageService.uploadImage(any()))
                 .willThrow(new com.plog.global.exception.exceptions.ImageException(
@@ -122,17 +149,7 @@ class ImageControllerTest {
                         "지원하지 않는 파일 형식입니다."
                 ));
 
-
-        ResultActions resultActions = mvc
-                .perform(
-                        multipart("/api/images")
-                                .file(txtFile)
-                                .contentType(MediaType.MULTIPART_FORM_DATA)
-                )
-                .andDo(print());
-
-
-        resultActions
+        mvc.perform(multipart("/api/images").file(txtFile))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("fail"))
                 .andExpect(jsonPath("$.message").value("지원하지 않는 파일 형식입니다."));
@@ -141,17 +158,7 @@ class ImageControllerTest {
     @Test
     @DisplayName("파일 없이 요청하면 400 Bad Request가 발생한다")
     void uploadImageWithoutFile() throws Exception {
-
-        ResultActions resultActions = mvc
-                .perform(
-                        multipart("/api/images")
-
-                                .contentType(MediaType.MULTIPART_FORM_DATA)
-                )
-                .andDo(print());
-
-
-        resultActions
+        mvc.perform(multipart("/api/images"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Missing request part"));
     }
