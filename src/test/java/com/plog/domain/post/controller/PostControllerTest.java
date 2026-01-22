@@ -6,6 +6,7 @@ import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.service.PostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.plog.global.security.JwtUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +17,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -40,6 +45,9 @@ class PostControllerTest {
 
     @MockitoBean
     private PostService postService;
+
+    @MockitoBean
+    private JwtUtils jwtUtils;
 
     @Test
     @DisplayName("게시글 생성 시 DTO 객체를 JSON으로 변환하여 요청을 검증한다")
@@ -158,5 +166,42 @@ class PostControllerTest {
 
         // 서비스의 deletePost 메서드가 호출되었는지 검증합니다.
         verify(postService).deletePost(1L);
+    }
+
+    @Test
+    @DisplayName("특정 회원의 게시글 목록 조회 시 상세한 DTO 필드들이 JSON에 포함되어야 한다")
+    void getPostsByMemberApiSuccess() throws Exception {
+        // [Given]
+        Long memberId = 1L;
+        LocalDateTime now = LocalDateTime.now();
+
+        // PostInfoRes의 표준 생성자를 사용한 데이터 준비
+        PostInfoRes res = new PostInfoRes(
+                100L, "제목", "본문", "요약", 5, now, now
+        );
+
+        given(postService.getPostsByMember(memberId)).willReturn(List.of(res));
+
+        // [When]
+        ResultActions resultActions = mvc.perform(
+                get("/api/posts/members/{memberId}", memberId)
+                        .contentType(MediaType.APPLICATION_JSON)
+        ).andDo(print());
+
+        // [Then]
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data").isArray())
+                // 레코드 필드명 기반 JSON 경로 검증
+                .andExpect(jsonPath("$.data[0].id").value(100))
+                .andExpect(jsonPath("$.data[0].title").value("제목"))
+                .andExpect(jsonPath("$.data[0].content").value("본문"))
+                .andExpect(jsonPath("$.data[0].summary").value("요약"))
+                .andExpect(jsonPath("$.data[0].viewCount").value(5))
+                .andExpect(jsonPath("$.data[0].createDate").exists())
+                .andExpect(jsonPath("$.data[0].modifyDate").exists());
+
+        verify(postService).getPostsByMember(memberId);
     }
 }

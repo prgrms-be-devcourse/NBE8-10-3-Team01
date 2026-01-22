@@ -99,6 +99,16 @@ public class PostServiceImpl implements PostService {
         postRepository.delete(post);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<PostInfoRes> getPostsByMember(Long memberId) {
+        // PostRepository가 명명 규칙에 따라 Member 엔티티의 ID를 참조하여 조회합니다.
+        return postRepository.findAllByMemberIdOrderByCreatedAtDesc(memberId)
+                .stream()
+                .map(PostInfoRes::from)
+                .collect(Collectors.toList());
+    }
+
     /**
      * 마크다운 텍스트에서 특수기호를 제거하고 순수 텍스트만 추출합니다.
      * * @param markdown 마크다운 원문
