@@ -1,8 +1,11 @@
 package com.plog.domain.post.controller;
 
+import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
+import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.service.PostService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,21 +29,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @WebMvcTest를 사용하여 웹 계층(Controller)만 테스트합니다.
  * JPA, Repository, Service 빈은 로드되지 않으며, MockitoBean을 통해 주입합니다.
  */
-@WebMvcTest(PostController.class) // 테스트 대상 컨트롤러를 명시합니다.
+@WebMvcTest(PostController.class)
 @ActiveProfiles("test")
 class PostControllerTest {
 
     @Autowired
     private MockMvc mvc;
 
+    ObjectMapper objectMapper = new ObjectMapper();
+
     @MockitoBean
     private PostService postService;
 
     @Test
-    @DisplayName("게시글 생성 시 JSON 문자열을 직접 전달하여 검증한다")
+    @DisplayName("게시글 생성 시 DTO 객체를 JSON으로 변환하여 요청을 검증한다")
     void createPostSuccess() throws Exception {
         // [Given]
         Long mockPostId = 1L;
+        PostCreateReq requestDto = new PostCreateReq("테스트 제목", "테스트 본문");
+
         given(postService.createPost(anyString(), anyString())).willReturn(mockPostId);
 
         // [When]
@@ -48,20 +55,17 @@ class PostControllerTest {
                 .perform(
                         post("/api/posts")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
-                                        {
-                                            "title": "테스트 제목",
-                                            "content": "테스트 본문"
-                                        }
-                                        """)
+                                .content(objectMapper.writeValueAsString(requestDto))
                 )
                 .andDo(print());
 
         // [Then]
         resultActions
-                .andExpect(status().isCreated()) // 201 확인
-                .andExpect(header().string("Location", "/api/posts/%d".formatted(mockPostId))) // 헤더 경로 확인
-                .andExpect(jsonPath("$").doesNotExist()); // Body가 없는지 확인
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/posts/%d".formatted(mockPostId)))
+                .andExpect(jsonPath("$").doesNotExist());
+
+        verify(postService).createPost(eq(requestDto.title()), eq(requestDto.content()));
     }
 
     @Test
@@ -115,27 +119,28 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 수정 요청 시 성공 메시지와 함께 200 OK를 반환한다")
+    @DisplayName("게시글 수정 요청 시 성공 메시지와 함께 204 No Content를 반환한다")
     void updatePostSuccess() throws Exception {
+        // [Given]
+        Long postId = 1L;
+        PostUpdateReq requestDto = new PostUpdateReq("수정 제목", "수정 본문");
+
         // [When]
         ResultActions resultActions = mvc.perform(
-                put("/api/posts/1")
+                put("/api/posts/{id}", postId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                    "title": "수정 제목",
-                                    "content": "수정 본문"
-                                }
-                                """)
+                        // 객체를 JSON 문자열로 자동 변환
+                        .content(objectMapper.writeValueAsString(requestDto))
         ).andDo(print());
 
         // [Then]
-        resultActions
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$").doesNotExist());
+        resultActions.andExpect(status().isNoContent());
 
-        // 서비스의 updatePost 메서드가 올바른 파라미터로 호출되었는지 검증
-        verify(postService).updatePost(eq(1L), eq("수정 제목"), eq("수정 본문"));
+        verify(postService).updatePost(
+                eq(postId),
+                eq(requestDto.title()),
+                eq(requestDto.content())
+        );
     }
 
     @Test
