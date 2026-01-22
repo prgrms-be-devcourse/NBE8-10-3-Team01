@@ -91,7 +91,7 @@ public class PostController {
      * @param request 수정할 제목과 본문 정보({@link PostUpdateReq})
      * @return {@code 204 No Content} 응답
      */
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Void> updatePost(
             @PathVariable Long id,
             @Valid @RequestBody PostUpdateReq request) {

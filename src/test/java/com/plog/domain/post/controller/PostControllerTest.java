@@ -119,7 +119,7 @@ class PostControllerTest {
     void updatePostSuccess() throws Exception {
         // [When]
         ResultActions resultActions = mvc.perform(
-                patch("/api/posts/1")
+                put("/api/posts/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
