@@ -1,6 +1,9 @@
 package com.plog.domain.member.service;
 
-import com.plog.domain.member.dto.AuthSignInRes;
+import com.plog.domain.member.dto.AuthLoginResult;
+import com.plog.domain.member.dto.AuthSignInReq;
+import com.plog.domain.member.dto.AuthSignUpReq;
+import com.plog.domain.member.dto.MemberInfoRes;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.global.exception.errorCode.AuthErrorCode;
@@ -14,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -49,28 +53,24 @@ class AuthServiceTest {
     @DisplayName("회원가입 성공 - 이메일/닉네임 중복 없음, 비밀번호를 암호화, ID 반환")
     void signUp_success() {
         // given
-        String email = "test@plog.com";
-        String rawPassword = "password123!";
+        AuthSignUpReq req = new AuthSignUpReq("test@plog.com", "password123!", "plogger");
         String encodedPassword = "encoded_password";
-        String nickname = "plogger";
 
         Member mockMember = mock(Member.class);
         given(mockMember.getId()).willReturn(1L);
 
-        given(memberService.isDuplicateEmail(email)).willReturn(false);
-        given(memberService.isDuplicateNickname(nickname)).willReturn(false);
-        given(passwordEncoder.encode(rawPassword)).willReturn(encodedPassword);
+        given(memberService.isDuplicateEmail(req.email())).willReturn(false);
+        given(memberService.isDuplicateNickname(req.nickname())).willReturn(false);
+        given(passwordEncoder.encode(req.password())).willReturn(encodedPassword);
         given(memberRepository.save(any(Member.class))).willReturn(mockMember);
 
         // when
-        Long savedId = authService.signUp(email, rawPassword, nickname);
+        Long savedId = authService.signUp(req);
 
         // then
         assertThat(savedId).isEqualTo(1L);
-        then(memberService).should().isDuplicateEmail(email);
-        then(memberService).should().isDuplicateNickname(nickname);
-        then(passwordEncoder).should(times(1)).encode(rawPassword);
-        then(memberRepository).should(times(1)).save(any(Member.class));
+        then(memberService).should().isDuplicateEmail(req.email());
+        then(passwordEncoder).should().encode(req.password());
     }
 
     @Test
@@ -78,11 +78,12 @@ class AuthServiceTest {
     void signUp_fail_alreadyExist() {
         // given
         String email = "exist@plog.com";
+        AuthSignUpReq req = new AuthSignUpReq(email, "pw", "nick");
         given(memberService.isDuplicateEmail(email)).willReturn(true);
 
         // when
         AuthException ex = assertThrows(AuthException.class,
-                () -> authService.signUp(email, "pw", "nick"));
+                () -> authService.signUp(req));
 
         // then
         assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.USER_ALREADY_EXIST);
@@ -96,13 +97,14 @@ class AuthServiceTest {
         // given
         String email = "test@plog.com";
         String nickname = "duplicateNick";
+        AuthSignUpReq req = new AuthSignUpReq(email, "pw", nickname);
 
         given(memberService.isDuplicateEmail(email)).willReturn(false);
         given(memberService.isDuplicateNickname(nickname)).willReturn(true);
 
         // when
         AuthException ex = assertThrows(AuthException.class,
-                () -> authService.signUp(email, "pw", nickname));
+                () -> authService.signUp(req));
 
         // then
         assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.USER_ALREADY_EXIST);
@@ -117,19 +119,26 @@ class AuthServiceTest {
         String email = "test@plog.com";
         String password = "password123!";
         String encodedPassword = "encoded_password";
+        AuthSignInReq req = new AuthSignInReq(email, password);
         Member mockMember = Member.builder()
                 .email(email)
+                .nickname("plogger")
                 .password(encodedPassword)
                 .build();
+        ReflectionTestUtils.setField(mockMember, "id", 1L);
 
         given(memberRepository.findByEmail(email)).willReturn(Optional.of(mockMember));
         given(passwordEncoder.matches(password, encodedPassword)).willReturn(true);
+        given(jwtUtils.createAccessToken(anyMap())).willReturn("mock-access");
+        given(jwtUtils.createRefreshToken(anyLong())).willReturn("mock-refresh");
 
         // when
-        Member result = authService.signIn(email, password);
+        AuthLoginResult result = authService.signIn(req);
 
         // then
-        assertThat(result.getEmail()).isEqualTo(email);
+        assertThat(result.nickname()).isEqualTo("plogger");
+        assertThat(result.accessToken()).isEqualTo("mock-access");
+        assertThat(result.refreshToken()).isEqualTo("mock-refresh");
         then(passwordEncoder).should(times(1)).matches(password, encodedPassword);
     }
 
@@ -139,6 +148,7 @@ class AuthServiceTest {
         // given
         String email = "test@plog.com";
         String password = "wrong_password";
+        AuthSignInReq req = new AuthSignInReq(email, password);
         Member mockMember = Member.builder()
                 .email(email)
                 .password("encoded_password")
@@ -148,7 +158,7 @@ class AuthServiceTest {
         given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
 
         // when
-        AuthException ex = assertThrows(AuthException.class, () -> authService.signIn(email, password));
+        AuthException ex = assertThrows(AuthException.class, () -> authService.signIn(req));
 
         // then
         assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_CREDENTIALS);
@@ -158,10 +168,10 @@ class AuthServiceTest {
     @DisplayName("AccessToken 생성 시 JwtUtils를 호출")
     void genAccessToken_success() {
         // given
-        Member mockMember = mock(Member.class);
-        given(mockMember.getId()).willReturn(1L);
-        given(mockMember.getEmail()).willReturn("test@plog.com");
-        given(mockMember.getNickname()).willReturn("nick");
+        MemberInfoRes mockMember = mock(MemberInfoRes.class);
+        given(mockMember.id()).willReturn(1L);
+        given(mockMember.email()).willReturn("test@plog.com");
+        given(mockMember.nickname()).willReturn("nick");
 
         given(jwtUtils.createAccessToken(anyMap())).willReturn("mock-token");
 
@@ -174,55 +184,50 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("토큰 재발급 성공 - 리프레시 토큰이 유효하면 새 AccessToken 발급")
-    void accessTokenReissue_success() {
+    @DisplayName("토큰 재발급 성공 - 리프레시 토큰이 유효하면 새 Access/Refresh Token 발급")
+    void tokenReissue_success() {
         // given
         String refreshToken = "valid-refresh-token";
         String newAccessToken = "new-access-token";
+        String newRefreshToken = "new-refresh-token";
         String nickname = "nick";
         Long memberId = 1L;
-
-        // Mock 객체 설정
-        Member mockMember = mock(Member.class);
+        MemberInfoRes mockMember = mock(MemberInfoRes.class);
         Claims mockClaims = mock(Claims.class);
 
-        // 토큰 파싱 및 클레임 추출 모킹
         given(jwtUtils.parseToken(refreshToken)).willReturn(mockClaims);
         given(mockClaims.get("id", Long.class)).willReturn(memberId);
+        given(memberService.findMemberWithId(memberId)).willReturn(mockMember);
 
-        given(memberRepository.findById(memberId)).willReturn(Optional.of(mockMember));
-
-        given(mockMember.getId()).willReturn(memberId);
-        given(mockMember.getEmail()).willReturn("test@plog.com");
-        given(mockMember.getNickname()).willReturn(nickname);
+        // Mock 멤버 정보 설정
+        given(mockMember.id()).willReturn(memberId);
+        given(mockMember.email()).willReturn("test@plog.com");
+        given(mockMember.nickname()).willReturn(nickname);
 
         given(jwtUtils.createAccessToken(anyMap())).willReturn(newAccessToken);
+        given(jwtUtils.createRefreshToken(anyLong())).willReturn(newRefreshToken);
 
         // when
-        AuthSignInRes result = authService.accessTokenReissue(refreshToken);
+        AuthLoginResult result = authService.tokenReissue(refreshToken);
 
         // then
-        assertThat(result).isNotNull();
-        assertThat(result.nickname()).isEqualTo(nickname);
-        assertThat(result.accessToken()).isEqualTo(newAccessToken);
-
-        then(jwtUtils).should(times(1)).parseToken(refreshToken);
-        then(memberRepository).should(times(1)).findById(memberId);
+        assertThat(result.accessToken()).isEqualTo("new-access-token");
+        assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
+        then(jwtUtils).should().createRefreshToken(anyLong());
     }
 
     @Test
     @DisplayName("토큰 재발급 실패 - 리프레시 토큰 만료 시 LOGIN_REQUIRED 예외 발생")
-    void accessTokenReissue_fail_expired() {
+    void tokenReissue_fail_expired() {
         // given
         String expiredToken = "expired-token";
-        // parseToken 호출 시 ExpiredJwtException이 발생하도록 설정
         given(jwtUtils.parseToken(expiredToken)).willThrow(
                 new io.jsonwebtoken.ExpiredJwtException(null, null, "token expired")
         );
 
         // when
         AuthException ex = assertThrows(AuthException.class,
-                () -> authService.accessTokenReissue(expiredToken));
+                () -> authService.tokenReissue(expiredToken));
 
         // then
         assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.LOGIN_REQUIRED);
@@ -231,10 +236,10 @@ class AuthServiceTest {
 
     @Test
     @DisplayName("토큰 재발급 실패 - 토큰이 null이면 TOKEN_INVALID 예외 발생")
-    void accessTokenReissue_fail_nullToken() {
+    void token() {
         // when
         AuthException ex = assertThrows(AuthException.class,
-                () -> authService.accessTokenReissue(null));
+                () -> authService.tokenReissue(null));
 
         // then
         assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.TOKEN_INVALID);

@@ -1,10 +1,9 @@
 package com.plog.domain.member.controller;
 
 
+import com.plog.domain.member.dto.AuthLoginResult;
 import com.plog.domain.member.dto.AuthSignInReq;
-import com.plog.domain.member.dto.AuthSignInRes;
 import com.plog.domain.member.dto.AuthSignUpReq;
-import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.service.AuthService;
 import com.plog.global.rq.Rq;
 import com.plog.global.security.JwtUtils;
@@ -51,7 +50,7 @@ public class AuthControllerTest extends WebMvcTestSupport {
                 "plogger"
         );
 
-        given(authService.signUp(anyString(), anyString(), anyString())).willReturn(memberId);
+        given(authService.signUp(any(AuthSignUpReq.class))).willReturn(memberId);
 
         // when
         ResultActions result = mockMvc.perform(post("/api/members/sign-up")
@@ -91,17 +90,10 @@ public class AuthControllerTest extends WebMvcTestSupport {
         String nickname = "plogger";
         String accessToken = "mock-access-token";
         String refreshToken = "mock-refresh-token";
-
-        Member mockMember = Member.builder()
-                .email(email)
-                .nickname(nickname)
-                .build();
-
+        AuthLoginResult loginResult = new AuthLoginResult(nickname, accessToken, refreshToken);
         AuthSignInReq req = new AuthSignInReq(email, password);
 
-        given(authService.signIn(anyString(), anyString())).willReturn(mockMember);
-        given(authService.genAccessToken(any(Member.class))).willReturn(accessToken);
-        given(authService.genRefreshToken(any(Member.class))).willReturn(refreshToken);
+        given(authService.signIn(any(AuthSignInReq.class))).willReturn(loginResult);
 
         // when
         ResultActions result = mockMvc.perform(post("/api/members/sign-in")
@@ -154,12 +146,13 @@ public class AuthControllerTest extends WebMvcTestSupport {
         // given
         String refreshToken = "mock-refresh-token";
         String newAccessToken = "new-access-token";
+        String newRefreshToken = "new-refresh-token";
         String nickname = "nick";
 
-        AuthSignInRes resDto = new AuthSignInRes(nickname, newAccessToken);
+        AuthLoginResult resDto = new AuthLoginResult(nickname, newAccessToken, newRefreshToken);
 
         given(rq.getCookieValue(eq("apiKey"), any())).willReturn(refreshToken);
-        given(authService.accessTokenReissue(refreshToken)).willReturn(resDto);
+        given(authService.tokenReissue(refreshToken)).willReturn(resDto);
 
         // when
         ResultActions result = mockMvc.perform(get("/api/members/reissue")
