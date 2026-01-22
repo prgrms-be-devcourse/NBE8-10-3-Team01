@@ -77,4 +77,17 @@ public class PostController {
         List<PostInfoRes> posts = postService.getPosts();
         return ResponseEntity.ok(CommonResponse.success(posts, "게시글 목록 조회 성공"));
     }
+
+    /**
+     * 특정 사용자가 작성한 게시물 목록을 조회합니다.
+     *
+     * @param memberId 조회할 사용자의 ID
+     * @return 게시물 리스트를 포함한 공통 응답 객체
+     */
+    @GetMapping("/members/{memberId}")
+    public ResponseEntity<Response<List<PostInfoRes>>> getPostsByMember(@PathVariable Long memberId) {
+        List<PostInfoRes> posts = postService.getPostsByMember(memberId);
+
+        return ResponseEntity.ok(CommonResponse.success(posts, "사용자 게시글 목록 조회 성공"));
+    }
 }

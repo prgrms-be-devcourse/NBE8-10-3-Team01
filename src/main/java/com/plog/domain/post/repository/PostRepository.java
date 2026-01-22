@@ -4,6 +4,8 @@ import com.plog.domain.post.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * Post 엔티티에 대한 데이터 액세스 기능을 제공하는 인터페이스입니다.
  * <p>
@@ -26,4 +28,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
+    List<Post> findAllByMemberIdOrderByCreatedAtDesc(Long memberId);
 }

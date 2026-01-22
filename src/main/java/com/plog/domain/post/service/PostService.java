@@ -55,4 +55,16 @@ public interface PostService {
      * @return 최신순으로 정렬된 게시물 정보 DTO 리스트
      */
     List<PostInfoRes> getPosts();
+
+    /**
+     * 특정 회원이 작성한 모든 게시물 목록을 조회합니다.
+     * <p><b>실행 로직:</b><br>
+     * 1. 전달받은 회원 ID(memberId)를 외래 키로 가진 게시물들을 검색합니다.<br>
+     * 2. 검색된 게시물들을 생성일(createdAt) 기준 내림차순으로 정렬합니다.<br>
+     * 3. 조회된 엔티티 리스트를 응답용 DTO({@code PostInfoRes}) 리스트로 변환하여 반환합니다.
+     *
+     * @param memberId 조회할 회원의 고유 식별자
+     * @return 해당 회원이 작성한 최신순 게시물 정보 DTO 리스트
+     */
+    List<PostInfoRes> getPostsByMember(Long memberId);
 }
