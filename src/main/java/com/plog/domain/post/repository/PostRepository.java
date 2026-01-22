@@ -1,6 +1,8 @@
 package com.plog.domain.post.repository;
 
 import com.plog.domain.post.entity.Post;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -28,5 +30,9 @@ import java.util.List;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    List<Post> findAllByMemberIdOrderByCreatedAtDesc(Long memberId);
+    /**
+     * 특정 회원의 게시글을 Slice 방식으로 조회합니다.
+     * 정렬 정보는 파라미터로 전달받는 pageable 내부에 포함됩니다.
+     */
+    Slice<Post> findAllByMemberId(Long memberId, Pageable pageable);
 }
