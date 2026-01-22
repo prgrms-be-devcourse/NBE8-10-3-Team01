@@ -63,7 +63,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         try {
             if (token != null) {
                 Claims claims = jwtUtils.parseToken(token);
-                Long id = claims.get("id", Long.class);
+                Long id = Long.valueOf(claims.getSubject());
                 String email = claims.getSubject();
                 String nickname = claims.get("nickname", String.class);
                 if (nickname == null) nickname = "";
