@@ -2,7 +2,6 @@ package com.plog.domain.member.service;
 
 
 import com.plog.domain.member.dto.AuthLoginResult;
-import com.plog.domain.member.dto.AuthSignInReq;
 import com.plog.domain.member.dto.AuthSignUpReq;
 import com.plog.domain.member.dto.MemberInfoRes;
 import com.plog.domain.member.entity.Member;
@@ -65,18 +64,6 @@ public class AuthServiceImpl implements AuthService {
                 .nickname(req.nickname())
                 .build();
         return memberRepository.save(member).getId();
-    }
-
-    @Override
-    public AuthLoginResult signIn(AuthSignInReq req) {
-        Member member = findMemberWithEmail(req.email());
-        checkPassword(member, req.password());
-
-        MemberInfoRes memberInfo = MemberInfoRes.from(member);
-        String accessToken = createAccessToken(memberInfo);
-        String refreshToken = createRefreshToken(memberInfo);
-
-        return new AuthLoginResult(member.getNickname(), accessToken, refreshToken);
     }
 
     @Override
@@ -162,30 +149,5 @@ public class AuthServiceImpl implements AuthService {
                         "존재하지 않는 사용자입니다."));
 
         return MemberInfoRes.from(member);
-    }
-
-    /**
-     * 이메일을 통해 회원을 조회하며, 존재하지 않을 경우 예외를 발생시킵니다.
-     *
-     * @param email 회원 이메일
-     * @return 조회된 회원 엔티티
-     * @throws AuthException 해당 이메일의 회원이 없는 경우 발생
-     */
-    private Member findMemberWithEmail(String email) {
-        return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_CREDENTIALS));
-    }
-
-    /**
-     * 입력받은 평문 비밀번호와 DB에 저장된 암호화 비밀번호의 일치 여부를 검증합니다.
-     *
-     * @param member   검증 대상 회원 엔티티
-     * @param password 입력받은 평문 비밀번호
-     * @throws AuthException 비밀번호가 일치하지 않을 경우 발생
-     */
-    private void checkPassword(Member member, String password) {
-        if (!passwordEncoder.matches(password, member.getPassword())) {
-            throw new AuthException(AuthErrorCode.INVALID_CREDENTIALS);
-        }
     }
 }

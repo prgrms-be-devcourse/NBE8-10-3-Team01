@@ -82,36 +82,6 @@ public class AuthControllerTest extends WebMvcTestSupport {
     }
 
     @Test
-    @DisplayName("로그인 성공 - 200, AccessToken을 반환")
-    void signIn_success() throws Exception {
-        // given
-        String email = "test@plog.com";
-        String password = "password123!";
-        String nickname = "plogger";
-        String accessToken = "mock-access-token";
-        String refreshToken = "mock-refresh-token";
-        AuthLoginResult loginResult = new AuthLoginResult(nickname, accessToken, refreshToken);
-        AuthSignInReq req = new AuthSignInReq(email, password);
-
-        given(authService.signIn(any(AuthSignInReq.class))).willReturn(loginResult);
-
-        // when
-        ResultActions result = mockMvc.perform(post("/api/members/sign-in")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)));
-
-        // then
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data.nickname").value(nickname))
-                .andExpect(jsonPath("$.data.accessToken").value(accessToken));
-
-        // Rq를 통해 헤더와 쿠키가 설정되었는지 검증
-        verify(rq).setHeader("Authorization", accessToken);
-        verify(rq).setCookie("apiKey", refreshToken);
-    }
-
-    @Test
     @DisplayName("로그인 실패 - 이메일 공백, 400 에러 반환")
     void signIn_fail_emptyEmail() throws Exception {
         // given
@@ -137,7 +107,7 @@ public class AuthControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$.message").value("로그아웃 되었습니다."));
 
         // Rq를 통해 쿠키가 삭제되었는지 검증
-        verify(rq).deleteCookie("apiKey");
+        verify(rq).deleteCookie("refreshToken");
     }
 
     @Test
@@ -151,7 +121,7 @@ public class AuthControllerTest extends WebMvcTestSupport {
 
         AuthLoginResult resDto = new AuthLoginResult(nickname, newAccessToken, newRefreshToken);
 
-        given(rq.getCookieValue(eq("apiKey"), any())).willReturn(refreshToken);
+        given(rq.getCookieValue(eq("refreshToken"), any())).willReturn(refreshToken);
         given(authService.tokenReissue(refreshToken)).willReturn(resDto);
 
         // when

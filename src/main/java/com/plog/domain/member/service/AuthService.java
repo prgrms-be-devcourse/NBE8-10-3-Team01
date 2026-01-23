@@ -2,13 +2,8 @@ package com.plog.domain.member.service;
 
 
 import com.plog.domain.member.dto.AuthLoginResult;
-import com.plog.domain.member.dto.AuthSignInReq;
 import com.plog.domain.member.dto.AuthSignUpReq;
-import com.plog.domain.member.dto.MemberInfoRes;
-import com.plog.domain.member.entity.Member;
 import com.plog.global.exception.exceptions.AuthException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 인증 및 인가와 관련된 비즈니스 로직을 정의하는 인터페이스입니다.
@@ -38,19 +33,6 @@ public interface AuthService {
      * @throws AuthException 이미 존재하는 이메일일 경우 발생
      */
     Long signUp(AuthSignUpReq req);
-
-    /**
-     * 사용자의 자격 증명을 확인하여 로그인을 처리합니다.
-     * <p><b>실행 로직:</b><br>
-     * 1. 이메일을 통해 데이터베이스에서 회원 정보를 검색합니다. <br>
-     * 2. 입력된 평문 비밀번호와 저장된 암호화 비밀번호를 비교 검증합니다. <br>
-     * 3. 검증에 성공하면 회원 엔티티를 반환하며, 실패 시 인증 예외를 발생시킵니다.
-     *
-     * @param req 로그인 요청 데이터 (email, password)
-     * @return nickname, Access Token, Refresh Token이 포함된 로그인 결과 DTO
-     * @throws AuthException 이메일 미존재 또는 비밀번호 불일치 시 발생
-     */
-    AuthLoginResult signIn(AuthSignInReq req);
 
     /**
      * 만료된 Access Token을 Refresh Token을 사용하여 재발급합니다.

@@ -1,7 +1,6 @@
 package com.plog.domain.member.service;
 
 import com.plog.domain.member.dto.AuthLoginResult;
-import com.plog.domain.member.dto.AuthSignInReq;
 import com.plog.domain.member.dto.AuthSignUpReq;
 import com.plog.domain.member.dto.MemberInfoRes;
 import com.plog.domain.member.entity.Member;
@@ -19,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,58 +105,6 @@ class AuthServiceTest {
         assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.USER_ALREADY_EXIST);
         assertThat(ex.getMessage()).isEqualTo("이미 사용 중인 닉네임입니다.");
         then(passwordEncoder).shouldHaveNoInteractions();
-    }
-
-    @Test
-    @DisplayName("로그인 성공 - 회원 정보 반환")
-    void signIn_success() {
-        // given
-        String email = "test@plog.com";
-        String password = "password123!";
-        String encodedPassword = "encoded_password";
-        AuthSignInReq req = new AuthSignInReq(email, password);
-        Member mockMember = Member.builder()
-                .email(email)
-                .nickname("plogger")
-                .password(encodedPassword)
-                .build();
-        ReflectionTestUtils.setField(mockMember, "id", 1L);
-
-        given(memberRepository.findByEmail(email)).willReturn(Optional.of(mockMember));
-        given(passwordEncoder.matches(password, encodedPassword)).willReturn(true);
-        given(jwtUtils.createAccessToken(any(MemberInfoRes.class))).willReturn("mock-access");
-        given(jwtUtils.createRefreshToken(anyLong())).willReturn("mock-refresh");
-
-        // when
-        AuthLoginResult result = authService.signIn(req);
-
-        // then
-        assertThat(result.nickname()).isEqualTo("plogger");
-        assertThat(result.accessToken()).isEqualTo("mock-access");
-        assertThat(result.refreshToken()).isEqualTo("mock-refresh");
-        then(passwordEncoder).should(times(1)).matches(password, encodedPassword);
-    }
-
-    @Test
-    @DisplayName("로그인 실패 - 비밀번호 불일치, INVALID_CREDENTIALS 예외 발생")
-    void signIn_fail_invalidPassword() {
-        // given
-        String email = "test@plog.com";
-        String password = "wrong_password";
-        AuthSignInReq req = new AuthSignInReq(email, password);
-        Member mockMember = Member.builder()
-                .email(email)
-                .password("encoded_password")
-                .build();
-
-        given(memberRepository.findByEmail(email)).willReturn(Optional.of(mockMember));
-        given(passwordEncoder.matches(anyString(), anyString())).willReturn(false);
-
-        // when
-        AuthException ex = assertThrows(AuthException.class, () -> authService.signIn(req));
-
-        // then
-        assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_CREDENTIALS);
     }
 
     @Test

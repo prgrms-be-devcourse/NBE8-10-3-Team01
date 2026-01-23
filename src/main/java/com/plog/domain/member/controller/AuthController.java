@@ -67,39 +67,33 @@ public class AuthController {
     }
 
     /**
-     * 인증/인가 도메인임을 고려하여 행위를 명시하는 경로를 예외적으로 사용합니다.
+     * 문서 확인용 로그인 API 입니다.
      * <p>
-     * 입력받은 이메일과 비밀번호를 검증하여 일치할 경우,
-     * 서비스 이용을 위한 Access Token과 보안 유지를 위한 Refresh Token을 생성합니다.
-     * Access Token은 응답 헤더와 바디에, Refresh Token은 보안 쿠키(apiKey)에 설정됩니다.
+     * 실제 로그인 로직은 {@link com.plog.global.security.LoginFilter}에서 처리됩니다.
+     * Swagger 문서 생성을 위해 존재하며, 실제 요청 시 실행되지 않습니다.
+     * 만약 실행될 시 설정 점검을 위해 예외를 던집니다.
      *
      * @param req 로그인 요청 데이터 (email, password)
-     * @return 로그인 성공 메시지와 사용자 닉네임, Access Token을 포함한 공통 응답 객체 (200 OK)
+     * @return 로그인 status(success), nickname, Access Token을 포함한 공통 응답 객체
      */
     @PostMapping("/sign-in")
     public ResponseEntity<Response<AuthInfoRes>> signIn(
             @Valid @RequestBody AuthSignInReq req
     ) {
-        AuthLoginResult res = authService.signIn(req);
-        rq.setHeader("Authorization", res.accessToken());
-        rq.setCookie("apiKey", res.refreshToken());
-
-        return ResponseEntity.ok(
-                CommonResponse.success(AuthInfoRes.from(res), "%s님 환영합니다.".formatted(res.nickname()))
-        );
+        throw new IllegalStateException("이 메서드는 LoginFilter에 의해 가로채져야 하며, 직접 호출될 수 없습니다.");
     }
 
     /**
      * 로그아웃을 수행합니다.
      * <p>
-     * 브라우저에 저장된 인증용 쿠키(apiKey)를 삭제하며, 세션 상태를 무효화합니다.
+     * 브라우저에 저장된 인증용 쿠키(refreshToken)를 삭제하며, 세션 상태를 무효화합니다.
      * 클라이언트 측에서도 보관 중인 Access Token을 삭제해야 완벽한 로그아웃이 이루어집니다.
      *
      * @return 로그아웃 완료 메시지를 포함한 공통 응답 객체 (200 OK)
      */
     @GetMapping("/logout")
     public ResponseEntity<Response<Void>> logout() {
-        rq.deleteCookie("apiKey");
+        rq.deleteCookie("refreshToken");
         return ResponseEntity.ok(
                 CommonResponse.success(null, "로그아웃 되었습니다.")
         );
@@ -108,7 +102,7 @@ public class AuthController {
     /**
      * 만료된 Access Token을 재발급합니다.
      * <p>
-     * 쿠키에 담긴 Refresh Token(apiKey)의 유효성을 검증하고,
+     * 쿠키에 담긴 Refresh Token(refreshToken)의 유효성을 검증하고,
      * 새로운 Access Token과 Refresh Token을 생성합니다.
      * 각각 헤더, 쿠키에 설정하고 응답은 Refresh를 제외하여 바디를 통해 반환합니다.
      *
@@ -117,11 +111,11 @@ public class AuthController {
      */
     @GetMapping("/reissue")
     public ResponseEntity<Response<AuthInfoRes>> tokenReissue() {
-        String refreshToken = rq.getCookieValue("apiKey", null);
+        String refreshToken = rq.getCookieValue("refreshToken", null);
         AuthLoginResult res = authService.tokenReissue(refreshToken);
 
         rq.setHeader("Authorization", res.accessToken());
-        rq.setCookie("apiKey", res.refreshToken());
+        rq.setCookie("refreshToken", res.refreshToken());
 
         return ResponseEntity.ok(
                 CommonResponse.success(AuthInfoRes.from(res), "토큰이 재발급되었습니다.")
