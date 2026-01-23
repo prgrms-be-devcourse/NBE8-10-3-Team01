@@ -104,7 +104,7 @@ public class CommentServiceImpl implements CommentService {
 
         Pageable pageable = PageRequest.of(
                 pageNumber,
-                CommentConstants.COMMENT_PAGE_SIZE,
+                CommentConstants.REPLY_PAGE_SIZE,
                 Sort.by(Sort.Direction.ASC, CommentConstants.DEFAULT_SORT_FIELD)
         );
 

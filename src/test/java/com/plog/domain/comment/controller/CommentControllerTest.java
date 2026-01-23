@@ -8,41 +8,28 @@ import com.plog.global.exception.errorCode.CommentErrorCode;
 import com.plog.global.exception.errorCode.PostErrorCode;
 import com.plog.global.exception.exceptions.CommentException;
 import com.plog.global.exception.exceptions.PostException;
-import com.plog.global.security.CustomAuthenticationFilter;
 import com.plog.global.security.JwtUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
 import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-// 이 두 줄이 정확히 있는지 확인하세요
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 
-// BDDMockito (given을 사용하기 위해)
-
-// Mockito Argument Matchers (any, eq를 사용하기 위해)
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
-// 만약 willDoNothing을 사용하신다면 아래도 필요합니다.
 
 
 @WebMvcTest(controllers = CommentController.class,
@@ -52,13 +39,12 @@ class CommentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    // @Autowired 대신 직접 생성하여 의존성 문제 해결
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockitoBean // 최신 버전 방식
+    @MockitoBean
     private CommentService commentService;
 
-    @MockitoBean // Security 필터 에러 방지용
+    @MockitoBean
     private JwtUtils jwtUtils;
 
      @Test
@@ -81,9 +67,9 @@ class CommentControllerTest {
      @Test
      @DisplayName("댓글 생성 실패: 내용(content)이 비어있으면 400 Bad Request를 반환한다")
      void createComment_Fail_Validation() throws Exception {
-         // given
+
          Long postId = 1L;
-         // @NotBlank 위반 케이스 (빈 문자열)
+
          CommentCreateReq invalidRequest = new CommentCreateReq("", 1L, null);
 
          // when & then
@@ -149,8 +135,6 @@ class CommentControllerTest {
         // given
         Long commentId = 100L;
 
-        // deleteComment는 void 메서드이므로 별도의 willReturn은 필요 없지만,
-        // 명시적으로 아무 일도 일어나지 않음을 선언할 수 있습니다.
         willDoNothing().given(commentService).deleteComment(commentId);
 
         // when & then

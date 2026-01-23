@@ -33,8 +33,7 @@ import org.hibernate.annotations.Formula;
 
 @Getter
 @Entity
-//@Builder
-@SuperBuilder
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 public class Comment extends BaseEntity {
