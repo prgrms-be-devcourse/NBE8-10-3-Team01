@@ -60,28 +60,21 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
     private final JwtUtils jwtUtils;
     private final List<String> allowedOrigins;
-    private final long refreshExpiration;
-    private final String cookieDomain;
-    private final boolean cookieSecure;
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final TokenResolver tokenResolver;
 
     public SecurityConfig(
             CustomAuthenticationFilter customAuthenticationFilter,
             ObjectMapper objectMapper,
             JwtUtils jwtUtils,
             AuthenticationConfiguration authenticationConfiguration,
-            @Value("${custom.cors.allowed-origins}") List<String> allowedOrigins,
-            @Value("${custom.jwt.refresh-expiration}") long refreshExpiration,
-            @Value("${custom.cookie.domain}") String cookieDomain,
-            @Value("${custom.cookie.secure}") boolean cookieSecure) {
+            @Value("${custom.cors.allowed-origins}") List<String> allowedOrigins, TokenResolver tokenResolver) {
         this.customAuthenticationFilter = customAuthenticationFilter;
         this.objectMapper = objectMapper;
         this.jwtUtils = jwtUtils;
         this.authenticationConfiguration = authenticationConfiguration;
         this.allowedOrigins = allowedOrigins;
-        this.refreshExpiration = refreshExpiration;
-        this.cookieDomain = cookieDomain;
-        this.cookieSecure = cookieSecure;
+        this.tokenResolver = tokenResolver;
     }
 
     private LoginFilter loginFilter() throws Exception {
@@ -89,9 +82,7 @@ public class SecurityConfig {
                 authenticationManager(authenticationConfiguration),
                 objectMapper,
                 jwtUtils,
-                refreshExpiration,
-                cookieDomain,
-                cookieSecure
+                tokenResolver
         );
     }
 

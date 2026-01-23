@@ -13,8 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -54,17 +52,13 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final ObjectMapper objectMapper;
     private final JwtUtils jwtUtils;
-    private final long refreshExpiration;
-    private final String cookieDomain;
-    private final boolean cookieSecure;
+    private final TokenResolver tokenResolver;
 
-    public LoginFilter(AuthenticationManager authenticationManager, ObjectMapper objectMapper, JwtUtils jwtUtils, long refreshExpiration, String cookieDomain, boolean cookieSecure) {
+    public LoginFilter(AuthenticationManager authenticationManager, ObjectMapper objectMapper, JwtUtils jwtUtils, TokenResolver tokenResolver) {
         this.authenticationManager = authenticationManager;
         this.objectMapper = objectMapper;
         this.jwtUtils = jwtUtils;
-        this.refreshExpiration = refreshExpiration;
-        this.cookieDomain = cookieDomain;
-        this.cookieSecure = cookieSecure;
+        this.tokenResolver = tokenResolver;
 
         setFilterProcessesUrl("/api/members/sign-in");
     }
@@ -112,18 +106,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         String accessToken = jwtUtils.createAccessToken(memberInfo);
         String refreshToken = jwtUtils.createRefreshToken(user.getId());
+        tokenResolver.setHeader(response, accessToken);
+        tokenResolver.setCookie(response, refreshToken);
 
-        response.setHeader("Authorization", "Bearer " + accessToken);
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
-                .path("/")
-                .domain(cookieDomain.equals("localhost") ? null : cookieDomain)
-                .secure(cookieSecure)
-                .httpOnly(true)
-                .sameSite("Lax")
-                .maxAge(refreshExpiration / 1000)
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         response.setContentType("application/json;charset=UTF-8");
         AuthInfoRes authInfoRes = AuthInfoRes.builder()
                 .nickname(user.getNickname())

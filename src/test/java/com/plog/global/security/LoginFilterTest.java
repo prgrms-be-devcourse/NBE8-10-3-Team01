@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -53,10 +54,12 @@ class LoginFilterTest {
     @Mock
     private JwtUtils jwtUtils;
     private ObjectMapper objectMapper = new ObjectMapper();
+    @Spy
+    private TokenResolver tokenResolver = new TokenResolver(3600000, "localhost", false);
 
     @BeforeEach
     void setUp() {
-        loginFilter = new LoginFilter(authenticationManager, objectMapper, jwtUtils, 3600L, "localhost", false);
+        loginFilter = new LoginFilter(authenticationManager, objectMapper, jwtUtils, tokenResolver);
     }
 
     @Test
