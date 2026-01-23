@@ -58,7 +58,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Slice<CommentInfoRes> getCommentsByPostId(Long postId, int page) {
+    public Slice<CommentInfoRes> getCommentsByPostId(Long postId, int pageNumber) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostException(
@@ -68,7 +68,7 @@ public class CommentServiceImpl implements CommentService {
                 ));
 
         Pageable pageable = PageRequest.of(
-                page,
+                pageNumber,
                 CommentConstants.COMMENT_PAGE_SIZE,
                 Sort.by(Sort.Direction.ASC, CommentConstants.DEFAULT_SORT_FIELD)
         );
@@ -80,7 +80,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public Slice<ReplyInfoRes> getRepliesByCommentId(Long commentId, int page) {
+    public Slice<ReplyInfoRes> getRepliesByCommentId(Long commentId, int pageNumber) {
 
         Comment parent = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentException(CommentErrorCode.COMMENT_NOT_FOUND,
@@ -88,7 +88,7 @@ public class CommentServiceImpl implements CommentService {
                         "존재하지 않는 댓글입니다."));
 
         Pageable pageable = PageRequest.of(
-                page,
+                pageNumber,
                 CommentConstants.COMMENT_PAGE_SIZE,
                 Sort.by(Sort.Direction.ASC, CommentConstants.DEFAULT_SORT_FIELD)
         );

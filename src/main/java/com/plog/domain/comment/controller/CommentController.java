@@ -61,17 +61,17 @@ public class CommentController {
      * 해당 게시물의 루트 댓글들을 최대 10개씩 조회합니다.
      *
      * @param postId 해당 게시물 식별자
-     * @param page 조회할 댓글 offset
+     * @param pageNumber 조회할 댓글 pageNumber
      * @return 페이징된 댓글 정보와 조회 성공 메시지.
      */
 
     @GetMapping({"posts/{postId}/comments"})
     public ResponseEntity<Response<Slice<CommentInfoRes>>> getComments(
             @PathVariable Long postId,
-            @RequestParam int page
+            @RequestParam(name = "pageNumber", defaultValue = "0") int pageNumber
     ) {
 
-        Slice<CommentInfoRes> commentList = commentService.getCommentsByPostId(postId, page);
+        Slice<CommentInfoRes> commentList = commentService.getCommentsByPostId(postId, pageNumber);
 
         return ResponseEntity.ok(CommonResponse.success(commentList, "댓글 조회 성공"));
     }
@@ -80,16 +80,16 @@ public class CommentController {
      * 해당 댓글의 대댓글들을 최대 5개씩 조회합니다.
      *
      * @param commentId 해당 댓글 식별자
-     * @param page 조회할 대댓글 offset
+     * @param pageNumber 조회할 대댓글 pageNumber
      * @return 페이징된 대댓글 정보와 조회 성공 메시지.
      */
     @GetMapping({"/comments/{commentId}/replies"})
     public ResponseEntity<Response<Slice<ReplyInfoRes>>> getReplies(
             @PathVariable Long commentId,
-            @RequestParam int page
+            @RequestParam(name = "pageNumber", defaultValue = "0") int pageNumber
     ) {
 
-        Slice<ReplyInfoRes> replyList = commentService.getRepliesByCommentId(commentId, page);
+        Slice<ReplyInfoRes> replyList = commentService.getRepliesByCommentId(commentId, pageNumber);
 
         return ResponseEntity.ok(CommonResponse.success(replyList, "댓글 조회 성공"));
     }

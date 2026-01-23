@@ -67,10 +67,10 @@ public interface CommentService {
      * </p>
      *
      * @param postId 게시글 식별자
-     * @param page 조회할 댓글 offset
+     * @param pageNumber 조회할 댓글 pageNumber
      * @return 댓글 목록 응답 DTO 슬라이스
      */
-    Slice<CommentInfoRes> getCommentsByPostId(Long postId, int page);
+    Slice<CommentInfoRes> getCommentsByPostId(Long postId, int pageNumber);
 
 
     /**
@@ -82,10 +82,10 @@ public interface CommentService {
      * </p>
      *
      * @param commentId 부모 댓글 식별자
-     * @param page 조회할 대댓글 offset
+     * @param pageNumber 조회할 대댓글 pageNumber
      * @return 대댓글 목록 응답 DTO 슬라이스
      */
-    Slice<ReplyInfoRes> getRepliesByCommentId(Long commentId, int page);
+    Slice<ReplyInfoRes> getRepliesByCommentId(Long commentId, int pageNumber);
 
 
     /**
