@@ -69,11 +69,10 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<PostInfoRes> getPosts() {
-        return postRepository.findAll(Sort.by(Sort.Direction.DESC, "id"))
-                .stream()
-                .map(PostInfoRes::from)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Slice<PostInfoRes> getPosts(Pageable pageable) {
+        return postRepository.findAll(pageable)
+                .map(PostInfoRes::from);
     }
 
     @Override

@@ -10,10 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.*;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
@@ -84,6 +81,31 @@ public class PostServiceTest {
         assertThat(savedPost.getSummary().length()).isEqualTo(153);
         assertThat(savedPost.getSummary()).endsWith("...");
     }
+
+    @Test
+    @DisplayName("전체 게시글 조회 시 리포지토리의 결과를 Slice DTO로 변환하여 반환한다")
+    void getPostsSuccess() {
+        // [Given]
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id"));
+        Post post = Post.builder().title("테스트 제목").content("테스트 내용").build();
+
+        // 리포지토리는 Page를 반환 (Page는 Slice를 상속함)
+        Page<Post> mockPage = new PageImpl<>(List.of(post), pageable, 1);
+
+        given(postRepository.findAll(any(Pageable.class))).willReturn(mockPage);
+
+        // [When]
+        Slice<PostInfoRes> result = postService.getPosts(pageable);
+
+        // [Then]
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).title()).isEqualTo("테스트 제목");
+        assertThat(result.getNumber()).isEqualTo(0);
+        assertThat(result.isLast()).isTrue();
+
+        verify(postRepository).findAll(pageable);
+    }
+
     @Test
     @DisplayName("게시글 수정 시 본문에 맞춰 요약본이 새롭게 생성되어야 한다")
     void updatePostSuccess() {

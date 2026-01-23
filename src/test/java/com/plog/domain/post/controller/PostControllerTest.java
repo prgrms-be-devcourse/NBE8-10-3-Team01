@@ -11,10 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -104,28 +101,38 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 목록 조회 시 최신순으로 정렬된 리스트를 반환한다")
+    @DisplayName("게시글 목록 조회 시 페이징 처리된 Slice 리스트를 반환한다")
     void getPostsSuccess() throws Exception {
         // [Given]
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
         Post post1 = Post.builder().title("제목1").content("내용1").build();
         Post post2 = Post.builder().title("제목2").content("내용2").build();
 
-        given(postService.getPosts()).willReturn(List.of(
-                PostInfoRes.from(post2),
-                PostInfoRes.from(post1)
-        ));
+        Slice<PostInfoRes> sliceResponse = new SliceImpl<>(
+                List.of(PostInfoRes.from(post2), PostInfoRes.from(post1)),
+                pageable,
+                false // 다음 페이지가 없다고 가정
+        );
+
+        given(postService.getPosts(any(Pageable.class))).willReturn(sliceResponse);
 
         // [When]
         ResultActions resultActions = mvc
-                .perform(get("/api/posts"))
+                .perform(get("/api/posts")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .param("sort", "createdAt,desc"))
                 .andDo(print());
 
         // [Then]
         resultActions
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].title").value("제목2"))
+                .andExpect(jsonPath("$.data.content").isArray())
+                .andExpect(jsonPath("$.data.content[0].title").value("제목2"))
+                .andExpect(jsonPath("$.data.content[1].title").value("제목1"))
+                .andExpect(jsonPath("$.data.number").value(0))
+                .andExpect(jsonPath("$.data.last").value(true))
                 .andExpect(jsonPath("$.message").value("게시글 목록 조회 성공"));
     }
 

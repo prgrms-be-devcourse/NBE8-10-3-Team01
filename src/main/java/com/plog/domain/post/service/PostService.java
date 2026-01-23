@@ -49,15 +49,15 @@ public interface PostService {
     PostInfoRes getPostDetail(Long id);
 
     /**
-     * 모든 게시물 목록을 조회합니다.
+     * 게시물 목록을 페이징하여 조회합니다.
      * <p><b>실행 로직:</b><br>
      * 1. 데이터베이스의 모든 게시물을 조회합니다. <br>
      * 2. 게시물의 ID를 기준으로 내림차순(최신순) 정렬을 수행합니다. <br>
-     * 3. 조회된 모든 엔티티를 응답용 DTO 리스트로 변환하여 반환합니다.
+     * 3. 조회된 엔티티를 응답용 DTO 리스트로 변환 후 페이징하여 반환합니다.
      *
      * @return 최신순으로 정렬된 게시물 정보 DTO 리스트
      */
-    List<PostInfoRes> getPosts();
+    Slice<PostInfoRes> getPosts(Pageable pageable);
 
     /**
      * 기존 게시물을 수정합니다.
