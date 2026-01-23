@@ -1,6 +1,5 @@
 package com.plog.domain.member.service;
 
-import com.plog.domain.member.dto.AuthLoginResult;
 import com.plog.domain.member.dto.AuthSignUpReq;
 import com.plog.domain.member.dto.MemberInfoRes;
 import com.plog.domain.member.entity.Member;
@@ -8,7 +7,6 @@ import com.plog.domain.member.repository.MemberRepository;
 import com.plog.global.exception.errorCode.AuthErrorCode;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.security.JwtUtils;
-import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,8 +38,6 @@ class AuthServiceTest {
     private MemberRepository memberRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
-    @Mock
-    private JwtUtils jwtUtils;
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -108,58 +104,39 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("토큰 재발급 성공 - 리프레시 토큰이 유효하면 새 Access/Refresh Token 발급")
-    void tokenReissue_success() {
+    @DisplayName("회원 ID 조회 성공 - 존재하는 ID일 경우 정보를 반환")
+    void findMemberWithId_success() {
         // given
-        String refreshToken = "valid_refresh_token";
-        Claims claims = mock(Claims.class);
-        given(claims.getSubject()).willReturn("1");
-        given(jwtUtils.parseToken(refreshToken)).willReturn(claims);
-
+        Long memberId = 1L;
         Member member = Member.builder()
                 .email("test@plog.com")
                 .nickname("plogger")
                 .build();
-        ReflectionTestUtils.setField(member, "id", 1L); // Map.of NPE 방지
+        ReflectionTestUtils.setField(member, "id", memberId);
 
-        given(memberRepository.findById(1L)).willReturn(Optional.of(member));
-        given(jwtUtils.createAccessToken(any(MemberInfoRes.class))).willReturn("new_access");
-        given(jwtUtils.createRefreshToken(anyLong())).willReturn("new_refresh");
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
 
         // when
-        AuthLoginResult result = authService.tokenReissue(refreshToken);
+        MemberInfoRes result = authService.findMemberWithId(memberId);
 
         // then
-        assertThat(result.accessToken()).isEqualTo("new_access");
-        assertThat(result.refreshToken()).isEqualTo("new_refresh");
+        assertThat(result.id()).isEqualTo(memberId);
+        assertThat(result.email()).isEqualTo("test@plog.com");
     }
 
     @Test
-    @DisplayName("토큰 재발급 실패 - 리프레시 토큰 만료 시 LOGIN_REQUIRED 예외 발생")
-    void tokenReissue_fail_expired() {
+    @DisplayName("회원 ID 조회 실패 - 존재하지 않는 ID일 경우 AuthException 발생")
+    void findMemberWithId_fail() {
         // given
-        String expiredToken = "expired-token";
-        given(jwtUtils.parseToken(expiredToken)).willThrow(
-                new io.jsonwebtoken.ExpiredJwtException(null, null, "token expired")
-        );
+        Long invalidId = 999L;
+        given(memberRepository.findById(invalidId)).willReturn(Optional.empty());
 
         // when
         AuthException ex = assertThrows(AuthException.class,
-                () -> authService.tokenReissue(expiredToken));
+                () -> authService.findMemberWithId(invalidId));
 
         // then
-        assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.LOGIN_REQUIRED);
-        assertThat(ex.getMessage()).isEqualTo("세션이 만료되었습니다. 다시 로그인해 주세요.");
-    }
-
-    @Test
-    @DisplayName("토큰 재발급 실패 - 토큰이 null이면 TOKEN_INVALID 예외 발생")
-    void token() {
-        // when
-        AuthException ex = assertThrows(AuthException.class,
-                () -> authService.tokenReissue(null));
-
-        // then
-        assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.TOKEN_INVALID);
+        assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.USER_NOT_FOUND);
+        assertThat(ex.getLogMessage()).contains("[AuthServiceImpl#findMemberWithId]");
     }
 }

@@ -1,7 +1,6 @@
 package com.plog.domain.member.service;
 
 
-import com.plog.domain.member.dto.AuthLoginResult;
 import com.plog.domain.member.dto.AuthSignUpReq;
 import com.plog.domain.member.dto.MemberInfoRes;
 import com.plog.domain.member.entity.Member;
@@ -9,8 +8,6 @@ import com.plog.domain.member.repository.MemberRepository;
 import com.plog.global.exception.errorCode.AuthErrorCode;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.security.JwtUtils;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -66,53 +63,6 @@ public class AuthServiceImpl implements AuthService {
         return memberRepository.save(member).getId();
     }
 
-    @Override
-    public AuthLoginResult tokenReissue(String refreshToken) {
-        if (refreshToken == null) {
-            throw new AuthException(AuthErrorCode.TOKEN_INVALID);
-        }
-
-        try {
-            Claims claims = jwtUtils.parseToken(refreshToken);
-            Long memberId = Long.valueOf(claims.getSubject());
-
-            MemberInfoRes member = findMemberWithId(memberId);
-            String newAccessToken = createAccessToken(member);
-            String newRefreshToken = createRefreshToken(member);
-            return new AuthLoginResult(member.nickname(), newAccessToken, newRefreshToken);
-
-        } catch (ExpiredJwtException e) {
-            throw new AuthException(AuthErrorCode.LOGIN_REQUIRED,
-                    "[AuthServiceImpl#tokenReissue] Refresh Token expired",
-                    "세션이 만료되었습니다. 다시 로그인해 주세요.");
-        } catch (Exception e) {
-            throw new AuthException(
-                    AuthErrorCode.TOKEN_INVALID,
-                    "[AuthServiceImpl#tokenReissue] Unexpected reissue error: " + e.getMessage(),
-                    "유효한 토큰이 아닙니다."
-            );
-        }
-    }
-    /**
-     * 사용자의 정보를 바탕으로 Access Token을 생성합니다.
-     *
-     * @param member 토큰에 담을 정보를 보유한 회원 DTO
-     * @return 생성된 JWT Access Token 문자열
-     */
-    private String createAccessToken(MemberInfoRes member) {
-        return jwtUtils.createAccessToken(member);
-    }
-
-    /**
-     * 사용자의 보안 유지를 위한 Refresh Token을 생성합니다.
-     *
-     * @param member 토큰 생성 대상 회원 DTO
-     * @return 생성된 JWT Refresh Token 문자열
-     */
-    private String createRefreshToken(MemberInfoRes member) {
-        return jwtUtils.createRefreshToken(member.id());
-    }
-
     /**
      * 이메일 중복 여부를 확인합니다.
      *
@@ -142,10 +92,11 @@ public class AuthServiceImpl implements AuthService {
      * @throws IllegalArgumentException id가 null 인 경우
      * @throws AuthException 해당 ID에 대한 회원이 존재하지 않는 경우
      */
-    private MemberInfoRes findMemberWithId(Long id) {
+    @Override
+    public MemberInfoRes findMemberWithId(Long id) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.USER_NOT_FOUND,
-                        "[MemberServiceImpl#findMemberWithId] can't find user by id",
+                        "[AuthServiceImpl#findMemberWithId] can't find user by id",
                         "존재하지 않는 사용자입니다."));
 
         return MemberInfoRes.from(member);

@@ -1,13 +1,13 @@
 package com.plog.domain.member.controller;
 
 
-import com.plog.domain.member.dto.AuthLoginResult;
 import com.plog.domain.member.dto.AuthSignInReq;
 import com.plog.domain.member.dto.AuthSignUpReq;
 import com.plog.domain.member.service.AuthService;
-import com.plog.global.rq.Rq;
 import com.plog.global.security.JwtUtils;
+import com.plog.global.security.TokenResolver;
 import com.plog.testUtil.WebMvcTestSupport;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -35,9 +35,9 @@ public class AuthControllerTest extends WebMvcTestSupport {
     @MockitoBean
     private AuthService authService;
     @MockitoBean
-    private Rq rq;
-    @MockitoBean
     private JwtUtils jwtUtils;
+    @MockitoBean
+    private TokenResolver tokenResolver;
 
     @Test
     @DisplayName("회원가입 성공 - 201, Location 헤더를 반환")
@@ -107,35 +107,6 @@ public class AuthControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$.message").value("로그아웃 되었습니다."));
 
         // Rq를 통해 쿠키가 삭제되었는지 검증
-        verify(rq).deleteCookie("refreshToken");
-    }
-
-    @Test
-    @DisplayName("토큰 재발급 성공 - 200, 새 AccessToken 반환")
-    void tokenReissue_success() throws Exception {
-        // given
-        String refreshToken = "mock-refresh-token";
-        String newAccessToken = "new-access-token";
-        String newRefreshToken = "new-refresh-token";
-        String nickname = "nick";
-
-        AuthLoginResult resDto = new AuthLoginResult(nickname, newAccessToken, newRefreshToken);
-
-        given(rq.getCookieValue(eq("refreshToken"), any())).willReturn(refreshToken);
-        given(authService.tokenReissue(refreshToken)).willReturn(resDto);
-
-        // when
-        ResultActions result = mockMvc.perform(get("/api/members/reissue")
-                .contentType(MediaType.APPLICATION_JSON));
-
-        // then
-        result.andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("success"))
-                .andExpect(jsonPath("$.message").value("토큰이 재발급되었습니다."))
-                .andExpect(jsonPath("$.data.accessToken").value(newAccessToken))
-                .andExpect(jsonPath("$.data.nickname").value(nickname));
-
-        // 헤더에 새 토큰이 설정되었는지 검증
-        verify(rq).setHeader("Authorization", newAccessToken);
+        verify(tokenResolver).deleteRefreshTokenCookie(any(HttpServletResponse.class));
     }
 }

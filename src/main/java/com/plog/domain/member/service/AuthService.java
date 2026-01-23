@@ -1,8 +1,8 @@
 package com.plog.domain.member.service;
 
 
-import com.plog.domain.member.dto.AuthLoginResult;
 import com.plog.domain.member.dto.AuthSignUpReq;
+import com.plog.domain.member.dto.MemberInfoRes;
 import com.plog.global.exception.exceptions.AuthException;
 
 /**
@@ -12,11 +12,10 @@ import com.plog.global.exception.exceptions.AuthException;
  * JWT(JSON Web Token) 기반의 인증 시스템을 구축하기 위한 명세를 제공합니다.
  *
  * <p><b>주요 기능 요약:</b><br>
- * 1. 회원가입 및 로그인: 사용자 계정 생성 및 자격 증명 확인 <br>
- * 2. 토큰 관리: Access/Refresh Token 생성 및 만료 시 재발급 처리 <br>
- * 3. 보안 검증: 비밀번호 암호화 비교 및 토큰 유효성 검증
+ * 회원가입: 사용자 계정 생성 및 자격 증명 확인 <br>
+ * 로그인, 토큰 재발급은 필터에서 처리합니다.
  *
- * @author yyj96
+ * @author minhee
  * @since 2026-01-15
  */
 
@@ -35,15 +34,13 @@ public interface AuthService {
     Long signUp(AuthSignUpReq req);
 
     /**
-     * 만료된 Access Token을 Refresh Token을 사용하여 재발급합니다.
-     * <p><b>실행 로직:</b><br>
-     * 1. 전달받은 Refresh Token의 유효성 및 만료 여부를 검증합니다. <br>
-     * 2. 토큰 내부에 저장된 회원 식별자(ID)를 추출하여 회원을 조회합니다. <br>
-     * 3. 새로운 Access Token을 생성하고, 사용자 닉네임과 함께 DTO 객체에 담아 반환합니다.
+     * 회원 ID를 기준으로 사용자 정보를 조회합니다.
      *
-     * @param refreshToken 클라이언트로부터 전달받은 Refresh Token
-     * @return 갱신된 Access/Refresh Token과 사용자 정보를 포함한 결과 DTO
-     * @throws AuthException 토큰이 유효하지 않거나 만료되었을 때 발생
+     * @param id 조회할 회원의 고유 식별자
+     * @return 조회된 회원 정보
+     * @throws IllegalArgumentException id가 null 인 경우
+     * @throws com.plog.global.exception.exceptions.AuthException
+     *         해당 ID에 대한 회원이 존재하지 않는 경우
      */
-    AuthLoginResult tokenReissue(String refreshToken);
+    MemberInfoRes findMemberWithId(Long id);
 }

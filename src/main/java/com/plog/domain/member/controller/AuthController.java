@@ -1,14 +1,13 @@
 package com.plog.domain.member.controller;
 
-import com.plog.domain.member.dto.AuthLoginResult;
 import com.plog.domain.member.dto.AuthSignInReq;
 import com.plog.domain.member.dto.AuthInfoRes;
 import com.plog.domain.member.dto.AuthSignUpReq;
 import com.plog.domain.member.service.AuthService;
 import com.plog.global.response.CommonResponse;
-import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.response.Response;
-import com.plog.global.rq.Rq;
+import com.plog.global.security.TokenResolver;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,15 +18,15 @@ import java.net.URI;
 /**
  * 사용자 인증 및 권한 관리를 담당하는 컨트롤러입니다.
  * <p>
- * 회원가입, 로그인, 로그아웃 및 토큰 재발급을 위한 엔드포인트를 제공하며,
- * {@link Rq} 객체를 통해 HTTP 요청/응답 메시지의 헤더와 쿠키를 제어합니다.
+ * 회원가입, 로그인(문서용), 로그아웃을 위한 엔드포인트를 제공하며,
+ * {@link TokenResolver}를 통해 보안 쿠키의 생성 및 파기를 제어합니다.
  *
  * <p><b>상속 정보:</b><br>
  * 상속 정보 없음.
  *
  * <p><b>주요 생성자:</b><br>
- * {@code AuthController(AuthService authService, Rq rq)} <br>
- * 생성자 주입을 통해 인증 서비스와 요청/응답 편의 객체를 주입받습니다. <br>
+ * {@code AuthController(AuthService authService, TokenResolver tokenResolver)}<br>
+ * 생성자 주입을 통해 인증 비즈니스 로직과 토큰 관리 컴포넌트를 주입받습니다.
  *
  * <p><b>빈 관리:</b><br>
  * {@code @RestController}를 사용하여 스프링 컨테이너의 빈으로 관리되며,
@@ -39,7 +38,7 @@ import java.net.URI;
  * @author minhee
  * @since 2026-01-20
  * @see AuthService
- * @see Rq
+ * @see TokenResolver
  */
 
 @RestController
@@ -47,7 +46,7 @@ import java.net.URI;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
-    private final Rq rq;
+    private final TokenResolver tokenResolver;
 
     /**
      * 새로운 회원을 등록(회원가입)합니다.
@@ -92,33 +91,11 @@ public class AuthController {
      * @return 로그아웃 완료 메시지를 포함한 공통 응답 객체 (200 OK)
      */
     @GetMapping("/logout")
-    public ResponseEntity<Response<Void>> logout() {
-        rq.deleteCookie("refreshToken");
+    public ResponseEntity<Response<Void>> logout(HttpServletResponse response) {
+        // TODO: DB 도입 시 서비스 쪽으로 로직 이동 필요
+        tokenResolver.deleteRefreshTokenCookie(response);
         return ResponseEntity.ok(
                 CommonResponse.success(null, "로그아웃 되었습니다.")
-        );
-    }
-
-    /**
-     * 만료된 Access Token을 재발급합니다.
-     * <p>
-     * 쿠키에 담긴 Refresh Token(refreshToken)의 유효성을 검증하고,
-     * 새로운 Access Token과 Refresh Token을 생성합니다.
-     * 각각 헤더, 쿠키에 설정하고 응답은 Refresh를 제외하여 바디를 통해 반환합니다.
-     *
-     * @return 갱신된 Access Token을 포함한 공통 응답 객체 (200 OK)
-     * @throws AuthException Refresh Token이 유효하지 않거나 만료된 경우 발생
-     */
-    @GetMapping("/reissue")
-    public ResponseEntity<Response<AuthInfoRes>> tokenReissue() {
-        String refreshToken = rq.getCookieValue("refreshToken", null);
-        AuthLoginResult res = authService.tokenReissue(refreshToken);
-
-        rq.setHeader("Authorization", res.accessToken());
-        rq.setCookie("refreshToken", res.refreshToken());
-
-        return ResponseEntity.ok(
-                CommonResponse.success(AuthInfoRes.from(res), "토큰이 재발급되었습니다.")
         );
     }
 }
