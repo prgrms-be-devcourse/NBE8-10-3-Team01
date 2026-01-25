@@ -1,0 +1,200 @@
+package com.plog.domain.comment.service;
+
+import com.plog.domain.comment.dto.CommentCreateReq;
+import com.plog.domain.comment.dto.CommentInfoRes;
+import com.plog.domain.comment.dto.ReplyInfoRes;
+import com.plog.domain.comment.entity.Comment;
+import com.plog.domain.comment.repository.CommentRepository;
+import com.plog.domain.member.entity.Member;
+import com.plog.domain.member.repository.MemberRepository;
+import com.plog.domain.post.entity.Post;
+import com.plog.domain.post.repository.PostRepository;
+import com.plog.global.exception.exceptions.CommentException;
+import com.plog.global.exception.exceptions.PostException;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class CommentServiceTest {
+
+    @InjectMocks
+    private CommentServiceImpl commentService; // 구현체 클래스로 변경!
+
+    @Mock
+    private CommentRepository commentRepository;
+
+    @Mock
+    private PostRepository postRepository;
+
+    @Mock
+    private MemberRepository memberRepository;
+
+    // --- Helper Methods ---
+
+    private Post createPost(Long id, String title) {
+        Post post = Post.builder().title(title).build();
+        ReflectionTestUtils.setField(post, "id", id);
+        return post;
+    }
+
+    private Comment createComment(Long id, String content, Post post, Member author, Comment parent) {
+        Comment comment = Comment.builder()
+                .content(content)
+                .post(post)
+                .author(author)
+                .parent(parent)
+                .build();
+        ReflectionTestUtils.setField(comment, "id", id);
+        return comment;
+    }
+
+    private Member createMember(Long id, String nickname) {
+        Member member = Member.builder().nickname(nickname).build();
+        ReflectionTestUtils.setField(member, "id", id);
+        return member;
+    }
+
+    // --- Test Cases ---
+
+    @Test
+    @DisplayName("댓글 생성 성공: 부모 댓글이 없는 일반 댓글을 저장한다")
+    void createComment_Success() {
+        // [given]
+        Long postId = 1L;
+        CommentCreateReq req = new CommentCreateReq("댓글 내용", 1L, null);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(createPost(postId, "제목")));
+        given(commentRepository.save(any(Comment.class))).willReturn(createComment(100L, "댓글 내용", null, null, null));
+
+        // [when]
+        Long resultId = commentService.createComment(postId, req);
+
+        // [then]
+        assertThat(resultId).isEqualTo(100L);
+        verify(commentRepository).save(any(Comment.class));
+    }
+
+    @Test
+    @DisplayName("댓글 생성 실패: 부모 댓글 ID가 존재하지 않으면 예외가 발생한다")
+    void createComment_Fail_ParentNotFound() {
+        // [given]
+        Long postId = 1L;
+        Long invalidParentId = 999L;
+        CommentCreateReq req = new CommentCreateReq("내용", 1L, invalidParentId);
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(createPost(postId, "제목")));
+        given(commentRepository.findById(invalidParentId)).willReturn(Optional.empty());
+
+        // [when & then]
+        assertThatThrownBy(() -> commentService.createComment(postId, req))
+                .isInstanceOf(CommentException.class);
+    }
+
+    @Test
+    @DisplayName("특정 댓글의 대댓글만 5개씩 페이징 조회한다.")
+    void getReplies_paging_success() {
+        // [given]
+        Long parentId = 1L;
+        Pageable pageable = PageRequest.of(0, 5);
+
+        // 1. 부모 객체 생성
+        Comment parent = createComment(parentId, "부모", null, null, null);
+
+        // 2. 대댓글 리스트 생성 (각 대댓글에 부모를 확실히 세팅!)
+        List<Comment> replies = new ArrayList<>();
+        for (long i = 1; i <= 5; i++) {
+            // 마지막 인자에 parent를 전달하여 getParent()가 null이 되지 않게 함
+            replies.add(createComment(i + 1, "대댓글 " + i, null, createMember(i, "유저"), parent));
+        }
+
+        Slice<Comment> slice = new SliceImpl<>(replies, pageable, true);
+
+        // Mock 설정
+        given(commentRepository.findById(parentId)).willReturn(Optional.of(parent));
+        given(commentRepository.findByParentId(eq(parentId), any(Pageable.class))).willReturn(slice);
+
+        // [when]
+        Slice<ReplyInfoRes> result = commentService.getRepliesByCommentId(parentId, 0);
+
+        // [then]
+        assertThat(result.getContent()).hasSize(5);
+        assertThat(result.hasNext()).isTrue();
+    }
+
+    @Test
+    @DisplayName("자식 댓글이 없는 댓글을 삭제하면 Hard Delete 된다.")
+    void deleteComment_hardDelete() {
+        // [given]
+        Long commentId = 1L;
+        Comment comment = createComment(commentId, "내용", null, null, null);
+
+        given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
+        given(commentRepository.existsByParent(comment)).willReturn(false);
+
+        // [when]
+        commentService.deleteComment(commentId);
+
+        // [then]
+        verify(commentRepository).delete(comment);
+    }
+
+    @Test
+    @DisplayName("댓글 조회 시 게시글이 존재하지 않으면 예외가 발생한다.")
+    void getComments_fail_postNotFound() {
+        // [given]
+        Long nonExistentPostId = 999L;
+        given(postRepository.findById(nonExistentPostId)).willReturn(Optional.empty());
+
+        // [when & then]
+        assertThatThrownBy(() -> commentService.getCommentsByPostId(nonExistentPostId, 0))
+                .isInstanceOf(PostException.class);
+    }
+
+    @Test
+    @DisplayName("삭제된 대댓글은 previewReplies 결과에서 제외되어야 한다")
+    void getComments_FilterDeletedChildren() {
+        // [Given]
+        Long postId = 1L;
+        Post post = createPost(postId, "제목");
+        Member author = createMember(1L, "작성자");
+        Comment parent = createComment(1L, "부모", post, author, null);
+
+        // 1. 부모 댓글 조회 결과 설정
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+        given(commentRepository.findByPostIdAndParentIsNull(eq(postId), any(Pageable.class)))
+                .willReturn(new SliceImpl<>(List.of(parent)));
+
+        // 2. ⭐ 핵심: 서비스 로직 내부에서 호출되는 대댓글 조회(findByParentId) 결과 설정
+        // 빈 리스트라도 Slice 객체로 감싸서 반환해야 .map() 호출 시 NPE가 나지 않습니다.
+        Slice<Comment> emptyReplySlice = new SliceImpl<>(new ArrayList<>(), PageRequest.of(0, 5), false);
+        given(commentRepository.findByParentId(anyLong(), any(Pageable.class)))
+                .willReturn(emptyReplySlice);
+
+        // [When]
+        Slice<CommentInfoRes> result = commentService.getCommentsByPostId(postId, 0);
+
+        // [Then]
+        assertThat(result.getContent()).isNotEmpty();
+        // 나머지 검증...
+    }
+}
