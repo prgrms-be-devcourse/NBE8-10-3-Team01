@@ -71,7 +71,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public Slice<PostInfoRes> getPosts(Pageable pageable) {
-        return postRepository.findAll(pageable)
+        return postRepository.findAllWithMember(pageable)
                 .map(PostInfoRes::from);
     }
 
