@@ -9,8 +9,10 @@ import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.repository.PostRepository;
+import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.CommentException;
 import com.plog.global.exception.exceptions.PostException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,8 +51,6 @@ class CommentServiceTest {
     @Mock
     private MemberRepository memberRepository;
 
-    // --- Helper Methods ---
-
     private Post createPost(Long id, String title) {
         Post post = Post.builder().title(title).build();
         ReflectionTestUtils.setField(post, "id", id);
@@ -74,20 +74,21 @@ class CommentServiceTest {
         return member;
     }
 
-    // --- Test Cases ---
-
     @Test
     @DisplayName("댓글 생성 성공: 부모 댓글이 없는 일반 댓글을 저장한다")
     void createComment_Success() {
         // [given]
         Long postId = 1L;
+        Long memberId = 1L;
         CommentCreateReq req = new CommentCreateReq("댓글 내용", 1L, null);
+        Member author = createMember(memberId, "테스트유저");
 
+        given(memberRepository.findById(anyLong())).willReturn(Optional.of(author));
         given(postRepository.findById(postId)).willReturn(Optional.of(createPost(postId, "제목")));
         given(commentRepository.save(any(Comment.class))).willReturn(createComment(100L, "댓글 내용", null, null, null));
 
         // [when]
-        Long resultId = commentService.createComment(postId, req);
+        Long resultId = commentService.createComment(postId, memberId, req);
 
         // [then]
         assertThat(resultId).isEqualTo(100L);
@@ -99,14 +100,19 @@ class CommentServiceTest {
     void createComment_Fail_ParentNotFound() {
         // [given]
         Long postId = 1L;
+        Long memberId = 1L;
         Long invalidParentId = 999L;
         CommentCreateReq req = new CommentCreateReq("내용", 1L, invalidParentId);
+
+        Member author = createMember(memberId, "테스트유저");
+
+        given(memberRepository.findById(anyLong())).willReturn(Optional.of(author));
 
         given(postRepository.findById(postId)).willReturn(Optional.of(createPost(postId, "제목")));
         given(commentRepository.findById(invalidParentId)).willReturn(Optional.empty());
 
         // [when & then]
-        assertThatThrownBy(() -> commentService.createComment(postId, req))
+        assertThatThrownBy(() -> commentService.createComment(postId, memberId, req))
                 .isInstanceOf(CommentException.class);
     }
 
@@ -146,13 +152,15 @@ class CommentServiceTest {
     void deleteComment_hardDelete() {
         // [given]
         Long commentId = 1L;
-        Comment comment = createComment(commentId, "내용", null, null, null);
+        Long memberId = 1L;
+        Member author = createMember(memberId, "테스트유저");
+        Comment comment = createComment(commentId, "내용", null, author, null);
 
         given(commentRepository.findById(commentId)).willReturn(Optional.of(comment));
         given(commentRepository.existsByParent(comment)).willReturn(false);
 
         // [when]
-        commentService.deleteComment(commentId);
+        commentService.deleteComment(commentId, memberId);
 
         // [then]
         verify(commentRepository).delete(comment);
@@ -196,5 +204,23 @@ class CommentServiceTest {
         // [Then]
         assertThat(result.getContent()).isNotEmpty();
         // 나머지 검증...
+    }
+
+    @Test
+    @DisplayName("댓글 삭제 실패: 작성자가 아닌 유저가 삭제 요청 시 예외 발생")
+    void deleteComment_Forbidden() {
+        // given
+        Long postId = 1L;
+        Long authorId = 100L;
+        Long requesterId = 999L; // 다른 사람
+        Post post = createPost(postId, "제목");
+        Member author = createMember(authorId, "작성자");
+        Comment comment = createComment(1L, "내용", post, author, null);
+
+        given(commentRepository.findById(anyLong())).willReturn(Optional.of(comment));
+
+        // when & then
+        assertThatThrownBy(() -> commentService.deleteComment(1L, requesterId))
+                .isInstanceOf(AuthException.class); // 혹은 팀에서 정한 권한 예외
     }
 }

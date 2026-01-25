@@ -53,7 +53,7 @@ class CommentControllerTest {
          // given
          Long postId = 1L;
          CommentCreateReq req = new CommentCreateReq("내용", 1L, null);
-         given(commentService.createComment(eq(postId), any(CommentCreateReq.class))).willReturn(100L);
+         given(commentService.createComment(eq(postId), anyLong(), any(CommentCreateReq.class))).willReturn(100L);
 
          // when & then
          mockMvc.perform(post("/api/posts/{postId}/comments", postId) // /api 포함
@@ -88,7 +88,7 @@ class CommentControllerTest {
          Long parentCommentId = 50L;
          CommentCreateReq replyRequest = new CommentCreateReq("이것은 대댓글입니다.", 1L, parentCommentId);
 
-         given(commentService.createComment(eq(postId), any(CommentCreateReq.class)))
+         given(commentService.createComment(eq(postId), anyLong(), any(CommentCreateReq.class)))
                  .willReturn(101L);
 
          // when & then
@@ -135,7 +135,7 @@ class CommentControllerTest {
         // given
         Long commentId = 100L;
 
-        willDoNothing().given(commentService).deleteComment(commentId);
+        willDoNothing().given(commentService).deleteComment(commentId, anyLong());
 
         // when & then
         mockMvc.perform(delete("/api/comments/{commentId}", commentId))
@@ -146,7 +146,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.message").value("댓글 삭제 완료"));
 
         // 서비스 메서드가 실제로 호출되었는지 검증
-        verify(commentService, times(1)).deleteComment(commentId);
+        verify(commentService, times(1)).deleteComment(commentId, anyLong());
     }
 
     @Test
@@ -158,7 +158,7 @@ class CommentControllerTest {
 
         // 서비스에서 CommentException을 던지도록 스텁 설정
         willThrow(new CommentException(CommentErrorCode.COMMENT_NOT_FOUND, "Not Found", "존재하지 않는 댓글입니다."))
-                .given(commentService).updateComment(eq(commentId), anyString());
+                .given(commentService).updateComment(eq(commentId), anyLong(), anyString());
 
         // when & then
         mockMvc.perform(put("/api/comments/{commentId}", commentId)
@@ -195,7 +195,7 @@ class CommentControllerTest {
         CommentCreateReq req = new CommentCreateReq("내용", 1L, null);
 
         // 서비스에서 PostException을 던지는 상황 가정
-        given(commentService.createComment(eq(postId), any(CommentCreateReq.class)))
+        given(commentService.createComment(eq(postId), anyLong(), any(CommentCreateReq.class)))
                 .willThrow(new PostException(PostErrorCode.POST_NOT_FOUND, "Post Not Found", "존재하지 않는 게시글입니다."));
 
         // when & then
