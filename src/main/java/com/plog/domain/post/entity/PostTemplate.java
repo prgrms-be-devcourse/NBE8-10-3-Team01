@@ -1,8 +1,6 @@
 package com.plog.domain.post.entity;
 
 import com.plog.domain.member.entity.Member;
-import com.plog.domain.post.dto.PostTemplateInfoDto;
-import com.plog.domain.post.service.PostTemplateService;
 import com.plog.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;

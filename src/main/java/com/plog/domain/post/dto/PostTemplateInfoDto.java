@@ -1,7 +1,6 @@
 package com.plog.domain.post.dto;
 
 import com.plog.domain.post.entity.PostTemplate;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 
 /**

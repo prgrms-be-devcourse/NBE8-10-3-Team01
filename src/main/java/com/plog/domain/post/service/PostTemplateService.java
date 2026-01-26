@@ -60,4 +60,10 @@ public interface PostTemplateService {
      * @param templateId 삭제할 템플릿 식별자
      */
     void deleteTemplate(Long memberId, Long templateId);
+
+    /**
+     * 회원가입 시 사용자에게 기본 템플릿을 추가합니다.
+     * @param memberId 추가할 사용자 아이디
+     */
+    void initTemplateSeedOfUser(Long memberId);
 }

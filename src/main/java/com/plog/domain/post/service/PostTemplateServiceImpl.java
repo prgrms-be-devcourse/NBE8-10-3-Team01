@@ -3,15 +3,24 @@ package com.plog.domain.post.service;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.domain.post.dto.PostTemplateInfoDto;
+import com.plog.domain.post.dto.PostTemplateSeed;
 import com.plog.domain.post.dto.PostTemplateSummaryRes;
 import com.plog.domain.post.entity.PostTemplate;
 import com.plog.domain.post.repository.PostTemplateRepository;
 import com.plog.global.exception.errorCode.PostErrorCode;
 import com.plog.global.exception.exceptions.PostException;
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,6 +47,43 @@ public class PostTemplateServiceImpl implements PostTemplateService {
 
     private final PostTemplateRepository postTemplateRepository;
     private final MemberRepository memberRepository;
+
+    @Getter
+    private List<PostTemplateSeed> seeds;
+
+    @PostConstruct
+    public void init() {
+        try {
+            PathMatchingResourcePatternResolver resolver =
+                    new PathMatchingResourcePatternResolver();
+
+            Resource[] resources = resolver.getResources("classpath:postTemplate/*.md");
+            List<PostTemplateSeed> loads = new ArrayList<>();
+
+            for(Resource resource : resources) {
+                String filename = resource.getFilename();
+                if(filename == null) continue;
+
+                String title = filename.replace(".md", "").replace("_", " ");
+                String context = new String(
+                        resource.getInputStream().readAllBytes(),
+                        StandardCharsets.UTF_8
+                );
+
+                loads.add(PostTemplateSeed.builder()
+                        .title(title)
+                        .name(title)
+                        .context(context)
+                        .build());
+            }
+            this.seeds = List.copyOf(loads);
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "[PostTemplateServiceImpl#init] failed to load postTemplate/*.md", e
+            );
+        }
+    }
+
 
     @Override
     @Transactional
@@ -94,6 +140,21 @@ public class PostTemplateServiceImpl implements PostTemplateService {
 
         postTemplateRepository.delete(postTemplate);
 
+    }
+
+    @Override
+    @Transactional
+    public void initTemplateSeedOfUser(Long memberId) {
+        Member member = memberRepository.getReferenceById(memberId);
+        List<PostTemplate> templates = new ArrayList<>();
+        seeds.forEach(seed -> templates.add(PostTemplate.builder()
+                .member(member)
+                .name(seed.name())
+                .title(seed.title())
+                .context(seed.context())
+                .build()));
+
+        postTemplateRepository.saveAll(templates);
     }
 
     private PostTemplate findByTemplateId(Long id) {
