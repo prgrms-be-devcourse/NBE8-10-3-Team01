@@ -27,8 +27,8 @@ spring:
         highlight_sql: false
         use_sql_comments: false
 minio:
-  enabled: false
-  endpoint: http://localhost:9000
+  enabled: ${MINIO_ENABLED:false}
+  endpoint: ${MINIO_ENDPOINT}
   access_key: ${MINIO_ACCESS_KEY}
   secret_key: ${MINIO_SECRET_KEY}
   bucket: team-bucket
@@ -39,5 +39,8 @@ custom:
     secretKey: ${SECRET_KEY}
     access-expiration: 1800000 # 30분
     refresh-expiration: 3153600000000 # 약 100년
+  cookie:
+    domain: ${COOKIE_DOMAIN:localhost}
+    secure: ${COOKIE_SECURE:false}
   cors:
     allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000}

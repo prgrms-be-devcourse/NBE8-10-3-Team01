@@ -1,5 +1,7 @@
 package com.plog.domain.post.service;
 
+import com.plog.domain.comment.dto.CommentInfoRes;
+import com.plog.domain.comment.service.CommentService;
 import com.plog.domain.post.dto.PostInfoRes;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.entity.PostStatus;
@@ -40,6 +42,7 @@ public class PostServiceImpl implements PostService {
     private static final int MAX_SUMMARY_LENGTH = 150;
 
     private final PostRepository postRepository;
+    private final CommentService commentService;
 
     @Override
     @Transactional
@@ -59,13 +62,16 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public PostInfoRes getPostDetail(Long id) {
+    public PostInfoRes getPostDetail(Long id, Pageable pageable) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND,
                         "[PostServiceImpl#getPostDetail] can't find post by id", "존재하지 않는 게시물입니다."));
 
         post.incrementViewCount();
-        return PostInfoRes.from(post);
+
+        Slice<CommentInfoRes> comments = commentService.getCommentsByPostId(id, pageable);
+
+        return PostInfoRes.from(post, comments);
     }
 
     @Override

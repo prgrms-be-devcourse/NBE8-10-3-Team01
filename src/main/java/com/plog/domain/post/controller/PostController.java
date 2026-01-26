@@ -1,5 +1,6 @@
 package com.plog.domain.post.controller;
 
+import com.plog.domain.comment.constant.CommentConstants;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
 import com.plog.domain.post.dto.PostUpdateReq;
@@ -66,8 +67,14 @@ public class PostController {
      * @return 조회된 게시물 정보와 성공 메시지를 포함한 공통 응답 객체 (200 OK)
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Response<PostInfoRes>> getPost(@PathVariable Long id) {
-        PostInfoRes response = postService.getPostDetail(id);
+    public ResponseEntity<Response<PostInfoRes>> getPost(
+            @PathVariable Long id,
+            @PageableDefault(
+                    size = CommentConstants.COMMENT_PAGE_SIZE,
+                    sort = CommentConstants.DEFAULT_SORT_FIELD,
+                    direction = Sort.Direction.ASC) Pageable pageable
+    ) {
+        PostInfoRes response = postService.getPostDetail(id, pageable);
         return ResponseEntity.ok(CommonResponse.success(response, "게시글 조회 성공"));
     }
 
