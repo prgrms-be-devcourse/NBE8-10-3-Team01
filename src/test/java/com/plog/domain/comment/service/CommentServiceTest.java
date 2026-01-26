@@ -122,20 +122,15 @@ class CommentServiceTest {
         // [given]
         Long parentId = 1L;
         Pageable pageable = PageRequest.of(0, 5);
-
-        // 1. 부모 객체 생성
         Comment parent = createComment(parentId, "부모", null, null, null);
-
-        // 2. 대댓글 리스트 생성 (각 대댓글에 부모를 확실히 세팅!)
         List<Comment> replies = new ArrayList<>();
+
         for (long i = 1; i <= 5; i++) {
-            // 마지막 인자에 parent를 전달하여 getParent()가 null이 되지 않게 함
             replies.add(createComment(i + 1, "대댓글 " + i, null, createMember(i, "유저"), parent));
         }
 
         Slice<Comment> slice = new SliceImpl<>(replies, pageable, true);
 
-        // Mock 설정
         given(commentRepository.findById(parentId)).willReturn(Optional.of(parent));
         given(commentRepository.findByParentId(eq(parentId), any(Pageable.class))).willReturn(slice);
 
@@ -187,13 +182,11 @@ class CommentServiceTest {
         Member author = createMember(1L, "작성자");
         Comment parent = createComment(1L, "부모", post, author, null);
 
-        // 1. 부모 댓글 조회 결과 설정
+
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
         given(commentRepository.findByPostIdAndParentIsNull(eq(postId), any(Pageable.class)))
                 .willReturn(new SliceImpl<>(List.of(parent)));
 
-        // 2. ⭐ 핵심: 서비스 로직 내부에서 호출되는 대댓글 조회(findByParentId) 결과 설정
-        // 빈 리스트라도 Slice 객체로 감싸서 반환해야 .map() 호출 시 NPE가 나지 않습니다.
         Slice<Comment> emptyReplySlice = new SliceImpl<>(new ArrayList<>(), PageRequest.of(0, 5), false);
         given(commentRepository.findByParentId(anyLong(), any(Pageable.class)))
                 .willReturn(emptyReplySlice);
@@ -203,7 +196,6 @@ class CommentServiceTest {
 
         // [Then]
         assertThat(result.getContent()).isNotEmpty();
-        // 나머지 검증...
     }
 
     @Test
@@ -212,7 +204,7 @@ class CommentServiceTest {
         // given
         Long postId = 1L;
         Long authorId = 100L;
-        Long requesterId = 999L; // 다른 사람
+        Long requesterId = 999L;
         Post post = createPost(postId, "제목");
         Member author = createMember(authorId, "작성자");
         Comment comment = createComment(1L, "내용", post, author, null);
@@ -221,6 +213,6 @@ class CommentServiceTest {
 
         // when & then
         assertThatThrownBy(() -> commentService.deleteComment(1L, requesterId))
-                .isInstanceOf(AuthException.class); // 혹은 팀에서 정한 권한 예외
+                .isInstanceOf(AuthException.class);
     }
 }

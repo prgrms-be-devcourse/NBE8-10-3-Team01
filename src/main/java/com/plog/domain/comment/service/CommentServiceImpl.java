@@ -40,7 +40,7 @@ public class CommentServiceImpl implements CommentService {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND,
-                        "[PostServiceImpl#getPostDetail] can't find post by id", "존재하지 않는 게시물입니다."));
+                        "[CommentServiceImpl#getPostDetail] can't find post by id", "존재하지 않는 게시물입니다."));
 
         Comment parentComment = null;
 
@@ -54,6 +54,14 @@ public class CommentServiceImpl implements CommentService {
                             "[CommentService#createComment] parent comment not found. parentCommentId=" + parentCommentId,
                             "부모 댓글이 존재하지 않습니다."
                     ));
+
+            if (!parentComment.getPost().getId().equals(postId)) {
+                throw new CommentException(
+                        CommentErrorCode.INVALID_PARENT_COMMENT,
+                        "[CommentService#createComment] post mismatch. parentComment.postId=" + parentComment.getPost().getId() + ", request.postId=" + postId,
+                        "해당 게시물의 댓글이 아닙니다."
+                );
+            }
         }
 
         Comment comment = Comment.builder()

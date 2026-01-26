@@ -56,11 +56,11 @@ class CommentControllerTest {
          given(commentService.createComment(eq(postId), anyLong(), any(CommentCreateReq.class))).willReturn(100L);
 
          // when & then
-         mockMvc.perform(post("/api/posts/{postId}/comments", postId) // /api 포함
+         mockMvc.perform(post("/api/posts/{postId}/comments", postId)
                          .contentType(MediaType.APPLICATION_JSON)
                          .content(objectMapper.writeValueAsString(req)))
                  .andDo(print())
-                 .andExpect(status().isCreated()) // 이제 201이 나올 것입니다.
+                 .andExpect(status().isCreated())
                  .andExpect(header().string("Location", "/api/posts/1/comments/100"));
      }
 
@@ -107,11 +107,11 @@ class CommentControllerTest {
         CommentUpdateReq req = new CommentUpdateReq("수정된 댓글 내용입니다.");
 
         // when & then
-        mockMvc.perform(put("/api/comments/{commentId}", commentId) // PUT 요청 수행
+        mockMvc.perform(put("/api/comments/{commentId}", commentId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req))) // Body에 JSON 데이터 삽입
-                .andExpect(status().isOk()); // 리턴값이 200 OK인지 검증
-    }
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk());
+     }
 
     @Test
     @WithMockUser
@@ -119,13 +119,13 @@ class CommentControllerTest {
     void updateComment_Fail_Validation() throws Exception {
         // given
         Long commentId = 1L;
-        CommentUpdateReq req = new CommentUpdateReq(""); // 빈 내용 (Validation 위반 가정)
+        CommentUpdateReq req = new CommentUpdateReq("");
 
         // when & then
         mockMvc.perform(put("/api/comments/1") //
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isBadRequest()); // @Valid에 의해 400 에러 발생
+                .andExpect(status().isBadRequest());
     }
 
 
@@ -145,7 +145,6 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.data").value(commentId))
                 .andExpect(jsonPath("$.message").value("댓글 삭제 완료"));
 
-        // 서비스 메서드가 실제로 호출되었는지 검증
         verify(commentService, times(1)).deleteComment(commentId, anyLong());
     }
 
@@ -156,7 +155,6 @@ class CommentControllerTest {
         Long commentId = 999L;
         CommentUpdateReq req = new CommentUpdateReq("수정 내용");
 
-        // 서비스에서 CommentException을 던지도록 스텁 설정
         willThrow(new CommentException(CommentErrorCode.COMMENT_NOT_FOUND, "Not Found", "존재하지 않는 댓글입니다."))
                 .given(commentService).updateComment(eq(commentId), anyLong(), anyString());
 
@@ -175,7 +173,6 @@ class CommentControllerTest {
         // given
         Long commentId = 999L;
 
-        // any(Pageable.class) -> anyInt() 또는 eq(0)으로 변경
         given(commentService.getRepliesByCommentId(eq(commentId), anyInt()))
                 .willThrow(new CommentException(CommentErrorCode.COMMENT_NOT_FOUND, "Parent Not Found", "존재하지 않는 댓글입니다."));
 
@@ -194,7 +191,6 @@ class CommentControllerTest {
         Long postId = 999L;
         CommentCreateReq req = new CommentCreateReq("내용", 1L, null);
 
-        // 서비스에서 PostException을 던지는 상황 가정
         given(commentService.createComment(eq(postId), anyLong(), any(CommentCreateReq.class)))
                 .willThrow(new PostException(PostErrorCode.POST_NOT_FOUND, "Post Not Found", "존재하지 않는 게시글입니다."));
 
