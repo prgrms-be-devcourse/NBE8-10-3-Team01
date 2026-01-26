@@ -18,7 +18,7 @@ public record PostTemplateInfoDto(
 
         String title,
 
-        String context
+        String content
 ) {
 
     public static PostTemplateInfoDto to(PostTemplate template) {
@@ -26,7 +26,7 @@ public record PostTemplateInfoDto(
                 .id(template.getId())
                 .name(template.getName())
                 .title(template.getTitle())
-                .context(template.getContext())
+                .content(template.getContent())
                 .build();
     }
 }

@@ -12,5 +12,5 @@ import lombok.Builder;
 public record PostTemplateSeed (
        String name,
        String title,
-       String context) {
+       String content) {
 }

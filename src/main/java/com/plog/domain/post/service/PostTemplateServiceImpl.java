@@ -5,6 +5,7 @@ import com.plog.domain.member.repository.MemberRepository;
 import com.plog.domain.post.dto.PostTemplateInfoDto;
 import com.plog.domain.post.dto.PostTemplateSeed;
 import com.plog.domain.post.dto.PostTemplateSummaryRes;
+import com.plog.domain.post.dto.PostTemplateUpdateReq;
 import com.plog.domain.post.entity.PostTemplate;
 import com.plog.domain.post.repository.PostTemplateRepository;
 import com.plog.global.exception.errorCode.PostErrorCode;
@@ -73,7 +74,7 @@ public class PostTemplateServiceImpl implements PostTemplateService {
                 loads.add(PostTemplateSeed.builder()
                         .title(title)
                         .name(title)
-                        .context(context)
+                        .content(context)
                         .build());
             }
             this.seeds = List.copyOf(loads);
@@ -93,7 +94,7 @@ public class PostTemplateServiceImpl implements PostTemplateService {
         PostTemplate postTemplate = PostTemplate.builder()
                 .name(dto.name())
                 .title(dto.title())
-                .context(dto.context())
+                .content(dto.content())
                 .member(author)
                 .build();
 
@@ -111,12 +112,12 @@ public class PostTemplateServiceImpl implements PostTemplateService {
 
     @Override
     @Transactional
-    public void updatePostTemplate(Long memberId, PostTemplateInfoDto dto) {
-        PostTemplate postTemplate = findByTemplateId(dto.id());
+    public void updatePostTemplate(Long memberId, Long templateId, PostTemplateUpdateReq dto) {
+        PostTemplate postTemplate = findByTemplateId(templateId);
 
         validateOwner(memberId, postTemplate);
 
-        postTemplate.update(dto.name(), dto.title(), dto.context());
+        postTemplate.update(dto.name(), dto.title(), dto.content());
 
         postTemplateRepository.save(postTemplate);
     }
@@ -151,7 +152,7 @@ public class PostTemplateServiceImpl implements PostTemplateService {
                 .member(member)
                 .name(seed.name())
                 .title(seed.title())
-                .context(seed.context())
+                .content(seed.content())
                 .build()));
 
         postTemplateRepository.saveAll(templates);

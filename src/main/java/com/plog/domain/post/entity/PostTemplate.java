@@ -31,15 +31,15 @@ public class PostTemplate extends BaseEntity {
 
     @Lob
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
-    private String context;
+    private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    public PostTemplate update(String name, String title, String context) {
+    public PostTemplate update(String name, String title, String content) {
         this.title = title;
-        this.context = context;
+        this.content = content;
         this.name = name;
 
         return this;

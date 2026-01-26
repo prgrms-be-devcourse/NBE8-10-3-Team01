@@ -2,6 +2,7 @@ package com.plog.domain.post.service;
 
 import com.plog.domain.post.dto.PostTemplateInfoDto;
 import com.plog.domain.post.dto.PostTemplateSummaryRes;
+import com.plog.domain.post.dto.PostTemplateUpdateReq;
 
 import java.util.List;
 
@@ -40,9 +41,10 @@ public interface PostTemplateService {
      * 게시글 템플릿을 수정합니다.
      *
      * @param memberId 수정 요청 당사자
+     * @param templateId 수정한 템플릿 아이디
      * @param dto 수정할 템플릿 정보
      */
-    void updatePostTemplate(Long memberId, PostTemplateInfoDto dto);
+    void updatePostTemplate(Long memberId, Long templateId, PostTemplateUpdateReq dto);
 
 
     /**
