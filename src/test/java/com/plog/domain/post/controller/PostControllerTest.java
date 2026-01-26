@@ -10,6 +10,7 @@ import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.service.PostService;
 import com.plog.global.security.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.plog.global.security.TokenResolver;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
