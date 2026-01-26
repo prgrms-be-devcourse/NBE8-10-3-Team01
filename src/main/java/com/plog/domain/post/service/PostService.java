@@ -72,7 +72,7 @@ public interface PostService {
      * @param title 새로운 제목
      * @param content 새로운 마크다운 본문
      */
-    void updatePost(Long id, String title, String content);
+    void updatePost(Long memberId, Long id, String title, String content);
 
     /**
      * 특정 게시물을 삭제합니다.
@@ -83,7 +83,7 @@ public interface PostService {
      * @param id 삭제할 게시물 ID
      * @throws com.plog.global.exception.exceptions.PostException 게시물을 찾을 수 없을 때 발생
      */
-    void deletePost(Long id);
+    void deletePost(Long memberId, Long id);
 
     /**
      * 특정 회원이 작성한 모든 게시물 목록을 조회합니다.

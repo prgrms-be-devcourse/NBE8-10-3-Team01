@@ -22,7 +22,6 @@ import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -56,6 +55,7 @@ class PostControllerTest {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
+    // 이 부분은 Spring Security 자체에서 필요로 하는 Bean이기 때문에 따로 선언해주어야 합니다.
     @TestConfiguration
     static class TestConfig {
         @Bean
@@ -81,6 +81,7 @@ class PostControllerTest {
     @MockitoBean
     private AuthenticationConfiguration authenticationConfiguration;
 
+    // 인증 유저를 모킹해서 생성합니다.
     private SecurityUser getMockUser() {
         return SecurityUser.securityUserBuilder()
                 .id(1L)
@@ -97,7 +98,6 @@ class PostControllerTest {
         // [Given]
         Long mockMemberId = 1L;
         Long createdPostId = 100L;
-
 
         PostCreateReq request = new PostCreateReq("게시글 제목", "게시글 본문");
 
@@ -194,6 +194,7 @@ class PostControllerTest {
         resultActions.andExpect(status().isNoContent());
 
         verify(postService).updatePost(
+                eq(getMockUser().getId()),
                 eq(postId),
                 eq(requestDto.title()),
                 eq(requestDto.content())
@@ -215,7 +216,7 @@ class PostControllerTest {
                 .andExpect(jsonPath("$").doesNotExist());
 
         // 서비스의 deletePost 메서드가 호출되었는지 검증합니다.
-        verify(postService).deletePost(1L);
+        verify(postService).deletePost(getMockUser().getId(), 1L);
     }
 
     @Test
