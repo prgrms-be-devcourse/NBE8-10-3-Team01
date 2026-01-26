@@ -158,4 +158,79 @@ public class ImageServiceTest {
         assertThatThrownBy(() -> imageService.uploadImage(emptyFile))
                 .isInstanceOf(ImageException.class);
     }
+    @Test
+    @DisplayName("이미지 단일 삭제 성공 시 스토리지와 DB에서 모두 삭제된다")
+    void deleteImageSuccess() {
+        // [Given]
+        String imageUrl = "http://minio/bucket/uuid-image.jpg";
+        String storedName = "uuid-image.jpg";
+
+        // 1. URL -> 저장 경로 파싱 Mocking
+        given(objectStorage.parsePath(imageUrl)).willReturn(storedName);
+
+        // 2. DB 조회 Mocking (삭제할 이미지가 있다고 가정)
+        Image mockImage = Image.builder()
+                .accessUrl(imageUrl)
+                .storedName(storedName)
+                .build();
+        given(imageRepository.findByAccessUrl(imageUrl)).willReturn(java.util.Optional.of(mockImage));
+
+        // [When]
+        imageService.deleteImage(imageUrl);
+
+        // [Then]
+        // 1. MinIO 삭제가 호출되었는지 확인
+        verify(objectStorage, times(1)).delete(storedName);
+
+        // 2. DB 삭제가 호출되었는지 확인
+        verify(imageRepository, times(1)).delete(mockImage);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 이미지 삭제 시 예외가 발생한다")
+    void deleteImageNotFound() {
+        // [Given]
+        String wrongUrl = "http://minio/bucket/ghost.jpg";
+
+        // DB 조회 시 Empty Optional 반환 (없음)
+        given(imageRepository.findByAccessUrl(wrongUrl)).willReturn(java.util.Optional.empty());
+
+        // 파싱 로직도 호출되긴 함 (순서상 DB 조회 전이라도 파싱 먼저 하면 이것도 given 필요)
+        given(objectStorage.parsePath(wrongUrl)).willReturn("ghost.jpg");
+
+        // [When & Then]
+        assertThatThrownBy(() -> imageService.deleteImage(wrongUrl))
+                .isInstanceOf(ImageException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ImageErrorCode.IMAGE_NOT_FOUND);
+
+        // MinIO 삭제는 실행되면 안 됨! (중요)
+        verify(objectStorage, times(0)).delete(anyString());
+    }
+
+    @Test
+    @DisplayName("다중 이미지 삭제 시 리스트 개수만큼 반복하여 삭제한다")
+    void deleteImagesSuccess() {
+        // [Given]
+        String url1 = "http://minio/bucket/1.jpg";
+        String url2 = "http://minio/bucket/2.jpg";
+        List<String> urls = List.of(url1, url2);
+
+        // 각각의 URL에 대해 동작 정의
+        given(objectStorage.parsePath(url1)).willReturn("1.jpg");
+        given(objectStorage.parsePath(url2)).willReturn("2.jpg");
+
+        Image img1 = Image.builder().accessUrl(url1).storedName("1.jpg").build();
+        Image img2 = Image.builder().accessUrl(url2).storedName("2.jpg").build();
+
+        given(imageRepository.findByAccessUrl(url1)).willReturn(java.util.Optional.of(img1));
+        given(imageRepository.findByAccessUrl(url2)).willReturn(java.util.Optional.of(img2));
+
+        // [When]
+        imageService.deleteImages(urls);
+
+        // [Then]
+        // 총 2번씩 호출되었는지 검증
+        verify(objectStorage, times(2)).delete(anyString());
+        verify(imageRepository, times(2)).delete(any(Image.class));
+    }
 }
