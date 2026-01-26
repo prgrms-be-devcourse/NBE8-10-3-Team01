@@ -63,7 +63,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public PostInfoRes getPostDetail(Long id, Pageable pageable) {
-        Post post = postRepository.findById(id)
+        Post post = postRepository.findByIdWithMember(id)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND,
                         "[PostServiceImpl#getPostDetail] can't find post by id", "존재하지 않는 게시물입니다."));
 
