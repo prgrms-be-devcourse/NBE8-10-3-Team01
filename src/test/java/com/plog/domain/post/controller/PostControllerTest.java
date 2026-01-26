@@ -124,7 +124,7 @@ class PostControllerTest {
 
         Slice<CommentInfoRes> mockComments = new SliceImpl<>(Collections.emptyList());
 
-        given(postService.getPostDetail(anyLong(), any(Pageable.class))).willReturn(PostInfoRes.from(mockPost));
+        given(postService.getPostDetail(anyLong(), anyInt())).willReturn(PostInfoRes.from(mockPost));
 
         // [When]
         ResultActions resultActions = mvc
