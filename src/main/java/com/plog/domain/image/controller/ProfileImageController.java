@@ -2,9 +2,8 @@ package com.plog.domain.image.controller;
 
 import com.plog.domain.image.dto.ProfileImageUploadRes;
 import com.plog.domain.image.service.ProfileImageService;
-// ↓ 팀에서 사용하는 공통 응답 객체 (import 경로 확인 필요)
 import com.plog.global.response.CommonResponse;
-import io.swagger.v3.oas.annotations.Operation; // 스웨거 쓴다면 추가
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
