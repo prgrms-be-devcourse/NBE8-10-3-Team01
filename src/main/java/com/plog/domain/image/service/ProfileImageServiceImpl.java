@@ -70,19 +70,26 @@ public class ProfileImageServiceImpl implements ProfileImageService {
 
         String accessUrl = objectStorage.upload(file, storedName);
 
-        Image newImage = Image.builder()
-                .originalName(originalFilename)
-                .storedName(storedName)
-                .accessUrl(accessUrl)
-                .build();
+        try {
+            Image newImage = Image.builder()
+                    .originalName(originalFilename)
+                    .storedName(storedName)
+                    .accessUrl(accessUrl)
+                    .build();
 
-        imageRepository.save(newImage);
+            imageRepository.save(newImage);
+            member.updateProfileImage(newImage);
 
-        member.updateProfileImage(newImage);
+            return ProfileImageUploadRes.from(member);
 
-        return ProfileImageUploadRes.from(member);
+        } catch (Exception e) {
+            try {
+                objectStorage.delete(storedName);
+            } catch (Exception ignored) {
+            }
+            throw e;
+        }
     }
-
     @Override
     @Transactional(readOnly = true)
     public ProfileImageUploadRes getProfileImage(Long memberId) {
