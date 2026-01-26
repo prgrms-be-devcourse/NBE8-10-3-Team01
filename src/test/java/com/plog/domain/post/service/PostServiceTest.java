@@ -6,6 +6,7 @@ import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.repository.PostRepository;
+import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.PostException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -124,10 +125,16 @@ public class PostServiceTest {
     @DisplayName("게시글 수정 시 본문에 맞춰 요약본이 새롭게 생성되어야 한다")
     void updatePostSuccess() {
         // [Given]
+        Long memberId = 1L;
         Long postId = 1L;
+
+        Member member = Member.builder().build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+
         Post existingPost = Post.builder()
                 .title("기존 제목")
                 .content("기존 본문")
+                .member(member)
                 .summary("기존 요약")
                 .build();
 
@@ -137,7 +144,7 @@ public class PostServiceTest {
         String newContent = "수정된 본문 내용입니다. 이 내용은 150자 미만이므로 그대로 요약이 됩니다.";
 
         // [When]
-        postService.updatePost(postId, newTitle, newContent);
+        postService.updatePost(memberId, postId, newTitle, newContent);
 
         // [Then]
         // 더티 체킹에 의해 변경될 엔티티의 상태를 검증합니다.
@@ -150,29 +157,58 @@ public class PostServiceTest {
     @DisplayName("존재하지 않는 게시글 수정 시 PostException이 발생한다")
     void updatePostFailNotFound() {
         // [Given]
+        Long memberId = 1L;
         given(postRepository.findById(anyLong())).willReturn(Optional.empty());
 
         // [When & Then]
-        assertThatThrownBy(() -> postService.updatePost(99L, "제목", "내용"))
+        assertThatThrownBy(() -> postService.updatePost(memberId, 99L, "제목", "내용"))
                 .isInstanceOf(PostException.class)
                 .hasMessageContaining("존재하지 않는 게시물입니다.");
+    }
+
+    @Test
+    @DisplayName("작성자가 아닌 사용자가 게시글 수정을 시도하면, AuthException이 발생한다")
+    void updatePostFailForbidden() {
+        // [Given]
+        Long ownerId = 1L;
+        Long otherMemberId = 2L;
+        Long postId = 1L;
+
+        Member owner = Member.builder().build();
+
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        Post post = Post.builder().member(owner).build();
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+
+        // [When & Then]
+        assertThatThrownBy(() -> postService.updatePost(otherMemberId, postId, "제목", "내용"))
+                .isInstanceOf(AuthException.class)
+                .hasMessageContaining("수정할 권한이 없습니다.");
     }
 
     @Test
     @DisplayName("게시글 삭제 시 해당 ID의 게시글이 존재하면 삭제를 수행한다")
     void deletePostSuccess() {
         // [Given]
+        Long memberId = 1L;
         Long postId = 1L;
+
+        Member member = Member.builder().build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+
         Post post = Post.builder()
                 .title("삭제될 제목")
                 .content("삭제될 본문")
+                .member(member)
                 .build();
 
         // findById 호출 시 삭제할 게시글이 있다고 가정합니다.
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
 
         // [When]
-        postService.deletePost(postId);
+        postService.deletePost(memberId, postId);
 
         // [Then]
         // 1. findById가 호출되었는지 확인
@@ -185,17 +221,42 @@ public class PostServiceTest {
     @DisplayName("존재하지 않는 ID로 삭제 요청 시 PostException이 발생한다")
     void deletePostFailNotFound() {
         // [Given]
+        Long memberId = 1L;
         Long postId = 99L;
+
         // findById 호출 시 빈 값을 반환한다고 가정합니다.
         given(postRepository.findById(postId)).willReturn(Optional.empty());
 
         // [When & Then]
         // 예외가 발생하는지 확인합니다.
-        assertThatThrownBy(() -> postService.deletePost(postId))
+        assertThatThrownBy(() -> postService.deletePost(memberId, postId))
                 .isInstanceOf(PostException.class)
                 .hasMessageContaining("존재하지 않는 게시물입니다.");
 
         // 예외가 발생했으므로 실제 delete 메서드는 호출되지 않아야 합니다.
+        verify(postRepository, never()).delete(any(Post.class));
+    }
+
+    @Test
+    @DisplayName("작성자가 아닌 사용자가 게시글 삭제를 시도하면 AuthException이 발생한다")
+    void deletePostFailForbidden() {
+        // [Given]
+        Long ownerId = 1L;
+        Long otherMemberId = 2L;
+        Long postId = 1L;
+
+        Member owner = Member.builder().build();
+        ReflectionTestUtils.setField(owner, "id", ownerId);
+
+        Post post = Post.builder().member(owner).build();
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(post));
+
+        // [When & Then]
+        assertThatThrownBy(() -> postService.deletePost(otherMemberId, postId))
+                .isInstanceOf(AuthException.class) //
+                .hasMessageContaining("삭제할 권한이 없습니다."); //
+
         verify(postRepository, never()).delete(any(Post.class));
     }
 

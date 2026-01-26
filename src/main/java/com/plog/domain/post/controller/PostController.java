@@ -114,10 +114,11 @@ public class PostController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<Void> updatePost(
+            @AuthenticationPrincipal SecurityUser user,
             @PathVariable Long id,
             @Valid @RequestBody PostUpdateReq request) {
 
-        postService.updatePost(id, request.title(), request.content());
+        postService.updatePost(user.getId(), id, request.title(), request.content());
 
         return ResponseEntity.noContent().build();
     }
@@ -133,9 +134,12 @@ public class PostController {
      * @return {@code 204 No Content} 응답
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+    public ResponseEntity<Void> deletePost(
+            @AuthenticationPrincipal SecurityUser user,
+            @PathVariable Long id
+    ) {
 
-        postService.deletePost(id);
+        postService.deletePost(user.getId(), id);
 
         return ResponseEntity.noContent().build();
     }

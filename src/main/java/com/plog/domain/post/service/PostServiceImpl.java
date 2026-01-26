@@ -10,7 +10,9 @@ import com.plog.domain.post.dto.PostInfoRes;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.entity.PostStatus;
 import com.plog.domain.post.repository.PostRepository;
+import com.plog.global.exception.errorCode.AuthErrorCode;
 import com.plog.global.exception.errorCode.PostErrorCode;
+import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.PostException;
 import lombok.RequiredArgsConstructor;
 import org.commonmark.node.Node;
@@ -90,10 +92,16 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void updatePost(Long id, String title, String content) {
+    public void updatePost(Long memberId, Long id, String title, String content) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND,
                         "[PostServiceImpl#updatePost] can't find post", "존재하지 않는 게시물입니다."));
+
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new AuthException(AuthErrorCode.USER_AUTH_FAIL,
+                    "[PostServiceImpl#updatePost] user " + memberId + " is not the owner of post " + id,
+                    "해당 게시물을 수정할 권한이 없습니다.");
+        }
 
         String plainText = extractPlainText(content);
         String summary = extractSummary(plainText);
@@ -103,13 +111,20 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void deletePost(Long id) {
+    public void deletePost(Long memberId, Long id) {
         // 1. 게시물 존재 여부 확인 및 조회
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND,
                         "[PostServiceImpl#deletePost] can't find post by id", "존재하지 않는 게시물입니다."));
 
-        // 2. 게시물 삭제
+        // 2. 작성자 본인 확인 (권한 체크)
+        if (!post.getMember().getId().equals(memberId)) {
+            throw new AuthException(AuthErrorCode.USER_AUTH_FAIL,
+                    "[PostServiceImpl#deletePost] user " + memberId + " is not the owner of post " + id,
+                    "해당 게시물을 삭제할 권한이 없습니다.");
+        }
+
+        // 3. 게시물 삭제
         postRepository.delete(post);
     }
 
