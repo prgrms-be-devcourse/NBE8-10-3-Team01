@@ -5,6 +5,7 @@ import com.plog.domain.hashtag.entity.PostHashTag;
 import com.plog.domain.hashtag.repository.HashTagRepository;
 import com.plog.domain.hashtag.repository.PostHashTagRepository;
 import com.plog.domain.post.entity.Post;
+import com.plog.domain.post.repository.PostRepository;
 import com.plog.global.exception.exceptions.HashTagException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,47 +15,70 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class HashTagServiceImpl  implements HashTagService {
+public class HashTagServiceImpl implements HashTagService {
 
     private final HashTagRepository hashTagRepository;
     private final PostHashTagRepository postHashTagRepository;
+    private final PostRepository postRepository;
 
-    /**
-     * 게시글 저장 시 태그를 연결하는 메서드 (Hybrid 방식)
-     * @param post       저장된 게시글 객체
-     * @param tagId      리스트에서 선택한 경우 (ID)
-     * @param newTagName 직접 입력한 경우 (이름)
-     */
-    public void createPostHashTag(Post post, Long tagId, String newTagName) {
+    @Override
+    @Transactional
+    public void createPostHashTag(Long postId, Long tagId, String newTagName) {
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+
         HashTag hashTag = null;
+        String displayName = "";
 
-        // 1. [선택] 사용자가 리스트에서 선택한 경우 (ID로 찾기)
+
         if (tagId != null) {
             hashTag = hashTagRepository.findById(tagId)
-                    .orElseThrow(() -> new HashTagException("존재하지 않는 태그 ID입니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 ID입니다."));
+            displayName = hashTag.getName();
         }
-        // 2. [입력] 사용자가 직접 입력한 경우 (이름으로 찾거나 만들기)
+
         else if (newTagName != null && !newTagName.trim().isEmpty()) {
-            hashTag = hashTagRepository.findByName(newTagName)
-                    .orElseGet(() -> hashTagRepository.save(new HashTag(newTagName)));
+            String rawTag = newTagName.trim();
+            String normalizedName = normalizeTag(rawTag);
+
+
+            hashTag = hashTagRepository.findByName(normalizedName)
+                    .orElseGet(() -> hashTagRepository.save(new HashTag(normalizedName)));
+
+            displayName = rawTag;
         }
 
-        // 선택도 입력도 안 했으면 저장하지 않고 종료
-        if (hashTag == null) {
-            return;
-        }
+        if (hashTag == null) return;
 
-        // 3. [저장] 연결 테이블에 저장 (DB에는 hashtag_id 숫자로 저장됨)
-        postHashTagRepository.save(PostHashTag.builder()
-                .post(post)
-                .hashTag(hashTag)
-                .build());
+        // 4. [저장] 중복 체크 후 저장
+        if (!postHashTagRepository.existsByPostIdAndHashTagId(post.getId(), hashTag.getId())) {
+
+            PostHashTag postHashTag = PostHashTag.builder()
+                    .post(post)
+                    .hashTag(hashTag)
+                    .displayName(displayName)
+                    .build();
+
+            // DB 저장
+            postHashTagRepository.save(postHashTag);
+
+            // 양방향 연관관계 설정
+            //post.addPostHashTag(postHashTag);
+        }
     }
 
-    // 화면에 태그 목록 뿌려주기용
+
+    @Override
     @Transactional(readOnly = true)
     public List<HashTag> getAllHashTags() {
         return hashTagRepository.findAll();
     }
 
+    private String normalizeTag(String keyword) {
+        return keyword.trim()
+                .replaceAll("\\s+", " ")
+                .replace(" ", "_")
+                .toLowerCase();
+    }
 }

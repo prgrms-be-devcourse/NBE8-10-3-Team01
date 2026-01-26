@@ -11,7 +11,6 @@ import java.util.List;
 @Transactional
 public interface HashTagService {
 
-
-    void createPostHashTag(Post post, Long tagId, String newTagName);
+    void createPostHashTag(Long postId, Long tagId, String newTagName);
      List<HashTag> getAllHashTags();
 }

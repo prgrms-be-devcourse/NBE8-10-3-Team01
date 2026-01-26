@@ -20,7 +20,7 @@ public class PostHashTag extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id")
-    private HashTag hashTag; // 여기 타입도 HashTag
+    private HashTag hashTag;
 
     private String displayName;
 

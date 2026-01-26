@@ -4,7 +4,7 @@ import com.plog.global.exception.errorCode.ErrorCode;
 
 public class HashTagException extends BaseException{
 
-    public HashTagException(String errorCode) {
+    public HashTagException(ErrorCode errorCode) {
         super(errorCode);
     }
 
