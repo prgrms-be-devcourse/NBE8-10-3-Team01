@@ -4,6 +4,8 @@ package com.plog.domain.image.service;
 import com.plog.domain.image.entity.Image;
 import com.plog.domain.image.dto.ImageUploadRes;
 import com.plog.domain.image.repository.ImageRepository;
+import com.plog.domain.member.entity.Member;
+import com.plog.domain.member.repository.MemberRepository;
 import com.plog.global.exception.errorCode.ImageErrorCode;
 import com.plog.global.exception.exceptions.ImageException;
 import com.plog.global.minio.storage.ObjectStorage;
@@ -16,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -54,7 +57,7 @@ import static org.mockito.Mockito.verify;
 public class ImageServiceTest {
 
     @InjectMocks
-    private ImageServiceImpl imageService; // 구현체를 주입 (인터페이스가 아닌 구현 클래스명 확인 필요)
+    private ImageServiceImpl imageService;
 
     @Mock
     private ObjectStorage objectStorage;
@@ -62,10 +65,24 @@ public class ImageServiceTest {
     @Mock
     private ImageRepository imageRepository;
 
+    @Mock
+    private MemberRepository memberRepository;
+
     @Test
     @DisplayName("이미지 업로드 시 UUID가 적용된 고유한 파일명으로 저장소에 전달된다")
     void uploadImageSuccess() {
         // [Given]
+        Long memberId = 1L; // 가짜 ID
+
+        Member mockMember = Member.builder()
+                .email("test@test.com") // 필수 필드만 대충 채움
+                .nickname("tester")
+                .build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+
+        // 👇 [추가] 회원 조회 Mocking
+        given(memberRepository.findById(memberId)).willReturn(java.util.Optional.of(mockMember));
+
         String originalFilename = "test-image.jpg";
         MockMultipartFile file = new MockMultipartFile(
                 "file", originalFilename, "image/jpeg", "content".getBytes()
@@ -75,14 +92,15 @@ public class ImageServiceTest {
                 .willReturn(mockUrl);
 
         // [When]
-        ImageUploadRes result = imageService.uploadImage(file);  // ← 타입 변경
+        // 👇 [수정] memberId 파라미터 추가
+        ImageUploadRes result = imageService.uploadImage(file, memberId);
 
         // [Then]
         assertThat(result.successUrls()).hasSize(1);
         assertThat(result.successUrls().get(0)).isEqualTo(mockUrl);
         assertThat(result.failedFilenames()).isEmpty();
 
-        // 파일명 변환 검증 (기존 로직 유지)
+        // 파일명 변환 검증 (기존 유지)
         ArgumentCaptor<String> filenameCaptor = ArgumentCaptor.forClass(String.class);
         verify(objectStorage).upload(any(MultipartFile.class), filenameCaptor.capture());
         String savedFilename = filenameCaptor.getValue();
@@ -97,6 +115,16 @@ public class ImageServiceTest {
     @DisplayName("다중 이미지 업로드 성공 시 모든 파일의 URL을 반환한다")
     void uploadImagesSuccess() {
         // [Given]
+        Long memberId = 1L;
+        Member mockMember = Member.builder()
+                .email("test@test.com") // 필수 필드만 대충 채움
+                .nickname("tester")
+                .build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+
+        // 👇 [추가] 여러 번 호출되므로 Optional.of 반환
+        given(memberRepository.findById(memberId)).willReturn(java.util.Optional.of(mockMember));
+
         List<MultipartFile> files = List.of(
                 new MockMultipartFile("f1", "a.png", "image/png", "d1".getBytes()),
                 new MockMultipartFile("f2", "b.jpg", "image/jpeg", "d2".getBytes())
@@ -106,13 +134,14 @@ public class ImageServiceTest {
                 .willReturn(mockUrl);
 
         // [When]
-        ImageUploadRes result = imageService.uploadImages(files);  // ← 타입 변경
+        // 👇 [수정] memberId 추가
+        ImageUploadRes result = imageService.uploadImages(files, memberId);
 
         // [Then]
         assertThat(result.successUrls()).hasSize(2);
         assertThat(result.failedFilenames()).isEmpty();
 
-        // 호출 횟수 검증 (기존 로직 유지)
+        // 호출 횟수 검증
         verify(objectStorage, times(2)).upload(any(MultipartFile.class), anyString());
         verify(imageRepository, times(2)).save(any(Image.class));
     }
@@ -121,6 +150,14 @@ public class ImageServiceTest {
     @DisplayName("다중 이미지 업로드 부분 실패 시 성공/실패 파일을 구분하여 반환한다")
     void uploadImagesPartialFailure() {
         // [Given]
+        Long memberId = 1L;
+        Member mockMember = Member.builder()
+                .email("test@test.com") // 필수 필드만 대충 채움
+                .nickname("tester")
+                .build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+        given(memberRepository.findById(memberId)).willReturn(java.util.Optional.of(mockMember));
+
         MockMultipartFile validFile = new MockMultipartFile("f1", "ok.jpg", "image/jpeg", "data".getBytes());
         MockMultipartFile invalidFile = new MockMultipartFile("f2", "bad.exe", "app/exe", "bad".getBytes());
 
@@ -128,22 +165,32 @@ public class ImageServiceTest {
                 .willReturn("http://mock.jpg");
 
         // [When]
-        ImageUploadRes result = imageService.uploadImages(List.of(validFile, invalidFile));
+        // 👇 [수정] memberId 추가
+        ImageUploadRes result = imageService.uploadImages(List.of(validFile, invalidFile), memberId);
 
         // [Then]
         assertThat(result.successUrls()).hasSize(1);
         assertThat(result.failedFilenames()).containsExactly("bad.exe");
-        verify(objectStorage, times(1)).upload(any(MultipartFile.class), anyString());  // 1개만 성공
+        verify(objectStorage, times(1)).upload(any(MultipartFile.class), anyString());
     }
 
     @Test
     @DisplayName("지원하지 않는 확장자는 예외가 발생한다")
     void uploadImageInvalidExtension() {
+        Long memberId = 1L;
+        Member mockMember = Member.builder()
+                .email("test@test.com") // 필수 필드만 대충 채움
+                .nickname("tester")
+                .build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+        given(memberRepository.findById(memberId)).willReturn(java.util.Optional.of(mockMember));
+
         MockMultipartFile txtFile = new MockMultipartFile(
                 "file", "danger.exe", "application/x-msdownload", "content".getBytes()
         );
 
-        assertThatThrownBy(() -> imageService.uploadImage(txtFile))
+        // 👇 [수정] memberId 추가
+        assertThatThrownBy(() -> imageService.uploadImage(txtFile, memberId))
                 .isInstanceOf(ImageException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ImageErrorCode.INVALID_FILE_EXTENSION);
     }
@@ -151,38 +198,49 @@ public class ImageServiceTest {
     @Test
     @DisplayName("빈 파일 업로드 시 예외가 발생한다")
     void uploadImageEmptyFile() {
+        // 빈 파일 체크는 Member 조회 전에 일어나므로 memberRepository Mocking 필요 없음
         MockMultipartFile emptyFile = new MockMultipartFile(
                 "file", "empty.jpg", "image/jpeg", new byte[0]
         );
 
-        assertThatThrownBy(() -> imageService.uploadImage(emptyFile))
+        // 👇 [수정] memberId 추가
+        assertThatThrownBy(() -> imageService.uploadImage(emptyFile, 1L))
                 .isInstanceOf(ImageException.class);
     }
+
     @Test
     @DisplayName("이미지 단일 삭제 성공 시 스토리지와 DB에서 모두 삭제된다")
     void deleteImageSuccess() {
         // [Given]
         String imageUrl = "http://minio/bucket/uuid-image.jpg";
         String storedName = "uuid-image.jpg";
+        Long memberId = 1L;
 
-        // 1. URL -> 저장 경로 파싱 Mocking
-        given(objectStorage.parsePath(imageUrl)).willReturn(storedName);
+        // 1. 멤버 생성
+        Member mockMember = Member.builder()
+                .email("test@test.com")
+                .nickname("tester")
+                .build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
 
-        // 2. DB 조회 Mocking (삭제할 이미지가 있다고 가정)
+        // 2. 이미지 생성 (uploader 제외)
         Image mockImage = Image.builder()
                 .accessUrl(imageUrl)
                 .storedName(storedName)
+                // .uploader(mockMember) ❌ 이거 빼고
                 .build();
+
+        // 3. Reflection으로 uploader 주입 💉
+        ReflectionTestUtils.setField(mockImage, "uploader", mockMember);
+
+        given(objectStorage.parsePath(imageUrl)).willReturn(storedName);
         given(imageRepository.findByAccessUrl(imageUrl)).willReturn(java.util.Optional.of(mockImage));
 
         // [When]
-        imageService.deleteImage(imageUrl);
+        imageService.deleteImage(imageUrl, memberId);
 
         // [Then]
-        // 1. MinIO 삭제가 호출되었는지 확인
         verify(objectStorage, times(1)).delete(storedName);
-
-        // 2. DB 삭제가 호출되었는지 확인
         verify(imageRepository, times(1)).delete(mockImage);
     }
 
@@ -191,19 +249,16 @@ public class ImageServiceTest {
     void deleteImageNotFound() {
         // [Given]
         String wrongUrl = "http://minio/bucket/ghost.jpg";
+        Long memberId = 1L;
 
-        // DB 조회 시 Empty Optional 반환 (없음)
         given(imageRepository.findByAccessUrl(wrongUrl)).willReturn(java.util.Optional.empty());
 
-        // 파싱 로직도 호출되긴 함 (순서상 DB 조회 전이라도 파싱 먼저 하면 이것도 given 필요)
-        given(objectStorage.parsePath(wrongUrl)).willReturn("ghost.jpg");
-
         // [When & Then]
-        assertThatThrownBy(() -> imageService.deleteImage(wrongUrl))
+        // 👇 [수정] memberId 추가
+        assertThatThrownBy(() -> imageService.deleteImage(wrongUrl, memberId))
                 .isInstanceOf(ImageException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ImageErrorCode.IMAGE_NOT_FOUND);
 
-        // MinIO 삭제는 실행되면 안 됨! (중요)
         verify(objectStorage, times(0)).delete(anyString());
     }
 
@@ -211,25 +266,43 @@ public class ImageServiceTest {
     @DisplayName("다중 이미지 삭제 시 리스트 개수만큼 반복하여 삭제한다")
     void deleteImagesSuccess() {
         // [Given]
+        Long memberId = 1L;
+        // 1. 멤버 생성 및 ID 주입
+        Member mockMember = Member.builder()
+                .email("test@test.com")
+                .nickname("tester")
+                .build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+
         String url1 = "http://minio/bucket/1.jpg";
         String url2 = "http://minio/bucket/2.jpg";
         List<String> urls = List.of(url1, url2);
 
-        // 각각의 URL에 대해 동작 정의
         given(objectStorage.parsePath(url1)).willReturn("1.jpg");
         given(objectStorage.parsePath(url2)).willReturn("2.jpg");
 
-        Image img1 = Image.builder().accessUrl(url1).storedName("1.jpg").build();
-        Image img2 = Image.builder().accessUrl(url2).storedName("2.jpg").build();
+        // 2. 이미지 생성 (빌더에서 uploader 빼고 생성)
+        Image img1 = Image.builder()
+                .accessUrl(url1)
+                .storedName("1.jpg")
+                .build();
+
+        Image img2 = Image.builder()
+                .accessUrl(url2)
+                .storedName("2.jpg")
+                .build();
+
+        // 3. Reflection으로 uploader 강제 주입! 💉
+        ReflectionTestUtils.setField(img1, "uploader", mockMember);
+        ReflectionTestUtils.setField(img2, "uploader", mockMember);
 
         given(imageRepository.findByAccessUrl(url1)).willReturn(java.util.Optional.of(img1));
         given(imageRepository.findByAccessUrl(url2)).willReturn(java.util.Optional.of(img2));
 
         // [When]
-        imageService.deleteImages(urls);
+        imageService.deleteImages(urls, memberId);
 
         // [Then]
-        // 총 2번씩 호출되었는지 검증
         verify(objectStorage, times(2)).delete(anyString());
         verify(imageRepository, times(2)).delete(any(Image.class));
     }

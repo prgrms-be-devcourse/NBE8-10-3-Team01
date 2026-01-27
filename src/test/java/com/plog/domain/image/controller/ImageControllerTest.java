@@ -58,7 +58,7 @@ class ImageControllerTest {
                 List.of("http://minio/bucket/images/uuid.jpg"),
                 List.of()
         );
-        given(imageService.uploadImage(any())).willReturn(mockResult);
+        given(imageService.uploadImage(any(), any())).willReturn(mockResult);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -95,7 +95,7 @@ class ImageControllerTest {
                 ),
                 List.of()
         );
-        given(imageService.uploadImages(anyList())).willReturn(mockResult);
+        given(imageService.uploadImages(anyList(), any())).willReturn(mockResult);
 
         ResultActions resultActions = mvc
                 .perform(
@@ -126,7 +126,7 @@ class ImageControllerTest {
                 List.of("http://minio/uuid1.jpg"),
                 List.of("invalid.txt")
         );
-        given(imageService.uploadImages(anyList())).willReturn(mockResult);
+        given(imageService.uploadImages(anyList(), any())).willReturn(mockResult);
 
         mvc.perform(multipart("/api/images/bulk").file(file1))
                 .andExpect(status().isOk())
@@ -143,7 +143,7 @@ class ImageControllerTest {
                 "file", "test.txt", "text/plain", "content".getBytes()
         );
 
-        given(imageService.uploadImage(any()))
+        given(imageService.uploadImage(any(), any()))
                 .willThrow(new com.plog.global.exception.exceptions.ImageException(
                         com.plog.global.exception.errorCode.ImageErrorCode.INVALID_FILE_EXTENSION,
                         "지원하지 않는 파일 형식입니다."
