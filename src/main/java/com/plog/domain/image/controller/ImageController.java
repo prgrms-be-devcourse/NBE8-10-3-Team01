@@ -6,6 +6,7 @@ import com.plog.global.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,9 +47,10 @@ public class ImageController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<ImageUploadRes>> uploadImage(
-            @RequestPart("file") MultipartFile file
+            @RequestPart("file") MultipartFile file,
+            @AuthenticationPrincipal Long memberId
     ) {
-        ImageUploadRes result = imageService.uploadImage(file);  // ← 이거
+        ImageUploadRes result = imageService.uploadImage(file, memberId);  // ← 이거
 
         return ResponseEntity.ok(
                 CommonResponse.success(result, "이미지 업로드 성공")
@@ -65,9 +67,10 @@ public class ImageController {
      */
     @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<ImageUploadRes>> uploadImages(
-            @RequestParam("files") List<MultipartFile> files
+            @RequestParam("files") List<MultipartFile> files,
+            @AuthenticationPrincipal Long memberId
     ) {
-        ImageUploadRes result = imageService.uploadImages(files);  // ← 변경1: 직접 받음
+        ImageUploadRes result = imageService.uploadImages(files, memberId);  // ← 변경1: 직접 받음
 
         // 변경2: 부분 실패 메시지 추가
         String message = result.failedFilenames().isEmpty()
