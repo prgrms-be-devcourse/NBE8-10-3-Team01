@@ -3,6 +3,7 @@ package com.plog.domain.image.controller;
 import com.plog.domain.image.dto.ImageUploadRes;
 import com.plog.domain.image.service.ImageService;
 import com.plog.global.response.CommonResponse;
+import com.plog.global.security.SecurityUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -48,13 +49,16 @@ public class ImageController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<ImageUploadRes>> uploadImage(
             @RequestPart("file") MultipartFile file,
-            @AuthenticationPrincipal Long memberId
-    ) {
-        ImageUploadRes result = imageService.uploadImage(file, memberId);  // ← 이거
+            @AuthenticationPrincipal SecurityUser securityUser) {
 
-        return ResponseEntity.ok(
-                CommonResponse.success(result, "이미지 업로드 성공")
-        );
+        Long memberId = securityUser.getId();
+
+            ImageUploadRes result = imageService.uploadImage(file, memberId);
+
+            return ResponseEntity.ok(
+                    CommonResponse.success(result, "이미지 업로드 성공")
+            );
+
     }
     /**
      * 다중 이미지를 업로드합니다.
@@ -68,17 +72,19 @@ public class ImageController {
     @PostMapping(value = "/bulk", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<ImageUploadRes>> uploadImages(
             @RequestParam("files") List<MultipartFile> files,
-            @AuthenticationPrincipal Long memberId
-    ) {
-        ImageUploadRes result = imageService.uploadImages(files, memberId);  // ← 변경1: 직접 받음
+            @AuthenticationPrincipal SecurityUser securityUser) {
 
-        // 변경2: 부분 실패 메시지 추가
-        String message = result.failedFilenames().isEmpty()
-                ? "다중 이미지 업로드 성공"
-                : String.format("다건 업로드 완료 (성공: %d건, 실패: %d건)",
-                result.successUrls().size(),
-                result.failedFilenames().size());
+        Long memberId = securityUser.getId();
 
-        return ResponseEntity.ok(CommonResponse.success(result, message));
+            ImageUploadRes result = imageService.uploadImages(files, memberId);
+
+            String message = result.failedFilenames().isEmpty()
+                    ? "다중 이미지 업로드 성공"
+                    : String.format("다건 업로드 완료 (성공: %d건, 실패: %d건)",
+                    result.successUrls().size(),
+                    result.failedFilenames().size());
+
+            return ResponseEntity.ok(CommonResponse.success(result, message));
+
     }
 }
