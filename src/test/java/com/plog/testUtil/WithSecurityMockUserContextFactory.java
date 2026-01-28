@@ -1,10 +1,14 @@
 package com.plog.testUtil;
 
+import com.plog.global.security.SecurityUser;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.test.context.support.WithSecurityContextFactory;
+
+import java.util.List;
 
 /**
  * 테스트 환경에서 {@link WithCustomMockUser} 어노테이션을 통해
@@ -45,16 +49,30 @@ import org.springframework.security.test.context.support.WithSecurityContextFact
 public class WithSecurityMockUserContextFactory implements WithSecurityContextFactory<WithCustomMockUser> {
     @Override
     public SecurityContext createSecurityContext(WithCustomMockUser annotation) {
-        Long userId = annotation.userId();
 
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                userId,
-                null,
-                AuthorityUtils.NO_AUTHORITIES
-        );
+
+        Long id = annotation.userId();
+        String email = annotation.email();
+        String nickname = annotation.nickname();
+
+        List<GrantedAuthority> authorities = AuthorityUtils.NO_AUTHORITIES;
+
+        SecurityUser user = SecurityUser.securityUserBuilder()
+                .id(id)
+                .email(email)
+                .password("test-password")
+                .nickname(nickname)
+                .authorities(authorities)
+                .build();
+
+
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(user, "test-password", user.getAuthorities());
+
 
         SecurityContext context = new SecurityContextImpl();
         context.setAuthentication(auth);
         return context;
     }
+
 }

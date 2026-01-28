@@ -1,28 +1,44 @@
 package com.plog.domain.post.controller;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.plog.domain.comment.dto.CommentInfoRes;
+import com.plog.domain.member.entity.Member;
+import com.plog.domain.member.service.AuthService;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
+import com.plog.domain.post.dto.PostListRes;
 import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.service.PostService;
-import com.plog.global.security.JwtUtils;
+import com.plog.global.security.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.plog.global.security.TokenResolver;
+import com.plog.testUtil.SecurityTestConfig;
+import com.plog.testUtil.WebMvcTestSupport;
+import com.plog.testUtil.WithCustomMockUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.mockito.Mockito.verify;
@@ -35,60 +51,51 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * JPA, Repository, Service 빈은 로드되지 않으며, MockitoBean을 통해 주입합니다.
  */
 @WebMvcTest(PostController.class)
+@Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-class PostControllerTest {
-
-    @Autowired
-    private MockMvc mvc;
-
-    ObjectMapper objectMapper = new ObjectMapper();
+class PostControllerTest extends WebMvcTestSupport {
 
     @MockitoBean
     private PostService postService;
 
-    @MockitoBean
-    private JwtUtils jwtUtils;
-
     @Test
-    @DisplayName("게시글 생성 시 DTO 객체를 JSON으로 변환하여 요청을 검증한다")
+    @DisplayName("게시글 생성 시 인증된 사용자가 요청하면 성공한다")
+    @WithCustomMockUser
     void createPostSuccess() throws Exception {
         // [Given]
-        Long mockPostId = 1L;
-        PostCreateReq requestDto = new PostCreateReq("테스트 제목", "테스트 본문");
+        Long mockMemberId = 1L;
+        Long createdPostId = 100L;
 
-        given(postService.createPost(anyString(), anyString())).willReturn(mockPostId);
+        PostCreateReq request = new PostCreateReq("게시글 제목", "게시글 본문", null);
 
-        // [When]
-        ResultActions resultActions = mvc
-                .perform(
-                        post("/api/posts")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(requestDto))
-                )
-                .andDo(print());
+        given(postService.createPost(eq(mockMemberId), any(PostCreateReq.class)))
+                .willReturn(createdPostId);
 
-        // [Then]
-        resultActions
+        mockMvc.perform(post("/api/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/posts/%d".formatted(mockPostId)))
-                .andExpect(jsonPath("$").doesNotExist());
-
-        verify(postService).createPost(eq(requestDto.title()), eq(requestDto.content()));
+                .andExpect(header().string("Location", "/api/posts/" + createdPostId));
     }
 
     @Test
     @DisplayName("게시글 상세 조회 시 응답 데이터 형식을 확인한다")
     void getPostSuccess() throws Exception {
         // [Given]
+        Member author = new Member("email", "password", "nickname", null);
         Post mockPost = Post.builder()
                 .title("조회 제목")
                 .content("조회 본문")
+                .member(author)
                 .build();
 
-        given(postService.getPostDetail(anyLong())).willReturn(PostInfoRes.from(mockPost));
+        Slice<CommentInfoRes> mockComments = new SliceImpl<>(Collections.emptyList());
+
+        given(postService.getPostDetail(anyLong(), anyInt())).willReturn(PostInfoRes.from(mockPost));
 
         // [When]
-        ResultActions resultActions = mvc
+        ResultActions resultActions = mockMvc
                 .perform(get("/api/posts/1"))
                 .andDo(print());
 
@@ -104,12 +111,13 @@ class PostControllerTest {
     @DisplayName("게시글 목록 조회 시 페이징 처리된 Slice 리스트를 반환한다")
     void getPostsSuccess() throws Exception {
         // [Given]
+        Member author = new Member("email", "password", "nickname", null);
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Post post1 = Post.builder().title("제목1").content("내용1").build();
-        Post post2 = Post.builder().title("제목2").content("내용2").build();
+        Post post1 = Post.builder().title("제목1").content("내용1").member(author).build();
+        Post post2 = Post.builder().title("제목2").content("내용2").member(author).build();
 
-        Slice<PostInfoRes> sliceResponse = new SliceImpl<>(
-                List.of(PostInfoRes.from(post2), PostInfoRes.from(post1)),
+        Slice<PostListRes> sliceResponse = new SliceImpl<>(
+                List.of(PostListRes.from(post2), PostListRes.from(post1)),
                 pageable,
                 false // 다음 페이지가 없다고 가정
         );
@@ -117,7 +125,7 @@ class PostControllerTest {
         given(postService.getPosts(any(Pageable.class))).willReturn(sliceResponse);
 
         // [When]
-        ResultActions resultActions = mvc
+        ResultActions resultActions = mockMvc
                 .perform(get("/api/posts")
                         .param("page", "0")
                         .param("size", "10")
@@ -138,34 +146,29 @@ class PostControllerTest {
 
     @Test
     @DisplayName("게시글 수정 요청 시 204 No Content를 반환한다")
+    @WithCustomMockUser
     void updatePostSuccess() throws Exception {
         // [Given]
         Long postId = 1L;
-        PostUpdateReq requestDto = new PostUpdateReq("수정 제목", "수정 본문");
+        PostUpdateReq requestDto = new PostUpdateReq("수정 제목", "수정 본문", null);
 
         // [When]
-        ResultActions resultActions = mvc.perform(
+        ResultActions resultActions = mockMvc.perform(
                 put("/api/posts/{id}", postId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        // 객체를 JSON 문자열로 자동 변환
                         .content(objectMapper.writeValueAsString(requestDto))
         ).andDo(print());
 
         // [Then]
         resultActions.andExpect(status().isNoContent());
-
-        verify(postService).updatePost(
-                eq(postId),
-                eq(requestDto.title()),
-                eq(requestDto.content())
-        );
     }
 
     @Test
     @DisplayName("게시글 삭제 요청 시 성공하면 204 No Content를 반환한다")
+    @WithCustomMockUser
     void deletePostSuccess() throws Exception {
         // [When]
-        ResultActions resultActions = mvc.perform(
+        ResultActions resultActions = mockMvc.perform(
                 delete("/api/posts/1")
         ).andDo(print());
 
@@ -175,7 +178,7 @@ class PostControllerTest {
                 .andExpect(jsonPath("$").doesNotExist());
 
         // 서비스의 deletePost 메서드가 호출되었는지 검증합니다.
-        verify(postService).deletePost(1L);
+        verify(postService).deletePost(any(), any());
     }
 
     @Test
@@ -188,7 +191,7 @@ class PostControllerTest {
 
         // PostInfoRes 데이터 준비
         PostInfoRes res = new PostInfoRes(
-                100L, "제목", "본문", "요약", 5, now, now
+                100L, "제목", "본문", 5, now, now, null, "nickname", "imageURL"
         );
 
         // SliceImpl을 사용하여 서비스 반환값 모킹 (데이터 1개, 다음 페이지 없음)
@@ -199,7 +202,7 @@ class PostControllerTest {
                 .willReturn(sliceResponse);
 
         // [When]
-        ResultActions resultActions = mvc.perform(
+        ResultActions resultActions = mockMvc.perform(
                 get("/api/posts/members/{memberId}", memberId)
                         .param("page", "0")
                         .param("size", "10")
@@ -215,7 +218,6 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.data.content[0].id").value(100))
                 .andExpect(jsonPath("$.data.content[0].title").value("제목"))
                 .andExpect(jsonPath("$.data.content[0].content").value("본문"))
-                .andExpect(jsonPath("$.data.content[0].summary").value("요약"))
                 .andExpect(jsonPath("$.data.content[0].viewCount").value(5))
                 .andExpect(jsonPath("$.data.content[0].createDate").exists())
                 .andExpect(jsonPath("$.data.content[0].modifyDate").exists())

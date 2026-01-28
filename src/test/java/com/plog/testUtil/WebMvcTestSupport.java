@@ -1,10 +1,12 @@
 package com.plog.testUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.plog.global.security.CustomUserDetailsService;
-import com.plog.global.security.JwtUtils;
-import com.plog.global.security.TokenResolver;
+import com.plog.domain.member.service.AuthService;
+import com.plog.global.security.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -35,6 +37,14 @@ public abstract class WebMvcTestSupport {
     protected TokenResolver tokenResolver;
 
     @MockitoBean
-    protected CustomUserDetailsService customUserDetailsService;
+    protected TokenStore tokenStore;
 
+    @MockitoBean
+    protected AuthenticationConfiguration authenticationConfiguration;
+
+    @MockitoBean
+    protected AuthService authService;
+
+    @MockitoBean
+    protected CustomUserDetailsService customUserDetailsService;
 }
