@@ -1,9 +1,8 @@
 package com.plog.domain.post.controller;
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.plog.domain.comment.dto.CommentInfoRes;
+import com.plog.domain.hashtag.service.HashTagService;
 import com.plog.domain.member.entity.Member;
-import com.plog.domain.member.service.AuthService;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
 import com.plog.domain.post.dto.PostListRes;
@@ -11,25 +10,17 @@ import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.service.PostService;
 import com.plog.global.security.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.plog.global.security.TokenResolver;
 import com.plog.testUtil.SecurityTestConfig;
 import com.plog.testUtil.WebMvcTestSupport;
 import com.plog.testUtil.WithCustomMockUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import java.time.LocalDateTime;
@@ -38,7 +29,6 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.mockito.Mockito.verify;
@@ -57,6 +47,9 @@ class PostControllerTest extends WebMvcTestSupport {
 
     @MockitoBean
     private PostService postService;
+
+    @MockitoBean
+    private HashTagService hashTagService;
 
     @Test
     @DisplayName("게시글 생성 시 인증된 사용자가 요청하면 성공한다")
