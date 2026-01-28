@@ -5,12 +5,11 @@ import com.plog.domain.comment.dto.CommentInfoRes;
 import com.plog.domain.comment.dto.ReplyInfoRes;
 import com.plog.domain.comment.entity.Comment;
 import com.plog.domain.comment.repository.CommentRepository;
-import com.plog.domain.comment.service.CommentService;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
-import com.plog.domain.member.service.MemberService;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
+import com.plog.domain.post.dto.PostListRes;
 import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.entity.PostStatus;
@@ -29,9 +28,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * {@link PostService} 인터페이스의 기본 구현체입니다.
@@ -70,6 +66,7 @@ public class PostServiceImpl implements PostService {
                 .summary(summary)
                 .member(member)
                 .status(PostStatus.PUBLISHED)
+                .thumbnail(req.thumbnail())
                 .build();
 
         return postRepository.save(post).getId();
@@ -112,9 +109,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional(readOnly = true)
-    public Slice<PostInfoRes> getPosts(Pageable pageable) {
+    public Slice<PostListRes> getPosts(Pageable pageable) {
         return postRepository.findAllWithMember(pageable)
-                .map(PostInfoRes::from);
+                .map(PostListRes::from);
     }
 
     @Override
@@ -133,7 +130,7 @@ public class PostServiceImpl implements PostService {
         String plainText = extractPlainText(req.content());
         String summary = extractSummary(plainText);
 
-        post.update(req.title(), req.content(), summary);
+        post.update(req.title(), req.content(), summary, req.thumbnail());
     }
 
     @Override

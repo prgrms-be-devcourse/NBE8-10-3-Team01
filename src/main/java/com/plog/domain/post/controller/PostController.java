@@ -1,8 +1,8 @@
 package com.plog.domain.post.controller;
 
-import com.plog.domain.comment.constant.CommentConstants;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
+import com.plog.domain.post.dto.PostListRes;
 import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.service.PostService;
 import com.plog.global.response.CommonResponse;
@@ -90,10 +90,10 @@ public class PostController {
      * @return 게시물 데이터 슬라이스와 성공 메시지를 포함한 공통 응답 객체
      */
     @GetMapping
-    public ResponseEntity<Response<Slice<PostInfoRes>>> getPosts(
+    public ResponseEntity<Response<Slice<PostListRes>>> getPosts(
             @PageableDefault(size = 10, sort = "createDate", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Slice<PostInfoRes> posts = postService.getPosts(pageable);
+        Slice<PostListRes> posts = postService.getPosts(pageable);
         return ResponseEntity.ok(CommonResponse.success(posts, "게시글 목록 조회 성공"));
     }
 
