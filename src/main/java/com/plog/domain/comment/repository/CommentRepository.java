@@ -1,15 +1,11 @@
 package com.plog.domain.comment.repository;
 
 import com.plog.domain.comment.entity.Comment;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
 
 /**
  * <p>
@@ -31,8 +27,6 @@ import java.util.List;
  */
 public interface CommentRepository extends JpaRepository<Comment, Long>{
 
-    @EntityGraph(attributePaths = {"author"})
-    Slice<Comment> findByPostIdAndParentIsNull(Long postId, Pageable pageable);
 
     @Query("select c from Comment c " +
             "join fetch c.author m " +
@@ -41,9 +35,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long>{
             "order by c.createDate desc")
     Slice<Comment> findCommentsWithMemberAndImageByPostId(@Param("postId") Long postId, Pageable pageable);
 
-    // 대댓글 조회용 (추가)
-    @EntityGraph(attributePaths = {"author"})
-    Slice<Comment> findByParentId(Long parentId, Pageable pageable);
 
     @Query("select r from Comment r " +
             "join fetch r.author m " +

@@ -4,7 +4,6 @@ import com.plog.domain.comment.entity.Comment;
 import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 게시물 댓글 조회 시 클라이언트에게 전달되는 댓글 응답 DTO입니다.
