@@ -132,7 +132,7 @@ class CommentServiceTest {
         Slice<Comment> slice = new SliceImpl<>(replies, pageable, true);
 
         given(commentRepository.findById(parentId)).willReturn(Optional.of(parent));
-        given(commentRepository.findByParentId(eq(parentId), any(Pageable.class))).willReturn(slice);
+        given(commentRepository.findRepliesWithMemberAndImageByParentId(eq(parentId), any(Pageable.class))).willReturn(slice);
 
         // [when]
         Slice<ReplyInfoRes> result = commentService.getRepliesByCommentId(parentId, 0);
@@ -184,11 +184,11 @@ class CommentServiceTest {
 
 
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
-        given(commentRepository.findByPostIdAndParentIsNull(eq(postId), any(Pageable.class)))
+        given(commentRepository.findCommentsWithMemberAndImageByPostId(eq(postId), any(Pageable.class)))
                 .willReturn(new SliceImpl<>(List.of(parent)));
 
         Slice<Comment> emptyReplySlice = new SliceImpl<>(new ArrayList<>(), PageRequest.of(0, 5), false);
-        given(commentRepository.findByParentId(anyLong(), any(Pageable.class)))
+        given(commentRepository.findRepliesWithMemberAndImageByParentId(anyLong(), any(Pageable.class)))
                 .willReturn(emptyReplySlice);
 
         // [When]

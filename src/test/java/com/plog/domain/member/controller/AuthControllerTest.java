@@ -4,6 +4,7 @@ package com.plog.domain.member.controller;
 import com.plog.domain.member.dto.AuthSignInReq;
 import com.plog.domain.member.dto.AuthSignUpReq;
 import com.plog.domain.member.service.AuthService;
+import com.plog.domain.post.service.PostTemplateService;
 import com.plog.testUtil.WebMvcTestSupport;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 public class AuthControllerTest extends WebMvcTestSupport {
+
+    @MockitoBean
+    PostTemplateService postTemplateService;
 
     @Test
     @DisplayName("회원가입 성공 - 201, Location 헤더를 반환")

@@ -3,6 +3,7 @@ package com.plog.domain.image.controller;
 import com.plog.domain.image.dto.ProfileImageUploadRes;
 import com.plog.domain.image.service.ProfileImageService;
 import com.plog.global.security.JwtUtils;
+import com.plog.testUtil.WebMvcTestSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,16 +32,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(ProfileImageController.class)
 @ActiveProfiles("test")
-class ProfileImageControllerTest {
-
-    @Autowired
-    private MockMvc mvc;
+class ProfileImageControllerTest extends WebMvcTestSupport {
 
     @MockitoBean
     private ProfileImageService profileImageService;
 
-    @MockitoBean
-    private JwtUtils jwtUtils;
 
     @Test
     @DisplayName("프로필 이미지 업로드 성공 시 변경된 URL을 반환한다")
@@ -53,7 +49,7 @@ class ProfileImageControllerTest {
         given(profileImageService.uploadProfileImage(eq(memberId), any())).willReturn(mockResponse);
 
         // [When & Then]
-        mvc.perform(
+        mockMvc.perform(
                 multipart("/api/members/{memberId}/profile-image", memberId)
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA)
@@ -74,7 +70,7 @@ class ProfileImageControllerTest {
         given(profileImageService.getProfileImage(memberId)).willReturn(mockResponse);
 
         // [When & Then]
-        mvc.perform(get("/api/members/{memberId}/profile-image", memberId))
+        mockMvc.perform(get("/api/members/{memberId}/profile-image", memberId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.profileImageUrl").value("http://minio/profile.jpg"));
     }
@@ -87,7 +83,7 @@ class ProfileImageControllerTest {
         // void 메서드는 별도 given 설정 불필요 (기본적으로 아무 동작 안 함)
 
         // [When & Then]
-        mvc.perform(delete("/api/members/{memberId}/profile-image", memberId))
+        mockMvc.perform(delete("/api/members/{memberId}/profile-image", memberId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("프로필 이미지가 삭제되었습니다."));
     }
