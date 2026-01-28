@@ -1,5 +1,6 @@
 package com.plog.domain.post.service;
 
+import com.plog.domain.comment.repository.CommentRepository;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.domain.post.dto.PostCreateReq;
@@ -42,6 +43,9 @@ public class PostServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
 
     @Test
     @DisplayName("게시글 저장 시 마크다운이 제거된 요약글이 자동 생성")
@@ -221,6 +225,7 @@ public class PostServiceTest {
         verify(postRepository).findById(postId);
         // 2. 실제 리포지토리의 delete 메서드가 해당 엔티티로 호출되었는지 확인
         verify(postRepository).delete(post);
+        verify(commentRepository).deleteAllByPostId(postId);
     }
 
     @Test

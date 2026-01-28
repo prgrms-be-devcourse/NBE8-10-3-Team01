@@ -148,7 +148,12 @@ public class PostServiceImpl implements PostService {
                     "해당 게시물을 삭제할 권한이 없습니다.");
         }
 
-        // 3. 게시물 삭제
+        // 3. 제약 조건 위반을 방지하기 위해 자식(대댓글)부터 삭제
+        commentRepository.deleteRepliesByPostId(postId);
+        // 4. 그 후 부모 댓글 삭제
+        commentRepository.deleteParentsByPostId(postId);
+
+        // 5. 게시물 삭제
         postRepository.delete(post);
     }
 
