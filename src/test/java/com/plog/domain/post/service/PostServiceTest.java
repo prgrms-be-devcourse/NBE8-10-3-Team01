@@ -4,6 +4,7 @@ import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
+import com.plog.domain.post.dto.PostListRes;
 import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.repository.PostRepository;
@@ -111,7 +112,7 @@ public class PostServiceTest {
         given(postRepository.findAllWithMember(any(Pageable.class))).willReturn(mockPage);
 
         // [When]
-        Slice<PostInfoRes> result = postService.getPosts(pageable);
+        Slice<PostListRes> result = postService.getPosts(pageable);
 
         // [Then]
         assertThat(result.getContent()).hasSize(1);

@@ -5,6 +5,7 @@ import com.plog.domain.comment.dto.CommentInfoRes;
 import com.plog.domain.member.service.AuthService;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
+import com.plog.domain.post.dto.PostListRes;
 import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.service.PostService;
@@ -146,8 +147,8 @@ class PostControllerTest {
         Post post1 = Post.builder().title("제목1").content("내용1").build();
         Post post2 = Post.builder().title("제목2").content("내용2").build();
 
-        Slice<PostInfoRes> sliceResponse = new SliceImpl<>(
-                List.of(PostInfoRes.from(post2), PostInfoRes.from(post1)),
+        Slice<PostListRes> sliceResponse = new SliceImpl<>(
+                List.of(PostListRes.from(post2), PostListRes.from(post1)),
                 pageable,
                 false // 다음 페이지가 없다고 가정
         );
