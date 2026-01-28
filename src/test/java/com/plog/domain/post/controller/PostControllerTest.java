@@ -2,6 +2,7 @@ package com.plog.domain.post.controller;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.plog.domain.comment.dto.CommentInfoRes;
+import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.service.AuthService;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
@@ -117,9 +118,11 @@ class PostControllerTest {
     @DisplayName("게시글 상세 조회 시 응답 데이터 형식을 확인한다")
     void getPostSuccess() throws Exception {
         // [Given]
+        Member author = new Member("email", "password", "nickname", null);
         Post mockPost = Post.builder()
                 .title("조회 제목")
                 .content("조회 본문")
+                .member(author)
                 .build();
 
         Slice<CommentInfoRes> mockComments = new SliceImpl<>(Collections.emptyList());
@@ -143,9 +146,10 @@ class PostControllerTest {
     @DisplayName("게시글 목록 조회 시 페이징 처리된 Slice 리스트를 반환한다")
     void getPostsSuccess() throws Exception {
         // [Given]
+        Member author = new Member("email", "password", "nickname", null);
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Post post1 = Post.builder().title("제목1").content("내용1").build();
-        Post post2 = Post.builder().title("제목2").content("내용2").build();
+        Post post1 = Post.builder().title("제목1").content("내용1").member(author).build();
+        Post post2 = Post.builder().title("제목2").content("내용2").member(author).build();
 
         Slice<PostListRes> sliceResponse = new SliceImpl<>(
                 List.of(PostListRes.from(post2), PostListRes.from(post1)),
@@ -228,7 +232,7 @@ class PostControllerTest {
 
         // PostInfoRes 데이터 준비
         PostInfoRes res = new PostInfoRes(
-                100L, "제목", "본문", 5, now, now, null
+                100L, "제목", "본문", 5, now, now, null, "nickname", "imageURL"
         );
 
         // SliceImpl을 사용하여 서비스 반환값 모킹 (데이터 1개, 다음 페이지 없음)

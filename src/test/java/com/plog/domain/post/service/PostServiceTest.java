@@ -103,8 +103,13 @@ public class PostServiceTest {
     @DisplayName("전체 게시글 조회 시 리포지토리의 결과를 Slice DTO로 변환하여 반환한다")
     void getPostsSuccess() {
         // [Given]
+        Member author = new Member("email", "password", "nickname", null);
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id"));
-        Post post = Post.builder().title("테스트 제목").content("테스트 내용").build();
+        Post post = Post.builder()
+                .title("테스트 제목")
+                .content("테스트 내용")
+                .member(author)
+                .build();
 
         // 리포지토리는 Page를 반환 (Page는 Slice를 상속함)
         Page<Post> mockPage = new PageImpl<>(List.of(post), pageable, 1);
@@ -267,6 +272,7 @@ public class PostServiceTest {
     void getPostsByMemberSuccess() {
         // [Given]
         Long memberId = 1L;
+        Member author = new Member("email", "password", "nickname", null);
         // 페이징 정보 설정 (0페이지, 10개씩 조회)
         Pageable pageable = PageRequest.of(0, 10);
 
@@ -274,6 +280,7 @@ public class PostServiceTest {
                 .title("테스트 제목")
                 .content("테스트 본문")
                 .summary("테스트 요약")
+                .member(author)
                 .viewCount(10)
                 .build();
 

@@ -36,7 +36,9 @@ public record PostInfoRes(
         int viewCount,
         LocalDateTime createDate,
         LocalDateTime modifyDate,
-        Slice<CommentInfoRes> comments
+        Slice<CommentInfoRes> comments,
+        String nickname,
+        String profileImage
 ) {
     /**
      * Post 엔티티 객체를 PostResponse DTO로 변환하는 정적 팩토리 메서드입니다.
@@ -52,7 +54,9 @@ public record PostInfoRes(
                 post.getViewCount(),
                 post.getCreateDate(),
                 post.getModifyDate(),
-                null
+                null,
+                post.getMember().getNickname(),
+                post.getMember().getProfileImage() != null ? post.getMember().getProfileImage().getAccessUrl() : null
         );
     }
 
@@ -64,7 +68,9 @@ public record PostInfoRes(
                 post.getViewCount(),
                 post.getCreateDate(),
                 post.getModifyDate(),
-                comments
+                comments,
+                post.getMember().getNickname(),
+                post.getMember().getProfileImage() != null ? post.getMember().getProfileImage().getAccessUrl() : null
         );
     }
 }
