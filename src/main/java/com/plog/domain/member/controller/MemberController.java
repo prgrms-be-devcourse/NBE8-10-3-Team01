@@ -5,6 +5,7 @@ import com.plog.domain.member.dto.MemberUpdaterReq;
 import com.plog.domain.member.service.MemberService;
 import com.plog.global.response.CommonResponse;
 import com.plog.global.response.Response;
+import com.plog.global.security.SecurityUser;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,8 +40,8 @@ public class MemberController {
 
     @PutMapping("/update")
     public ResponseEntity<Response<MemberInfoRes>> updateMember(@RequestBody MemberUpdaterReq request,
-                                                                @AuthenticationPrincipal Long memberId) {
-        MemberInfoRes response = memberService.updateMemberInfo(memberId, request);
+                                                                @AuthenticationPrincipal SecurityUser securityUser) {
+        MemberInfoRes response = memberService.updateMemberInfo(securityUser.getId(), request);
 
         return ResponseEntity.ok(CommonResponse.success(response));
     }
