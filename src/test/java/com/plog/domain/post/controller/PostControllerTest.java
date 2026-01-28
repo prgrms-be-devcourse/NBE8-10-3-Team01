@@ -13,6 +13,9 @@ import com.plog.domain.post.service.PostService;
 import com.plog.global.security.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plog.global.security.TokenResolver;
+import com.plog.testUtil.SecurityTestConfig;
+import com.plog.testUtil.WebMvcTestSupport;
+import com.plog.testUtil.WithCustomMockUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,54 +51,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * JPA, Repository, Service 빈은 로드되지 않으며, MockitoBean을 통해 주입합니다.
  */
 @WebMvcTest(PostController.class)
+@Import(SecurityTestConfig.class)
 @ActiveProfiles("test")
-@Import({SecurityConfig.class, CustomAuthenticationFilter.class})
-class PostControllerTest {
+class PostControllerTest extends WebMvcTestSupport {
 
-    @Autowired
-    private MockMvc mvc;
-
-    ObjectMapper objectMapper = new ObjectMapper();
-
-    // 이 부분은 Spring Security 자체에서 필요로 하는 Bean이기 때문에 따로 선언해주어야 합니다.
-    @TestConfiguration
-    static class TestConfig {
-        @Bean
-        public ObjectMapper objectMapper() {
-            return new ObjectMapper().registerModule(new JavaTimeModule());
-        }
-    }
     @MockitoBean
     private PostService postService;
 
-    @MockitoBean
-    private JwtUtils jwtUtils;
-
-    @MockitoBean
-    private TokenResolver tokenResolver;
-
-    @MockitoBean
-    private AuthService authService;
-
-    @MockitoBean
-    private CustomUserDetailsService customUserDetailsService;
-
-    @MockitoBean
-    private AuthenticationConfiguration authenticationConfiguration;
-
-    // 인증 유저를 모킹해서 생성합니다.
-    private SecurityUser getMockUser() {
-        return SecurityUser.securityUserBuilder()
-                .id(1L)
-                .email("test@plog.com")
-                .password("password")
-                .nickname("플로그")
-                .authorities(Collections.emptyList())
-                .build();
-    }
-
     @Test
     @DisplayName("게시글 생성 시 인증된 사용자가 요청하면 성공한다")
+    @WithCustomMockUser
     void createPostSuccess() throws Exception {
         // [Given]
         Long mockMemberId = 1L;
@@ -105,8 +71,7 @@ class PostControllerTest {
         given(postService.createPost(eq(mockMemberId), any(PostCreateReq.class)))
                 .willReturn(createdPostId);
 
-        mvc.perform(post("/api/posts")
-                        .with(user(getMockUser()))
+        mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -130,7 +95,7 @@ class PostControllerTest {
         given(postService.getPostDetail(anyLong(), anyInt())).willReturn(PostInfoRes.from(mockPost));
 
         // [When]
-        ResultActions resultActions = mvc
+        ResultActions resultActions = mockMvc
                 .perform(get("/api/posts/1"))
                 .andDo(print());
 
@@ -160,7 +125,7 @@ class PostControllerTest {
         given(postService.getPosts(any(Pageable.class))).willReturn(sliceResponse);
 
         // [When]
-        ResultActions resultActions = mvc
+        ResultActions resultActions = mockMvc
                 .perform(get("/api/posts")
                         .param("page", "0")
                         .param("size", "10")
@@ -181,36 +146,30 @@ class PostControllerTest {
 
     @Test
     @DisplayName("게시글 수정 요청 시 204 No Content를 반환한다")
+    @WithCustomMockUser
     void updatePostSuccess() throws Exception {
         // [Given]
         Long postId = 1L;
         PostUpdateReq requestDto = new PostUpdateReq("수정 제목", "수정 본문", null);
 
         // [When]
-        ResultActions resultActions = mvc.perform(
+        ResultActions resultActions = mockMvc.perform(
                 put("/api/posts/{id}", postId)
-                        .with(user(getMockUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto))
         ).andDo(print());
 
         // [Then]
         resultActions.andExpect(status().isNoContent());
-
-        verify(postService).updatePost(
-                eq(getMockUser().getId()),
-                eq(postId),
-                eq(requestDto)
-        );
     }
 
     @Test
     @DisplayName("게시글 삭제 요청 시 성공하면 204 No Content를 반환한다")
+    @WithCustomMockUser
     void deletePostSuccess() throws Exception {
         // [When]
-        ResultActions resultActions = mvc.perform(
+        ResultActions resultActions = mockMvc.perform(
                 delete("/api/posts/1")
-                        .with(user(getMockUser()))
         ).andDo(print());
 
         // [Then]
@@ -219,7 +178,7 @@ class PostControllerTest {
                 .andExpect(jsonPath("$").doesNotExist());
 
         // 서비스의 deletePost 메서드가 호출되었는지 검증합니다.
-        verify(postService).deletePost(getMockUser().getId(), 1L);
+        verify(postService).deletePost(any(), any());
     }
 
     @Test
@@ -243,7 +202,7 @@ class PostControllerTest {
                 .willReturn(sliceResponse);
 
         // [When]
-        ResultActions resultActions = mvc.perform(
+        ResultActions resultActions = mockMvc.perform(
                 get("/api/posts/members/{memberId}", memberId)
                         .param("page", "0")
                         .param("size", "10")

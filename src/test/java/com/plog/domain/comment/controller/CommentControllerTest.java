@@ -9,11 +9,15 @@ import com.plog.global.exception.errorCode.PostErrorCode;
 import com.plog.global.exception.exceptions.CommentException;
 import com.plog.global.exception.exceptions.PostException;
 import com.plog.global.security.JwtUtils;
+import com.plog.testUtil.SecurityTestConfig;
+import com.plog.testUtil.WebMvcTestSupport;
+import com.plog.testUtil.WithCustomMockUser;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
@@ -32,23 +36,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 
 
-@WebMvcTest(controllers = CommentController.class,
-        excludeAutoConfiguration = {SecurityAutoConfiguration.class})
-class CommentControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
+@WebMvcTest(controllers = CommentController.class)
+@Import(SecurityTestConfig.class)
+class CommentControllerTest extends WebMvcTestSupport {
 
     @MockitoBean
     private CommentService commentService;
 
-    @MockitoBean
-    private JwtUtils jwtUtils;
 
      @Test
      @DisplayName("댓글 생성 성공: 201 Created를 반환한다")
+     @WithCustomMockUser
      void createComment_Success() throws Exception {
          // given
          Long postId = 1L;
@@ -82,6 +80,7 @@ class CommentControllerTest {
 
      @Test
      @DisplayName("대댓글 생성 성공: 부모 댓글 ID가 포함되어도 정상 처리된다")
+     @WithCustomMockUser
      void createReply_Success() throws Exception {
          // given
          Long postId = 1L;
@@ -99,8 +98,8 @@ class CommentControllerTest {
      }
 
     @Test
-    @WithMockUser
     @DisplayName("댓글 수정 성공 시 200 OK를 반환한다.")
+    @WithCustomMockUser
     void updateComment_Success() throws Exception {
         // given
         Long commentId = 1L;
@@ -131,11 +130,12 @@ class CommentControllerTest {
 
     @Test
     @DisplayName("댓글 삭제 성공: 200 OK와 삭제된 ID를 반환한다")
+    @WithCustomMockUser
     void deleteComment_Success() throws Exception {
         // given
         Long commentId = 100L;
 
-        willDoNothing().given(commentService).deleteComment(commentId, anyLong());
+        willDoNothing().given(commentService).deleteComment(anyLong(), anyLong());
 
         // when & then
         mockMvc.perform(delete("/api/comments/{commentId}", commentId))
@@ -145,11 +145,12 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.data").value(commentId))
                 .andExpect(jsonPath("$.message").value("댓글 삭제 완료"));
 
-        verify(commentService, times(1)).deleteComment(commentId, anyLong());
+        verify(commentService, times(1)).deleteComment(anyLong(), anyLong());
     }
 
     @Test
     @DisplayName("댓글 수정 실패: 존재하지 않는 댓글을 수정하려 하면 404 Not Found를 반환한다")
+    @WithCustomMockUser
     void updateComment_Fail_NotFound() throws Exception {
         // given
         Long commentId = 999L;
@@ -169,6 +170,7 @@ class CommentControllerTest {
 
     @Test
     @DisplayName("대댓글 조회 실패: 부모 댓글이 존재하지 않으면 404 Not Found를 반환한다")
+    @WithCustomMockUser
     void getReplies_Fail_ParentNotFound() throws Exception {
         // given
         Long commentId = 999L;
@@ -186,6 +188,7 @@ class CommentControllerTest {
 
     @Test
     @DisplayName("댓글 생성 실패: 게시글이 존재하지 않으면 404 Not Found를 반환한다")
+    @WithCustomMockUser
     void createComment_Fail_PostNotFound() throws Exception {
         // given
         Long postId = 999L;
