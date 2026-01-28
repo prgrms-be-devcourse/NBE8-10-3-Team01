@@ -1,5 +1,7 @@
 package com.plog.domain.post.controller;
 
+import com.plog.domain.comment.constant.CommentConstants;
+import com.plog.domain.hashtag.service.HashTagService;
 import com.plog.domain.post.dto.PostCreateReq;
 import com.plog.domain.post.dto.PostInfoRes;
 import com.plog.domain.post.dto.PostListRes;
@@ -49,6 +51,7 @@ import java.net.URI;
 public class PostController {
 
     private final PostService postService;
+    private final HashTagService hashTagService;
 
     /**
      * 새로운 게시물을 생성합니다.
@@ -62,6 +65,8 @@ public class PostController {
             @Valid @RequestBody PostCreateReq request
     ) {
         Long postId = postService.createPost(user.getId(), request);
+        hashTagService.createPostHashTag(postId, request.hashtags());
+
         return ResponseEntity.created(URI.create("/api/posts/" + postId)).build();
     }
 
@@ -156,7 +161,7 @@ public class PostController {
     public ResponseEntity<Response<Slice<PostInfoRes>>> getPostsByMember(
             @PathVariable Long memberId,
             @PageableDefault(size = 10, sort = "createDate", direction = Sort.Direction.DESC) Pageable pageable
-            ) {
+    ) {
         Slice<PostInfoRes> posts = postService.getPostsByMember(memberId, pageable);
 
         return ResponseEntity.ok(CommonResponse.success(posts, "사용자 게시글 목록 조회 성공"));

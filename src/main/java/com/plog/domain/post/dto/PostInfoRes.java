@@ -1,10 +1,12 @@
 package com.plog.domain.post.dto;
 
 import com.plog.domain.comment.dto.CommentInfoRes;
+import com.plog.domain.hashtag.entity.PostHashTag;
 import com.plog.domain.post.entity.Post;
 import org.springframework.data.domain.Slice;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 게시물 상세 정보를 클라이언트에게 전달하기 위한 응답 데이터 레코드입니다.
@@ -37,6 +39,7 @@ public record PostInfoRes(
         LocalDateTime createDate,
         LocalDateTime modifyDate,
         Slice<CommentInfoRes> comments,
+        List<String> hashtags
         String nickname,
         String profileImage
 ) {
@@ -55,6 +58,10 @@ public record PostInfoRes(
                 post.getCreateDate(),
                 post.getModifyDate(),
                 null,
+                post.getPostHashTags().stream()
+                        .map(PostHashTag::getDisplayName)
+                        .toList()
+
                 post.getMember().getNickname(),
                 post.getMember().getProfileImage() != null ? post.getMember().getProfileImage().getAccessUrl() : null
         );
@@ -75,6 +82,9 @@ public record PostInfoRes(
                 post.getCreateDate(),
                 post.getModifyDate(),
                 comments,
+                post.getPostHashTags().stream()
+                        .map(PostHashTag::getDisplayName)
+                        .toList()
                 post.getMember().getNickname(),
                 post.getMember().getProfileImage() != null ? post.getMember().getProfileImage().getAccessUrl() : null
         );

@@ -2,6 +2,8 @@ package com.plog.domain.post.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
+import java.util.List;
+
 /**
  * 게시물 생성을 위해 클라이언트로부터 전달받는 요청 데이터 레코드입니다.
  * <p>
@@ -31,6 +33,8 @@ public record PostCreateReq(
 
         @NotBlank(message = "본문은 필수 입력 항목입니다.")
         String content,
+
+        List<String> hashtags
 
         String thumbnail
 ) {
