@@ -90,7 +90,7 @@ public class PostServiceImpl implements PostService {
                 Sort.by(Sort.Direction.ASC, CommentConstants.DEFAULT_SORT_FIELD)
         );
 
-        Slice<Comment> comments = commentRepository.findByPostIdAndParentIsNull(id, pageable);
+        Slice<Comment> comments = commentRepository.findCommentsWithMemberAndImageByPostId(id, pageable);
 
         Slice<CommentInfoRes> commentResSlice = comments.map(this::convertToCommentInfoRes);
 
@@ -105,8 +105,7 @@ public class PostServiceImpl implements PostService {
                 Sort.by("createDate").ascending()
         );
 
-        Slice<Comment> replySlice = commentRepository.findByParentId(comment.getId(), replyPageable);
-
+        Slice<Comment> replySlice = commentRepository.findRepliesWithMemberAndImageByParentId(comment.getId(), replyPageable);
 
         return new CommentInfoRes(comment, replySlice.map(ReplyInfoRes::new));
     }
