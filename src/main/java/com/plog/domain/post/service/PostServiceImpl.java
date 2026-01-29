@@ -5,6 +5,8 @@ import com.plog.domain.comment.dto.CommentInfoRes;
 import com.plog.domain.comment.dto.ReplyInfoRes;
 import com.plog.domain.comment.entity.Comment;
 import com.plog.domain.comment.repository.CommentRepository;
+import com.plog.domain.hashtag.repository.PostHashTagRepository;
+import com.plog.domain.hashtag.service.HashTagService;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.domain.post.dto.PostCreateReq;
@@ -52,6 +54,8 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final MemberRepository memberRepository;
+    private final HashTagService hashTagService;
+    private final PostHashTagRepository postHashTagRepository;
 
     @Override
     @Transactional
@@ -131,6 +135,8 @@ public class PostServiceImpl implements PostService {
         String summary = extractSummary(plainText);
 
         post.update(req.title(), req.content(), summary, req.thumbnail());
+
+        hashTagService.updatePostHashTag(postId, req.hashtags());
     }
 
     @Override
@@ -148,7 +154,13 @@ public class PostServiceImpl implements PostService {
                     "해당 게시물을 삭제할 권한이 없습니다.");
         }
 
-        // 3. 게시물 삭제
+        // 3. 제약 조건 위반을 방지하기 위해 자식(대댓글)부터 삭제
+        commentRepository.deleteRepliesByPostId(postId);
+        // 4. 그 후 부모 댓글 삭제
+        commentRepository.deleteParentsByPostId(postId);
+        // 5. 연결된 해시태그 정보 삭제
+        postHashTagRepository.deleteAllByPostId(postId);
+        // 6. 게시물 삭제
         postRepository.delete(post);
     }
 
