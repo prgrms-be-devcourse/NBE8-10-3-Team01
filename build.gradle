@@ -71,6 +71,20 @@ dependencies {
 
     // Kotlin Data Class를 JSON으로 변환하기 위한 필수 모듈
     implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+}
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
+    }
+}
+
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
 }
 
 // .env 로부터 테스트 환경변수 로드
