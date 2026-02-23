@@ -1,7 +1,6 @@
 package com.plog.global.exception.exceptions;
 
 import com.plog.global.exception.errorCode.ErrorCode;
-import lombok.Getter;
 
 /**
  * 모든 커스텀 예외 클래스의 추상 부모 클래스입니다. 자체적으로는 사용되지 않습니다.
@@ -22,7 +21,6 @@ import lombok.Getter;
  * @see ErrorCode
  * @since 2026-01-15
  */
-@Getter
 public class BaseException extends RuntimeException {
     private final ErrorCode errorCode;
     private final String logMessage;
@@ -43,5 +41,13 @@ public class BaseException extends RuntimeException {
         super(clientMessage, null, false, false);
         this.errorCode = errorCode;
         this.logMessage = "[internal] " + logMessage;
+    }
+
+    public ErrorCode getErrorCode() {
+        return errorCode;
+    }
+
+    public String getLogMessage() {
+        return logMessage;
     }
 }

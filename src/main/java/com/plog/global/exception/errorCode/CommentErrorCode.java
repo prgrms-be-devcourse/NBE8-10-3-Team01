@@ -1,6 +1,5 @@
 package com.plog.global.exception.errorCode;
 
-import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -26,7 +25,6 @@ import org.springframework.http.HttpStatus;
  * @since 2026-01-20
  */
 
-@AllArgsConstructor
 public enum CommentErrorCode implements ErrorCode{
 
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."),
@@ -38,6 +36,11 @@ public enum CommentErrorCode implements ErrorCode{
 
     private final HttpStatus httpStatus;
     private final String message;
+
+    CommentErrorCode(HttpStatus httpStatus, String message) {
+        this.httpStatus = httpStatus;
+        this.message = message;
+    }
 
     public HttpStatus getHttpStatus() {
         return httpStatus;

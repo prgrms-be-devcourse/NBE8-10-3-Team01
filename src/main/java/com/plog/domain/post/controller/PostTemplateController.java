@@ -8,7 +8,6 @@ import com.plog.global.response.CommonResponse;
 import com.plog.global.response.Response;
 import com.plog.global.security.SecurityUser;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +23,13 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/posts/templates")
-@RequiredArgsConstructor
 public class PostTemplateController {
 
     private final PostTemplateService postTemplateService;
+
+    public PostTemplateController(PostTemplateService postTemplateService) {
+        this.postTemplateService = postTemplateService;
+    }
 
     @PostMapping
     public ResponseEntity<Void> createPostTemplate(@Valid @RequestBody PostTemplateInfoDto request,

@@ -1,8 +1,6 @@
 package com.plog.global.security;
 
 
-import lombok.Builder;
-import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 
@@ -18,7 +16,6 @@ import java.util.Collection;
  * {@link User} 클래스를 상속받아 구현되었습니다.
  *
  * <p><b>주요 생성자:</b><br>
- * {@code @Builder SecurityUser(Long id, String email, String password, String nickname, Collection authorities)}<br>
  * 빌더 패턴을 통해 생성되며, 부모 클래스인 User에 인증 정보를 전달합니다.
  *
  * <p><b>빈 관리:</b><br>
@@ -32,12 +29,10 @@ import java.util.Collection;
  * @since 2026-01-16
  */
 
-@Getter
 public class SecurityUser extends User {
     private final Long id;
     private final String nickname;
 
-    @Builder(builderMethodName = "securityUserBuilder")
     public SecurityUser(
             Long id,
             String email,
@@ -48,6 +43,58 @@ public class SecurityUser extends User {
         super(email, password, authorities); // email이 부모의 username에 저장됨
         this.id = id;
         this.nickname = nickname;
+    }
+
+    public static SecurityUserBuilder securityUserBuilder() {
+        return new SecurityUserBuilder();
+    }
+
+    public static class SecurityUserBuilder {
+        private Long id;
+        private String email;
+        private String password;
+        private String nickname;
+        private Collection<? extends GrantedAuthority> authorities;
+
+        SecurityUserBuilder() {
+        }
+
+        public SecurityUserBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public SecurityUserBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public SecurityUserBuilder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public SecurityUserBuilder nickname(String nickname) {
+            this.nickname = nickname;
+            return this;
+        }
+
+        public SecurityUserBuilder authorities(Collection<? extends GrantedAuthority> authorities) {
+            this.authorities = authorities;
+            return this;
+        }
+
+        public SecurityUser build() {
+            return new SecurityUser(id, email, password, nickname, authorities);
+        }
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getNickname() {
+        return nickname;
     }
 
     /**

@@ -1,7 +1,8 @@
 package com.plog.global.exception.exceptionHadler;
 
 import com.plog.global.response.CommonResponse;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.ConversionNotSupportedException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.core.annotation.Order;
@@ -67,10 +68,10 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  * @see ExceptionHandlerOrder
  * @since 2026-01-15
  */
-@Slf4j
 @RestControllerAdvice
 @Order(ExceptionHandlerOrder.GLOBAL_EXCEPTION_HANDLER)
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private ResponseEntity<Object> fail(String message, HttpStatus status) {
         return ResponseEntity.status(status).body(CommonResponse.fail(message));

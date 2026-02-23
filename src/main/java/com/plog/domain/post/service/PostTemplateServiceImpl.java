@@ -11,11 +11,8 @@ import com.plog.domain.post.repository.PostTemplateRepository;
 import com.plog.global.exception.errorCode.PostErrorCode;
 import com.plog.global.exception.exceptions.PostException;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,14 +40,21 @@ import java.util.Objects;
  * @since 2026-01-26
  */
 @Service
-@RequiredArgsConstructor
 public class PostTemplateServiceImpl implements PostTemplateService {
 
     private final PostTemplateRepository postTemplateRepository;
     private final MemberRepository memberRepository;
 
-    @Getter
     private List<PostTemplateSeed> seeds;
+
+    public PostTemplateServiceImpl(PostTemplateRepository postTemplateRepository, MemberRepository memberRepository) {
+        this.postTemplateRepository = postTemplateRepository;
+        this.memberRepository = memberRepository;
+    }
+
+    public List<PostTemplateSeed> getSeeds() {
+        return seeds;
+    }
 
     @PostConstruct
     public void init() {

@@ -1,10 +1,8 @@
 package com.plog.domain.image.entity;
 
 import com.plog.domain.member.entity.Member;
-import com.plog.domain.post.entity.Post;
 import com.plog.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
 
 /**
  * 게시글에 첨부되는 이미지 파일의 메타데이터를 관리하는 JPA 엔티티입니다.
@@ -19,7 +17,6 @@ import lombok.*;
  * 스프링 빈이 아니며, JPA 영속성 컨텍스트(Persistence Context)에 의해 생명주기가 관리됩니다.
  *
  * <p><b>주요 패턴:</b><br>
- * {@code @Builder}를 통해 객체 생성 시 가독성을 높이고,
  * {@code @NoArgsConstructor(access = AccessLevel.PROTECTED)}로 무분별한 기본 생성자 호출을 방지합니다.
  *
  * @author Jaewon Ryu
@@ -27,10 +24,6 @@ import lombok.*;
  * @see
  */
 @Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 public class Image extends BaseEntity {
 
     @Column(nullable = false)
@@ -45,4 +38,68 @@ public class Image extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member uploader;
+
+    protected Image() {
     }
+
+    public Image(String originalName, String storedName, String accessUrl, Member uploader) {
+        this.originalName = originalName;
+        this.storedName = storedName;
+        this.accessUrl = accessUrl;
+        this.uploader = uploader;
+    }
+
+    public static ImageBuilder builder() {
+        return new ImageBuilder();
+    }
+
+    public static class ImageBuilder {
+        private String originalName;
+        private String storedName;
+        private String accessUrl;
+        private Member uploader;
+
+        ImageBuilder() {
+        }
+
+        public ImageBuilder originalName(String originalName) {
+            this.originalName = originalName;
+            return this;
+        }
+
+        public ImageBuilder storedName(String storedName) {
+            this.storedName = storedName;
+            return this;
+        }
+
+        public ImageBuilder accessUrl(String accessUrl) {
+            this.accessUrl = accessUrl;
+            return this;
+        }
+
+        public ImageBuilder uploader(Member uploader) {
+            this.uploader = uploader;
+            return this;
+        }
+
+        public Image build() {
+            return new Image(originalName, storedName, accessUrl, uploader);
+        }
+    }
+
+    public String getOriginalName() {
+        return originalName;
+    }
+
+    public String getStoredName() {
+        return storedName;
+    }
+
+    public String getAccessUrl() {
+        return accessUrl;
+    }
+
+    public Member getUploader() {
+        return uploader;
+    }
+}

@@ -9,7 +9,6 @@ import com.plog.global.response.CommonResponse;
 import com.plog.global.response.Response;
 import com.plog.global.security.SecurityUser;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -45,10 +44,13 @@ import java.net.URI;
  */
 @RestController
 @RequestMapping("/api/posts")
-@RequiredArgsConstructor
 public class PostController {
 
     private final PostService postService;
+
+    public PostController(PostService postService) {
+        this.postService = postService;
+    }
 
     /**
      * 새로운 게시물을 생성합니다.

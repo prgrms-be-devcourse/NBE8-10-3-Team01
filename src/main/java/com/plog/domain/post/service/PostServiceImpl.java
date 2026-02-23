@@ -22,7 +22,6 @@ import com.plog.global.exception.errorCode.AuthErrorCode;
 import com.plog.global.exception.errorCode.PostErrorCode;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.PostException;
-import lombok.RequiredArgsConstructor;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.text.TextContentRenderer;
@@ -49,7 +48,6 @@ import java.util.List;
  */
 @Service
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
 
     /** 요약본 생성을 위한 최대 글자 수 기준입니다. */
@@ -60,6 +58,14 @@ public class PostServiceImpl implements PostService {
     private final MemberRepository memberRepository;
     private final PostHashTagRepository postHashTagRepository;
     private final HashTagRepository hashTagRepository;
+
+    public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository, MemberRepository memberRepository, PostHashTagRepository postHashTagRepository, HashTagRepository hashTagRepository) {
+        this.postRepository = postRepository;
+        this.commentRepository = commentRepository;
+        this.memberRepository = memberRepository;
+        this.postHashTagRepository = postHashTagRepository;
+        this.hashTagRepository = hashTagRepository;
+    }
 
     @Override
     @Transactional

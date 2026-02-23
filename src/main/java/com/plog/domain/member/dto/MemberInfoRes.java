@@ -1,7 +1,6 @@
 package com.plog.domain.member.dto;
 
 import com.plog.domain.member.entity.Member;
-import lombok.Builder;
 
 import java.time.LocalDateTime;
 
@@ -11,7 +10,6 @@ import java.time.LocalDateTime;
  * @author jack8
  * @since 2026-01-18
  */
-@Builder
 public record MemberInfoRes(
         Long id,
         String email,
@@ -19,6 +17,50 @@ public record MemberInfoRes(
         String profileImageUrl,
         LocalDateTime createDate
 ) {
+
+    public static MemberInfoResBuilder builder() {
+        return new MemberInfoResBuilder();
+    }
+
+    public static class MemberInfoResBuilder {
+        private Long id;
+        private String email;
+        private String nickname;
+        private String profileImageUrl;
+        private LocalDateTime createDate;
+
+        MemberInfoResBuilder() {
+        }
+
+        public MemberInfoResBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public MemberInfoResBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public MemberInfoResBuilder nickname(String nickname) {
+            this.nickname = nickname;
+            return this;
+        }
+
+        public MemberInfoResBuilder profileImageUrl(String profileImageUrl) {
+            this.profileImageUrl = profileImageUrl;
+            return this;
+        }
+
+        public MemberInfoResBuilder createDate(LocalDateTime createDate) {
+            this.createDate = createDate;
+            return this;
+        }
+
+        public MemberInfoRes build() {
+            return new MemberInfoRes(id, email, nickname, profileImageUrl, createDate);
+        }
+    }
 
     public static MemberInfoRes from(Member member) {
         return MemberInfoRes.builder()

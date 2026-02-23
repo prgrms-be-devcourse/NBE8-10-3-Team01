@@ -9,7 +9,6 @@ import com.plog.global.response.CommonResponse;
 import com.plog.global.response.Response;
 import com.plog.global.security.SecurityUser;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,8 +34,7 @@ import java.net.URI;
  * </p>
  *
  * <p><b>빈 관리:</b><br>
- * {@link RestController}와 {@link RequiredArgsConstructor}를 통해
- * Spring 컨테이너에 의해 싱글톤 빈으로 관리된다.
+ * {@link RestController}를 통해 Spring 컨테이너에 의해 싱글톤 빈으로 관리된다.
  * </p>
  *
  * <p><b>외부 모듈:</b><br>
@@ -50,9 +48,12 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/api")
-@RequiredArgsConstructor
 public class CommentController {
     private final CommentService commentService;
+
+    public CommentController(CommentService commentService) {
+        this.commentService = commentService;
+    }
 
     /**
      * 해당 게시물의 루트 댓글들을 최대 10개씩 조회합니다.

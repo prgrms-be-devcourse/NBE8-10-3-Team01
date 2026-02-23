@@ -1,6 +1,5 @@
 package com.plog.global.exception.errorCode;
 
-import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -18,7 +17,6 @@ import org.springframework.http.HttpStatus;
  * @see com.plog.global.exception.exceptions.AuthException AuthException
  * @since 2026-01-15
  */
-@AllArgsConstructor
 public enum AuthErrorCode implements ErrorCode {
     // 조회 및 기본 관리
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
@@ -40,6 +38,11 @@ public enum AuthErrorCode implements ErrorCode {
 
     private final HttpStatus status;
     private final String message;
+
+    AuthErrorCode(HttpStatus status, String message) {
+        this.status = status;
+        this.message = message;
+    }
 
 
     @Override

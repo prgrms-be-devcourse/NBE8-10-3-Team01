@@ -4,7 +4,6 @@ import com.plog.domain.post.entity.Post;
 import com.plog.global.jpa.entity.BaseEntity;
 import com.plog.domain.member.entity.Member;
 import jakarta.persistence.*;
-import lombok.*;
 import org.hibernate.annotations.Formula;
 
 /**
@@ -30,11 +29,7 @@ import org.hibernate.annotations.Formula;
  * @see Member
  */
 
-@Getter
 @Entity
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
 public class Comment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -53,8 +48,82 @@ public class Comment extends BaseEntity {
     private Comment parent;
 
     @Column(nullable = false)
-    @Builder.Default
     private boolean deleted = false;
+
+    protected Comment() {
+    }
+
+    public Comment(Member author, Post post, String content, Comment parent, boolean deleted) {
+        this.author = author;
+        this.post = post;
+        this.content = content;
+        this.parent = parent;
+        this.deleted = deleted;
+    }
+
+    public static CommentBuilder builder() {
+        return new CommentBuilder();
+    }
+
+    public static class CommentBuilder {
+        private Member author;
+        private Post post;
+        private String content;
+        private Comment parent;
+        private boolean deleted = false;
+
+        CommentBuilder() {
+        }
+
+        public CommentBuilder author(Member author) {
+            this.author = author;
+            return this;
+        }
+
+        public CommentBuilder post(Post post) {
+            this.post = post;
+            return this;
+        }
+
+        public CommentBuilder content(String content) {
+            this.content = content;
+            return this;
+        }
+
+        public CommentBuilder parent(Comment parent) {
+            this.parent = parent;
+            return this;
+        }
+
+        public CommentBuilder deleted(boolean deleted) {
+            this.deleted = deleted;
+            return this;
+        }
+
+        public Comment build() {
+            return new Comment(author, post, content, parent, deleted);
+        }
+    }
+
+    public Member getAuthor() {
+        return author;
+    }
+
+    public Post getPost() {
+        return post;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public Comment getParent() {
+        return parent;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
 
     public void modify(String content){
         this.content = content;
@@ -67,4 +136,8 @@ public class Comment extends BaseEntity {
 
     @Formula("(SELECT count(*) FROM comment c WHERE c.parent_id = id AND c.deleted = false)")
     private long replyCount;
+
+    public long getReplyCount() {
+        return replyCount;
+    }
 }

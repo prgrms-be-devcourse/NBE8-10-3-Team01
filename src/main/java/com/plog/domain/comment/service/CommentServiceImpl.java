@@ -16,19 +16,23 @@ import com.plog.global.exception.errorCode.PostErrorCode;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.CommentException;
 import com.plog.global.exception.exceptions.PostException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
-@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
+
+    public CommentServiceImpl(CommentRepository commentRepository, PostRepository postRepository, MemberRepository memberRepository) {
+        this.commentRepository = commentRepository;
+        this.postRepository = postRepository;
+        this.memberRepository = memberRepository;
+    }
 
     @Override
     @Transactional

@@ -3,15 +3,8 @@ package com.plog.domain.member.entity;
 import com.plog.domain.image.entity.Image;
 import com.plog.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.*;
-
-import static lombok.AccessLevel.PROTECTED;
 
 @Entity
-@Getter
-@Builder
-@NoArgsConstructor(access = PROTECTED)
-@AllArgsConstructor
 public class Member extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String email;
@@ -25,6 +18,70 @@ public class Member extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_image_id")
     private Image profileImage;
+
+    protected Member() {
+    }
+
+    public Member(String email, String password, String nickname, Image profileImage) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.profileImage = profileImage;
+    }
+
+    public static MemberBuilder builder() {
+        return new MemberBuilder();
+    }
+
+    public static class MemberBuilder {
+        private String email;
+        private String password;
+        private String nickname;
+        private Image profileImage;
+
+        MemberBuilder() {
+        }
+
+        public MemberBuilder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public MemberBuilder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public MemberBuilder nickname(String nickname) {
+            this.nickname = nickname;
+            return this;
+        }
+
+        public MemberBuilder profileImage(Image profileImage) {
+            this.profileImage = profileImage;
+            return this;
+        }
+
+        public Member build() {
+            return new Member(email, password, nickname, profileImage);
+        }
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public Image getProfileImage() {
+        return profileImage;
+    }
 
     /**
      * 엔티티의 update 메서드입니다.
