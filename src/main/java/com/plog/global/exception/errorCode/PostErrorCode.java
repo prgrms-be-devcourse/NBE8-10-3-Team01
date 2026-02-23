@@ -1,6 +1,5 @@
 package com.plog.global.exception.errorCode;
 
-import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -17,7 +16,6 @@ import org.springframework.http.HttpStatus;
  * @see com.plog.global.exception.exceptions.PostException
  * @since 2026-01-16
  */
-@AllArgsConstructor
 public enum PostErrorCode implements ErrorCode {
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
     POST_CREATE_FAIL(HttpStatus.BAD_REQUEST, "게시글 작성에 실패했습니다."),
@@ -29,6 +27,11 @@ public enum PostErrorCode implements ErrorCode {
 
     private final HttpStatus status;
     private final String message;
+
+    PostErrorCode(HttpStatus status, String message) {
+        this.status = status;
+        this.message = message;
+    }
 
     @Override
     public HttpStatus getHttpStatus() {

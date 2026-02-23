@@ -8,7 +8,6 @@ import com.plog.global.exception.errorCode.ImageErrorCode;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.ImageException;
 import com.plog.global.minio.storage.ObjectStorage;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,8 +29,8 @@ import java.util.UUID;
  * {@link ImageService} 인터페이스를 구현합니다.
  *
  * <p><b>주요 생성자:</b><br>
- * {@code ImageServiceImpl(ObjectStorage objectStorage, ImageRepository imageRepository)} <br>
- * 롬복의 {@code @RequiredArgsConstructor}를 통해 필요한 의존성을 주입받습니다. <br>
+ * {@code ImageServiceImpl(ObjectStorage objectStorage, ImageRepository imageRepository, MemberRepository memberRepository)} <br>
+ * 필요한 의존성을 주입받습니다. <br>
  *
  * <p><b>빈 관리:</b><br>
  * {@code @Service} 어노테이션을 통해 스프링 빈으로 등록됩니다. <br>
@@ -47,12 +46,17 @@ import java.util.UUID;
  */
 
 @Service
-@RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
 
     private final ObjectStorage objectStorage;
     private final ImageRepository imageRepository;
     private final MemberRepository memberRepository;
+
+    public ImageServiceImpl(ObjectStorage objectStorage, ImageRepository imageRepository, MemberRepository memberRepository) {
+        this.objectStorage = objectStorage;
+        this.imageRepository = imageRepository;
+        this.memberRepository = memberRepository;
+    }
 
     @Override
     @Transactional

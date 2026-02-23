@@ -5,7 +5,6 @@ import com.plog.domain.image.service.ProfileImageService;
 import com.plog.global.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,18 +22,21 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * <p><b>주요 생성자:</b><br>
  * {@code ProfileImageController(ProfileImageService profileImageService)} <br>
- * {@code @RequiredArgsConstructor}를 통해 서비스 빈을 주입받습니다.
+ * 서비스 빈을 주입받습니다.
  *
  * @author Jaewon Ryu
  * @since 2026-01-23
  */
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/members")
 @Tag(name = "Profile Image", description = "프로필 이미지 관련 API")
 public class ProfileImageController {
 
     private final ProfileImageService profileImageService;
+
+    public ProfileImageController(ProfileImageService profileImageService) {
+        this.profileImageService = profileImageService;
+    }
 
     /**
      * 프로필 이미지 업로드 (수정)

@@ -4,7 +4,6 @@ import com.plog.domain.image.dto.ImageUploadRes;
 import com.plog.domain.image.service.ImageService;
 import com.plog.global.response.CommonResponse;
 import com.plog.global.security.SecurityUser;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,17 +23,20 @@ import java.util.List;
  *
  * <p><b>주요 생성자:</b><br>
  * {@code ImageController(ImageService imageService)} <br>
- * {@code @RequiredArgsConstructor}를 통해 서비스 빈을 주입받습니다.
+ * 서비스 빈을 주입받습니다.
  *
  * @author Jaewon Ryu
  * @since 2026-01-20
  */
 @RestController
 @RequestMapping(value = "/api/images", produces = MediaType.APPLICATION_JSON_VALUE)
-@RequiredArgsConstructor
 public class ImageController {
 
     private final ImageService imageService;
+
+    public ImageController(ImageService imageService) {
+        this.imageService = imageService;
+    }
 
     /**
      * 단일 이미지를 업로드합니다.

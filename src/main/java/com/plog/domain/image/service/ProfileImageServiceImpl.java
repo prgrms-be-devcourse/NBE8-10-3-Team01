@@ -9,7 +9,6 @@ import com.plog.global.exception.errorCode.ImageErrorCode;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.ImageException;
 import com.plog.global.minio.storage.ObjectStorage;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -33,7 +32,7 @@ import static com.plog.global.exception.errorCode.AuthErrorCode.USER_NOT_FOUND;
  *
  * <p><b>주요 생성자:</b><br>
  * {@code ProfileImageServiceImpl(MemberRepository, ImageRepository, ObjectStorage)} <br>
- * 롬복의 {@code @RequiredArgsConstructor}를 통해 필요한 의존성을 주입받습니다. <br>
+ * 필요한 의존성을 주입받습니다. <br>
  *
  * <p><b>빈 관리:</b><br>
  * {@code @Service} 어노테이션을 통해 스프링 빈으로 등록됩니다. <br>
@@ -48,12 +47,17 @@ import static com.plog.global.exception.errorCode.AuthErrorCode.USER_NOT_FOUND;
  * @since 2026-01-23
  */
 @Service
-@RequiredArgsConstructor
 public class ProfileImageServiceImpl implements ProfileImageService {
 
     private final MemberRepository memberRepository;
     private final ImageRepository imageRepository;
     private final ObjectStorage objectStorage;
+
+    public ProfileImageServiceImpl(MemberRepository memberRepository, ImageRepository imageRepository, ObjectStorage objectStorage) {
+        this.memberRepository = memberRepository;
+        this.imageRepository = imageRepository;
+        this.objectStorage = objectStorage;
+    }
 
     @Override
     @Transactional

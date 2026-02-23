@@ -11,7 +11,6 @@ import com.plog.global.security.TokenResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +26,7 @@ import java.net.URI;
  * 상속 정보 없음.
  *
  * <p><b>주요 생성자:</b><br>
- * {@code AuthController(AuthService authService, TokenResolver tokenResolver)}<br>
+ * {@code AuthController(AuthService authService, TokenResolver tokenResolver, PostTemplateService postTemplateService)}<br>
  * 생성자 주입을 통해 인증 비즈니스 로직과 토큰 관리 컴포넌트를 주입받습니다.
  *
  * <p><b>빈 관리:</b><br>
@@ -45,11 +44,16 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/api/members")
-@RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
     private final TokenResolver tokenResolver;
     private final PostTemplateService postTemplateService;
+
+    public AuthController(AuthService authService, TokenResolver tokenResolver, PostTemplateService postTemplateService) {
+        this.authService = authService;
+        this.tokenResolver = tokenResolver;
+        this.postTemplateService = postTemplateService;
+    }
 
     /**
      * 새로운 회원을 등록(회원가입)합니다.

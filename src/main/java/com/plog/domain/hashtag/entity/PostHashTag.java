@@ -3,14 +3,8 @@ package com.plog.domain.hashtag.entity;
 import com.plog.domain.post.entity.Post;
 import com.plog.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "post_hashtag")
 public class PostHashTag extends BaseEntity {
 
@@ -24,10 +18,56 @@ public class PostHashTag extends BaseEntity {
 
     private String displayName;
 
-    @Builder
+    protected PostHashTag() {
+    }
+
     public PostHashTag(Post post, HashTag hashTag, String displayName) {
         this.displayName = displayName;
         this.post = post;
         this.hashTag = hashTag;
+    }
+
+    public static PostHashTagBuilder builder() {
+        return new PostHashTagBuilder();
+    }
+
+    public static class PostHashTagBuilder {
+        private Post post;
+        private HashTag hashTag;
+        private String displayName;
+
+        PostHashTagBuilder() {
+        }
+
+        public PostHashTagBuilder post(Post post) {
+            this.post = post;
+            return this;
+        }
+
+        public PostHashTagBuilder hashTag(HashTag hashTag) {
+            this.hashTag = hashTag;
+            return this;
+        }
+
+        public PostHashTagBuilder displayName(String displayName) {
+            this.displayName = displayName;
+            return this;
+        }
+
+        public PostHashTag build() {
+            return new PostHashTag(post, hashTag, displayName);
+        }
+    }
+
+    public Post getPost() {
+        return post;
+    }
+
+    public HashTag getHashTag() {
+        return hashTag;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 }

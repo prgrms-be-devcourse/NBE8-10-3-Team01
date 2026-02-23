@@ -4,8 +4,8 @@ import com.plog.global.exception.errorCode.ImageErrorCode;
 import com.plog.global.exception.exceptions.ImageException;
 import io.minio.*;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -37,13 +37,16 @@ import java.io.InputStream;
  * @author Jaewon Ryu
  * @since 2026-01-16
  */
-@Slf4j
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "minio", name = "enabled", havingValue = "true")
 public class MinioStorage implements ObjectStorage {
+    private static final Logger log = LoggerFactory.getLogger(MinioStorage.class);
 
     private final MinioClient minioClient;
+
+    public MinioStorage(MinioClient minioClient) {
+        this.minioClient = minioClient;
+    }
 
     @Value("${minio.endpoint}")
     private String endpoint;

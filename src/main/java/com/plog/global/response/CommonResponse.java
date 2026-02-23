@@ -1,7 +1,5 @@
 package com.plog.global.response;
 
-import lombok.Getter;
-
 /**
  * 응답 형식에 대한 템플릿입니다. 도메인 및 기능 코드/상태/데이터/메시지가 포함되어 있습니다.
  *
@@ -20,7 +18,6 @@ import lombok.Getter;
  * @author jack8
  * @since 2026-01-15
  */
-@Getter
 public class CommonResponse<T> implements Response<T> {
     private final String status;
     private final T data;
@@ -43,5 +40,20 @@ public class CommonResponse<T> implements Response<T> {
 
     public static <T> CommonResponse<T> fail(String message) {
         return new CommonResponse<>("fail", null, message);
+    }
+
+    @Override
+    public String getStatus() {
+        return status;
+    }
+
+    @Override
+    public T getData() {
+        return data;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
     }
 }

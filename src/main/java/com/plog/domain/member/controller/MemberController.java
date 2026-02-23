@@ -6,7 +6,6 @@ import com.plog.domain.member.service.MemberService;
 import com.plog.global.response.CommonResponse;
 import com.plog.global.response.Response;
 import com.plog.global.security.SecurityUser;
-import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +18,13 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/members")
-@AllArgsConstructor
 public class MemberController {
 
     private final MemberService memberService;
+
+    public MemberController(MemberService memberService) {
+        this.memberService = memberService;
+    }
 
     @GetMapping("/id/{id}")
     public ResponseEntity<Response<MemberInfoRes>> findMemberWithId(@PathVariable("id") Long id) {

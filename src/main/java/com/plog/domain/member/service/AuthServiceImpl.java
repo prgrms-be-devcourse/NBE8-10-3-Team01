@@ -9,8 +9,8 @@ import com.plog.global.exception.errorCode.AuthErrorCode;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.security.JwtUtils;
 import com.plog.global.security.TokenStore;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,15 +33,22 @@ import org.springframework.transaction.annotation.Transactional;
  * @since 2026-01-15
  */
 
-@Slf4j
 @Service
 @Transactional(readOnly = true)
-@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+    private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
+
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final TokenStore tokenStore;
+
+    public AuthServiceImpl(MemberRepository memberRepository, PasswordEncoder passwordEncoder, JwtUtils jwtUtils, TokenStore tokenStore) {
+        this.memberRepository = memberRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtUtils = jwtUtils;
+        this.tokenStore = tokenStore;
+    }
 
     @Override
     @Transactional

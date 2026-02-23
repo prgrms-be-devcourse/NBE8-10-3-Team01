@@ -1,7 +1,5 @@
 package com.plog.global.exception.errorCode;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -16,15 +14,13 @@ import org.springframework.http.HttpStatus;
  * - <b>Client Error (4xx):</b> 파일 누락, 지원하지 않는 확장자 등 잘못된 요청
  *
  * <p><b>주요 패턴:</b><br>
- * {@code @AllArgsConstructor}와 {@code @Getter}를 사용하여 불변 필드를 관리합니다.
+ * 불변 필드를 관리합니다.
  *
  * @author Jaewon Ryu
  * @see com.plog.global.exception.exceptions.ImageException
  * @since 2026-01-21
  */
 
-@Getter
-@AllArgsConstructor
 public enum ImageErrorCode implements ErrorCode {
     
     // 500: 서버 내부 에러 (MinIO 연결 실패 등)
@@ -39,4 +35,17 @@ public enum ImageErrorCode implements ErrorCode {
 
     private final HttpStatus httpStatus;
     private final String message;
+
+    ImageErrorCode(HttpStatus httpStatus, String message) {
+        this.httpStatus = httpStatus;
+        this.message = message;
+    }
+
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
+    }
+
+    public String getMessage() {
+        return message;
+    }
 }

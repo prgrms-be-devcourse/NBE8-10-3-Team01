@@ -1,8 +1,6 @@
 package com.plog.global.security;
 
 
-import lombok.Getter;
-
 import java.util.List;
 
 /**
@@ -31,7 +29,6 @@ import java.util.List;
  * @since 2026-01-20
  */
 
-@Getter
 public enum AccessURL {
     /** 인증 없이 모든 사용자에게 노출되는 공개 API 경로입니다. */
     PUBLIC(List.of(
@@ -48,5 +45,9 @@ public enum AccessURL {
 
     AccessURL(List<String> urls) {
         this.urls = urls;
+    }
+
+    public List<String> getUrls() {
+        return urls;
     }
 }

@@ -2,8 +2,8 @@ package com.plog.global.exception.exceptionHadler;
 
 import com.plog.global.exception.exceptions.BaseException;
 import com.plog.global.response.CommonResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
  *
  * <p><b>외부 모듈:</b><br>
- * 로그 표시를 위한 {@code Slf4j}를 사용합니다.(lombok)
+ * 로그 표시를 위한 {@code Slf4j}를 사용합니다.
  *
  * @author jack8
  * @see ExceptionHandlerOrder
@@ -30,11 +30,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * @since 2026-01-15
  */
 
-@Slf4j
 @RestControllerAdvice
-@RequiredArgsConstructor
 @Order(ExceptionHandlerOrder.DEFAULT_EXCEPTION_HANDLER)
 public class DefaultExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(DefaultExceptionHandler.class);
 
     private ResponseEntity<Object> fail(String message, HttpStatus status) {
         return ResponseEntity.status(status).body(CommonResponse.fail(message));

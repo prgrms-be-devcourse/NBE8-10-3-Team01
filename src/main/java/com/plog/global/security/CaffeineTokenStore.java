@@ -1,7 +1,6 @@
 package com.plog.global.security;
 
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
@@ -34,9 +33,12 @@ import static com.plog.global.config.CacheConfig.CACHE_NAME;
  */
 
 @Component
-@RequiredArgsConstructor
 public class CaffeineTokenStore implements TokenStore {
     private final CacheManager cacheManager;
+
+    public CaffeineTokenStore(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+    }
 
     @Override
     public void save(String email, String refreshToken) {

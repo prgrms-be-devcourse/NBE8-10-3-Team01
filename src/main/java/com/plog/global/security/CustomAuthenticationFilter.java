@@ -9,7 +9,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,12 +45,18 @@ import java.util.List;
  */
 
 @Component
-@RequiredArgsConstructor
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtils jwtUtils;
     private final TokenResolver tokenResolver;
     private final CustomUserDetailsService customUserDetailsService;
     private final TokenStore tokenStore;
+
+    public CustomAuthenticationFilter(JwtUtils jwtUtils, TokenResolver tokenResolver, CustomUserDetailsService customUserDetailsService, TokenStore tokenStore) {
+        this.jwtUtils = jwtUtils;
+        this.tokenResolver = tokenResolver;
+        this.customUserDetailsService = customUserDetailsService;
+        this.tokenStore = tokenStore;
+    }
 
     /**
      * 필터의 핵심 로직을 수행하며, Access Token의 유효성을 검사하고 만료 시 재발급을 시도합니다.
