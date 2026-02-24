@@ -1,6 +1,6 @@
-package com.plog.global.exception.exceptions;
+package com.plog.global.exception.exceptions
 
-import com.plog.global.exception.errorCode.PostErrorCode;
+import com.plog.global.exception.errorCode.PostErrorCode
 
 /**
  * 게시글 서비스 도메인에서 발생하는 예외를 처리하는 클래스입니다.
@@ -21,17 +21,8 @@ import com.plog.global.exception.errorCode.PostErrorCode;
  * @see PostErrorCode
  * @since 2026-01-16
  */
-public class PostException extends BaseException {
-
-    public PostException(PostErrorCode errorCode) {
-        super(errorCode);
-    }
-
-    public PostException(PostErrorCode errorCode, String logMessage) {
-        super(errorCode, logMessage);
-    }
-
-    public PostException(PostErrorCode errorCode, String logMessage, String clientMessage) {
-        super(errorCode, logMessage, clientMessage);
-    }
+class PostException : BaseException {
+    constructor(errorCode: PostErrorCode) : super(errorCode)
+    constructor(errorCode: PostErrorCode, logMessage: String) : super(errorCode, logMessage)
+    constructor(errorCode: PostErrorCode, logMessage: String, clientMessage: String) : super(errorCode, logMessage, clientMessage)
 }

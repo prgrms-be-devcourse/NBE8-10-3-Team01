@@ -1,6 +1,6 @@
-package com.plog.global.exception.exceptions;
+package com.plog.global.exception.exceptions
 
-import com.plog.global.exception.errorCode.AuthErrorCode;
+import com.plog.global.exception.errorCode.AuthErrorCode
 
 /**
  * 인증 / 인가 및 멤버 관리에서 발생하는 예외입니다.
@@ -23,17 +23,8 @@ import com.plog.global.exception.errorCode.AuthErrorCode;
  * @see BaseException
  * @since 2026-01-15
  */
-public class AuthException extends BaseException {
-
-    public AuthException(AuthErrorCode errorCode) {
-        super(errorCode);
-    }
-
-    public AuthException(AuthErrorCode errorCode, String logMessage) {
-        super(errorCode, logMessage);
-    }
-
-    public AuthException(AuthErrorCode errorCode, String logMessage, String clientMessage) {
-        super(errorCode, logMessage, clientMessage);
-    }
+class AuthException : BaseException {
+    constructor(errorCode: AuthErrorCode) : super(errorCode)
+    constructor(errorCode: AuthErrorCode, logMessage: String) : super(errorCode, logMessage)
+    constructor(errorCode: AuthErrorCode, logMessage: String, clientMessage: String) : super(errorCode, logMessage, clientMessage)
 }

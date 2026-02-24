@@ -1,6 +1,6 @@
-package com.plog.global.exception.errorCode;
+package com.plog.global.exception.errorCode
 
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus
 
 /**
  * 모든 errorCode enum class 의 인터페이스입니다. 해당 enum class 가 가져야 할 필드를 정의합니다.
@@ -14,9 +14,7 @@ import org.springframework.http.HttpStatus;
  * @see RuntimeException
  * @since 2026-01-15
  */
-public interface ErrorCode {
-
-    HttpStatus getHttpStatus();
-
-    String getMessage();
+interface ErrorCode {
+    val httpStatus: HttpStatus
+    val message: String
 }
