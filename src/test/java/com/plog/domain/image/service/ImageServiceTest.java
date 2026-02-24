@@ -51,6 +51,7 @@ class ImageServiceTest {
     @DisplayName("이미지 업로드 시 UUID가 적용된 고유한 파일명으로 저장소에 전달된다")
     void uploadImageSuccess() {
         // [Given]
+
         Long memberId = 1L;
         String originalFilename = "test-image.jpg";
         MockMultipartFile file = new MockMultipartFile(
@@ -58,9 +59,8 @@ class ImageServiceTest {
         );
         String mockUrl = "http://minio-url/bucket/uuid-filename.jpg";
 
-        // 🚨 [수정] findById Stubbing 제거 (서비스에서 호출하지 않음)
-        // 만약 서비스가 getReferenceById를 쓴다면 아래처럼 lenient()를 써서 유연하게 대처 가능
-        // lenient().when(memberRepository.getReferenceById(memberId)).thenReturn(new Member(...));
+        Member mockMember = Member.builder().build();
+        given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
 
         given(objectStorage.upload(any(MultipartFile.class), anyString()))
                 .willReturn(mockUrl);
@@ -94,7 +94,8 @@ class ImageServiceTest {
         );
         String mockUrl = "http://mock-url/img";
 
-        // 🚨 [수정] findById Stubbing 제거
+        Member mockMember = Member.builder().build();
+        given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
 
         given(objectStorage.upload(any(MultipartFile.class), anyString()))
                 .willReturn(mockUrl);
@@ -118,7 +119,8 @@ class ImageServiceTest {
         MockMultipartFile validFile = new MockMultipartFile("f1", "ok.jpg", "image/jpeg", "data".getBytes());
         MockMultipartFile invalidFile = new MockMultipartFile("f2", "bad.exe", "app/exe", "bad".getBytes());
 
-        // 🚨 [수정] findById Stubbing 제거
+        Member mockMember = Member.builder().build();
+        given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
 
         given(objectStorage.upload(any(MultipartFile.class), anyString()))
                 .willReturn("http://mock.jpg");
@@ -140,9 +142,6 @@ class ImageServiceTest {
         MockMultipartFile txtFile = new MockMultipartFile(
                 "file", "danger.exe", "application/x-msdownload", "content".getBytes()
         );
-
-        // 🚨 [수정] findById Stubbing 제거
-        // 이유: 확장자 검사(fail)가 DB 조회보다 먼저 일어나므로 DB 조회 메서드는 실행조차 되지 않음.
 
         // [When & Then]
         assertThatThrownBy(() -> imageService.uploadImage(txtFile, memberId))

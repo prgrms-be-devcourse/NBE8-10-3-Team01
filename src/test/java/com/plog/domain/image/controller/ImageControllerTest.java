@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 /**
  * ImageController의 웹 계층 단위 테스트입니다.
@@ -66,7 +67,7 @@ class ImageControllerTest extends WebMvcTestSupport {
                 List.of("http://minio/bucket/images/uuid.jpg"),
                 List.of()
         );
-        given(imageService.uploadImage(any(), any())).willReturn(mockResult);
+        given(imageService.uploadImage(any(), anyLong())).willReturn(mockResult);
 
         ResultActions resultActions = mockMvc
                 .perform(
@@ -103,7 +104,7 @@ class ImageControllerTest extends WebMvcTestSupport {
                 ),
                 List.of()
         );
-        given(imageService.uploadImages(anyList(), any())).willReturn(mockResult);
+        given(imageService.uploadImages(anyList(), anyLong())).willReturn(mockResult);
 
         ResultActions resultActions = mockMvc
                 .perform(
@@ -134,7 +135,7 @@ class ImageControllerTest extends WebMvcTestSupport {
                 List.of("http://minio/uuid1.jpg"),
                 List.of("invalid.txt")
         );
-        given(imageService.uploadImages(anyList(), any())).willReturn(mockResult);
+        given(imageService.uploadImages(anyList(), anyLong())).willReturn(mockResult);
 
         mockMvc.perform(multipart("/api/images/bulk").file(file1))
                 .andExpect(status().isOk())
@@ -151,7 +152,7 @@ class ImageControllerTest extends WebMvcTestSupport {
                 "file", "test.txt", "text/plain", "content".getBytes()
         );
 
-        given(imageService.uploadImage(any(), any()))
+        given(imageService.uploadImage(any(), anyLong()))
                 .willThrow(new com.plog.global.exception.exceptions.ImageException(
                         com.plog.global.exception.errorCode.ImageErrorCode.INVALID_FILE_EXTENSION,
                         "지원하지 않는 파일 형식입니다."
