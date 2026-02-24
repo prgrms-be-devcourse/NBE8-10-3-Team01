@@ -10,7 +10,7 @@ import com.plog.domain.member.entity.Member
  * @author Jaewon Ryu
  * @since 2026-01-23
  */
-
+@JvmRecord
 data class ProfileImageUploadRes(
     val memberId: Long?,
     val profileImageUrl: String?
