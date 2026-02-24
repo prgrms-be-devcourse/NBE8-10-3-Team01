@@ -1,6 +1,7 @@
 package com.plog.testUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import com.plog.domain.member.service.AuthService;
 import com.plog.global.security.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,9 @@ public abstract class WebMvcTestSupport {
     @Autowired
     protected MockMvc mockMvc;
 
-    protected final ObjectMapper objectMapper = new ObjectMapper();
+    protected final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new KotlinModule.Builder().build())
+            .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
     @MockitoBean
     protected JwtUtils jwtUtils;

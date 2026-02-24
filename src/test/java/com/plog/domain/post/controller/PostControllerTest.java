@@ -12,9 +12,14 @@ import com.plog.global.security.*;
 import com.plog.testUtil.SecurityTestConfig;
 import com.plog.testUtil.WebMvcTestSupport;
 import com.plog.testUtil.WithCustomMockUser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
@@ -40,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * JPA, Repository, Service 빈은 로드되지 않으며, MockitoBean을 통해 주입합니다.
  */
 @WebMvcTest(PostController.class)
-@Import(SecurityTestConfig.class)
+@Import({SecurityTestConfig.class})
 @ActiveProfiles("test")
 class PostControllerTest extends WebMvcTestSupport {
 
