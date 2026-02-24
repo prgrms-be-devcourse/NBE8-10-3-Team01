@@ -1,6 +1,6 @@
-package com.plog.global.exception.exceptions;
+package com.plog.global.exception.exceptions
 
-import com.plog.global.exception.errorCode.ErrorCode;
+import com.plog.global.exception.errorCode.ErrorCode
 
 /**
  * 이미지 처리 도메인에서 발생하는 모든 예외를 담당하는 커스텀 예외 클래스입니다.
@@ -25,18 +25,11 @@ import com.plog.global.exception.errorCode.ErrorCode;
  * @see BaseException
  * @since 2026-01-21
  */
+class ImageException : BaseException {
 
-public class ImageException extends BaseException {
+    constructor(errorCode: ErrorCode) : super(errorCode)
 
-    public ImageException(ErrorCode errorCode) {
-        super(errorCode);
-    }
+    constructor(errorCode: ErrorCode, logMessage: String) : super(errorCode, logMessage)
 
-    public ImageException(ErrorCode errorCode, String logMessage) {
-        super(errorCode, logMessage);
-    }
-
-    public ImageException(ErrorCode errorCode, String logMessage, String clientMessage) {
-        super(errorCode, logMessage, clientMessage);
-    }
+    constructor(errorCode: ErrorCode, logMessage: String, clientMessage: String) : super(errorCode, logMessage, clientMessage)
 }
