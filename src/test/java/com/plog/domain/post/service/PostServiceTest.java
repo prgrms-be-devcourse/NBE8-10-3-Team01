@@ -1,6 +1,7 @@
 package com.plog.domain.post.service;
 
 import com.plog.domain.comment.repository.CommentRepository;
+import com.plog.domain.hashtag.repository.HashTagRepository;
 import com.plog.domain.hashtag.repository.PostHashTagRepository;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
@@ -50,6 +51,9 @@ public class PostServiceTest {
 
     @Mock
     private PostHashTagRepository postHashTagRepository;
+
+    @Mock
+    private HashTagRepository hashTagRepository;
 
     @Test
     @DisplayName("게시글 저장 시 마크다운이 제거된 요약글이 자동 생성")

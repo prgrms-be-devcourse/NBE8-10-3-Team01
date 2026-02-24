@@ -1,12 +1,11 @@
-package com.plog.domain.post.service;
+package com.plog.domain.post.service
 
-import com.plog.domain.post.dto.PostCreateReq;
-import com.plog.domain.post.dto.PostInfoRes;
-import com.plog.domain.post.dto.PostListRes;
-import com.plog.domain.post.dto.PostUpdateReq;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-
+import com.plog.domain.post.dto.PostCreateReq
+import com.plog.domain.post.dto.PostInfoRes
+import com.plog.domain.post.dto.PostListRes
+import com.plog.domain.post.dto.PostUpdateReq
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 
 /**
  * 게시물 관련 비즈니스 로직을 정의하는 인터페이스입니다.
@@ -22,7 +21,7 @@ import org.springframework.data.domain.Slice;
  * @author MintyU
  * @since 2026-01-19
  */
-public interface PostService {
+interface PostService {
 
     /**
      * 새로운 게시물을 작성하고 저장합니다.
@@ -35,21 +34,21 @@ public interface PostService {
      * @param req 게시물 생성 요청 정보(title, content)
      * @return 저장된 게시물의 고유 식별자(ID)
      */
-    Long createPost(Long memberId, PostCreateReq req);
+    fun createPost(memberId: Long?, req: PostCreateReq?): Long?
 
     /**
      * 특정 ID의 게시물을 상세 조회합니다.
      * <p><b>실행 로직:</b><br>
-     * 1. 전달받은 ID로 게시물을 검색하며, 존재하지 않을 경우 {@code PostException}을 발생시킵니다. <br>
+     * 1. 전달받은 ID로 게시물을 검색하며, 존재하지 않을 경우 [com.plog.global.exception.exceptions.PostException]을 발생시킵니다. <br>
      * 2. 조회에 성공하면 해당 게시물의 누적 조회수를 1 증가시킵니다. <br>
-     * 3. 엔티티 객체를 응답용 DTO({@code PostInfoRes})로 변환하여 반환합니다.
+     * 3. 엔티티 객체를 응답용 DTO([PostInfoRes])로 변환하여 반환합니다.
      *
      * @param id 게시물 고유 식별자
      * @param pageNumber 조회할 댓글 pageNumber (최초 조회이므로 pageNumber==0)
      * @return 조회된 게시물 정보 DTO
      * @throws com.plog.global.exception.exceptions.PostException 게시물을 찾을 수 없을 때 발생
      */
-    PostInfoRes getPostDetail(Long id, int pageNumber);
+    fun getPostDetail(id: Long?, pageNumber: Int): PostInfoRes?
 
     /**
      * 게시물 목록을 페이징하여 조회합니다.
@@ -60,13 +59,13 @@ public interface PostService {
      *
      * @return 최신순으로 정렬된 게시물 정보 DTO 리스트
      */
-    Slice<PostListRes> getPosts(Pageable pageable);
+    fun getPosts(pageable: Pageable?): Slice<PostListRes>?
 
     /**
      * 기존 게시물을 수정합니다.
      * <p><b>실행 로직:</b><br>
-     * 1. 전달받은 ID로 게시물을 조회하며, 존재하지 않을 경우 {@code PostException}를 발생시킵니다. <br>
-     * 2. 게시물의 작성자 ID와, 전달받은 memberId가 같지 않을 경우 {@code AuthException}을 발생시킵니다. <br>
+     * 1. 전달받은 ID로 게시물을 조회하며, 존재하지 않을 경우 [com.plog.global.exception.exceptions.PostException]를 발생시킵니다. <br>
+     * 2. 게시물의 작성자 ID와, 전달받은 memberId가 같지 않을 경우 [com.plog.global.exception.exceptions.AuthException]을 발생시킵니다. <br>
      * 3. 본문이 수정됨에 따라 마크다운 파싱 및 요약본(Summary) 생성 로직을 다시 실행하여 업데이트합니다.
      *
      * @param memberId 이용자 식별자
@@ -75,13 +74,13 @@ public interface PostService {
      * @throws com.plog.global.exception.exceptions.PostException 게시물을 찾을 수 없을 때 발생
      * @throws com.plog.global.exception.exceptions.AuthException 작성자가 아닌 경우 발생
      */
-    void updatePost(Long memberId, Long postId, PostUpdateReq req);
+    fun updatePost(memberId: Long?, postId: Long?, req: PostUpdateReq?)
 
     /**
      * 특정 게시물을 삭제합니다.
      * <p><b>실행 로직:</b><br>
-     * 1. 전달받은 ID로 게시물을 조회하며, 존재하지 않을 경우 {@code PostException}을 발생시킵니다. <br>
-     * 2. 게시물의 작성자 ID와, 전달받은 memberId가 같지 않을 경우 {@code AuthException}을 발생시킵니다. <br>
+     * 1. 전달받은 ID로 게시물을 조회하며, 존재하지 않을 경우 [com.plog.global.exception.exceptions.PostException]을 발생시킵니다. <br>
+     * 2. 게시물의 작성자 ID와, 전달받은 memberId가 같지 않을 경우 [com.plog.global.exception.exceptions.AuthException]을 발생시킵니다. <br>
      * 3. 게시물이 존재하며 작성자가 맞다면 해당 리소스를 데이터베이스에서 영구적으로 삭제합니다.
      *
      * @param memberId 이용자 식별자
@@ -89,19 +88,19 @@ public interface PostService {
      * @throws com.plog.global.exception.exceptions.PostException 게시물을 찾을 수 없을 때 발생
      * @throws com.plog.global.exception.exceptions.AuthException 작성자가 아닌 경우 발생
      */
-    void deletePost(Long memberId, Long postId);
+    fun deletePost(memberId: Long?, postId: Long?)
 
     /**
      * 특정 회원이 작성한 모든 게시물 목록을 조회합니다.
      * <p><b>실행 로직:</b><br>
      * 1. 전달받은 회원 ID(memberId)를 외래 키로 가진 게시물들을 검색합니다.<br>
-     * 2. {@link Pageable} 객체에 담긴 페이징 및 정렬 정보를 쿼리에 반영합니다.<br>
+     * 2. [Pageable] 객체에 담긴 페이징 및 정렬 정보를 쿼리에 반영합니다.<br>
      * 3. 전체 개수를 세는 COUNT 쿼리 없이 $n+1$ 조회를 통해 다음 페이지 존재 여부만 확인합니다.<br>
-     * 4. 조회된 엔티티({@code Post})를 응답 DTO({@link PostInfoRes})로 변환하여 반환합니다.
+     * 4. 조회된 엔티티([com.plog.domain.post.entity.Post])를 응답 DTO([PostInfoRes])로 변환하여 반환합니다.
      *
-     * @param memberId 조회할 회원의 고유 식별자
+     * @param memberId 조회할 사용자의 고유 식별자
      * @param pageable 페이징 및 정렬 정보 (size, page, sort 등)
      * @return 해당 회원이 작성한 최신순 게시물 정보 DTO 리스트
      */
-    Slice<PostInfoRes> getPostsByMember(Long memberId, Pageable pageable);
+    fun getPostsByMember(memberId: Long?, pageable: Pageable?): Slice<PostInfoRes>?
 }
