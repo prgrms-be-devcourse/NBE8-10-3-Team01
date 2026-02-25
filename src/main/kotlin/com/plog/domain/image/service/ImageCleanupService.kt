@@ -34,7 +34,7 @@ class ImageCleanupService(
                 successCount++
                 log.info("스토리지 삭제 성공: {}", storedName)
             } catch (e: Exception) {
-                log.error("스토리지 삭제 실패 (무시): {} - {}", storedName, e.message)  // throw 제거!
+                log.error("스토리지 삭제 실패 (무시): {} - {}", storedName, e.message)
             }
         }
 
@@ -43,26 +43,26 @@ class ImageCleanupService(
         log.info("[ImageCleanupService] 청크 완료: DB {}개, 스토리지 성공 {}개", chunkIds.size, successCount)
     }
 
-        /**
+    /**
      * 고아 이미지를 조회하여 스토리지와 DB에서 모두 삭제합니다.
      * 업로드 후 3일 이내의 이미지는 삭제 대상에서 제외합니다.
      */
-        @Transactional(readOnly = true)
-        fun cleanupOrphanImages() {
-            val threshold = timeUtil.getNowKST().minusDays(3)
-            val orphanIds = imageRepository.findPendingOrphanIds(threshold)
+    @Transactional(readOnly = true)
+    fun cleanupOrphanImages() {
+        val threshold = timeUtil.getNowKST().minusDays(3)
+        val orphanIds = imageRepository.findPendingOrphanIds(threshold)
 
-            if (orphanIds.isEmpty()) {
-                log.info("[ImageCleanupService] 삭제할 고아 이미지가 없습니다.")
-                return
-            }
-
-            log.info("[ImageCleanupService] 총 ${orphanIds.size}개 → 청크 처리 시작 (500개)")
-
-            orphanIds.chunked(500).forEach { chunk ->
-                deleteOrphanChunk(chunk)
-            }
-
-            log.info("[ImageCleanupService] 전체 청크 처리 완료")
+        if (orphanIds.isEmpty()) {
+            log.info("[ImageCleanupService] 삭제할 고아 이미지가 없습니다.")
+            return
         }
+
+        log.info("[ImageCleanupService] 총 ${orphanIds.size}개 → 청크 처리 시작 (500개)")
+
+        orphanIds.chunked(500).forEach { chunk ->
+            deleteOrphanChunk(chunk)
+        }
+
+        log.info("[ImageCleanupService] 전체 청크 처리 완료")
+    }
 }
