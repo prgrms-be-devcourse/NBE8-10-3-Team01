@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
 interface HashTagService {
-    fun linkTags(post: Post, tagNames: List<String>?)
-    fun updateTags(post: Post, newTagNames: List<String>?)
+
     fun searchPostsByTag(keyword: String?, pageable: Pageable): Page<PostListRes>
 }

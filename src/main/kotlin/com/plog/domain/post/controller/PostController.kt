@@ -9,6 +9,7 @@ import com.plog.global.response.CommonResponse
 import com.plog.global.response.Response
 import com.plog.global.security.SecurityUser
 import jakarta.validation.Valid
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Sort
@@ -73,6 +74,26 @@ class PostController(private val postService: PostService) {
     ): ResponseEntity<Response<PostInfoRes>> {
         val response = postService.getPostDetail(id, pageNumber)
         return ResponseEntity.ok(CommonResponse.success(response, "게시글 조회 성공"))
+    }
+
+    /**
+     * 게시물 제목 키워드를 이용해 검색 결과를 페이징하여 조회합니다.
+     * <p>
+     * 제목에 특정 키워드가 포함된 모든 게시물을 조회하며,
+     * 검색어의 앞뒤 공백을 제거한 후 최신순으로 정렬하여 반환합니다.
+     *
+     * @param title    검색하고자 하는 제목 키워드
+     * @param pageable 페이징 및 정렬 정보 (기본값: 10개씩, 생성일 내림차순)
+     * @return 검색된 게시물 데이터 슬라이스와 성공 메시지를 포함한 공통 응답 객체
+     */
+
+    @GetMapping("/search/title")
+    fun searchByTitle(
+        @RequestParam("title") title: String,
+        pageable: Pageable
+    ): ResponseEntity<Page<PostListRes>> {
+        val result = postService.searchPostsByTitle(title, pageable)
+        return ResponseEntity.ok(result)
     }
 
     /**
