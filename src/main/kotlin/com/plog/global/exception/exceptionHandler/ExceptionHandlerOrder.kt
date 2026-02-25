@@ -1,4 +1,4 @@
-package com.plog.global.exception.exceptionHadler;
+package com.plog.global.exception.exceptionHandler
 
 /**
  * exception handler 의 처리 순서에 대한 상수 값을 정의하고 관리하는 객체입니다.
@@ -8,9 +8,7 @@ package com.plog.global.exception.exceptionHadler;
  * @author jack8
  * @since 2026-01-15
  */
-public class ExceptionHandlerOrder {
-    public static final int GLOBAL_EXCEPTION_HANDLER = 1;
-
-    public static final int DEFAULT_EXCEPTION_HANDLER = 2;
+object ExceptionHandlerOrder {
+    const val GLOBAL_EXCEPTION_HANDLER = 1
+    const val DEFAULT_EXCEPTION_HANDLER = 2
 }
-

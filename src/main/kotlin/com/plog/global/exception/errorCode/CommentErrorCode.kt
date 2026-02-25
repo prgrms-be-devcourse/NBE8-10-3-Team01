@@ -1,6 +1,6 @@
-package com.plog.global.exception.errorCode;
+package com.plog.global.exception.errorCode
 
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus
 
 /**
  * 코드에 대한 전체적인 역할을 적습니다.
@@ -24,30 +24,13 @@ import org.springframework.http.HttpStatus;
  * @see
  * @since 2026-01-20
  */
-
-public enum CommentErrorCode implements ErrorCode{
-
+enum class CommentErrorCode(
+    override val httpStatus: HttpStatus,
+    override val message: String
+) : ErrorCode {
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다."),
     INVALID_PARENT_COMMENT(HttpStatus.NOT_FOUND, "해당 게시글의 댓글이 아닙니다."),
     COMMENT_CREATE_FAILED(HttpStatus.NOT_FOUND, "댓글 작성에 실패하였습니다."),
     COMMENT_UPDATE_FAILED(HttpStatus.NOT_FOUND, "댓글 수정에 실패하였습니다."),
     COMMENT_DELETE_FAILED(HttpStatus.NOT_FOUND, "댓글 삭제에 실패하였습니다.");
-
-
-    private final HttpStatus httpStatus;
-    private final String message;
-
-    CommentErrorCode(HttpStatus httpStatus, String message) {
-        this.httpStatus = httpStatus;
-        this.message = message;
-    }
-
-    public HttpStatus getHttpStatus() {
-        return httpStatus;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
 }
