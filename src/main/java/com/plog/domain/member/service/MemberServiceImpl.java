@@ -59,7 +59,7 @@ public class MemberServiceImpl implements MemberService {
                         "[MemberServiceImpl#updateMemberInfo] can't find user by id",
                         "존재하지 않는 사용자입니다."));
 
-        member = member.update(dto.nickname());
+        member = member.update(dto.getNickname());
 
         //코드의 흐름 상, save 를 일부로 명시하는 편을 좋아합니다.
         memberRepository.save(member);
