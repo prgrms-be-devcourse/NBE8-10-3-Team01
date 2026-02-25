@@ -2,6 +2,7 @@ package com.plog.domain.image.repository
 
 import com.plog.domain.image.entity.Image
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import java.util.Optional
 
@@ -28,4 +29,21 @@ import java.util.Optional
 @Repository
 interface ImageRepository : JpaRepository<Image, Long> {
     fun findByAccessUrl(accessUrl: String): Optional<Image>
+
+    /**
+     * DB에 저장된 Image 중, Post의 썸네일(thumbnail)로도 사용되지 않고,
+     * Post의 본문(content)에도 해당 URL이 포함되지 않은 고아 이미지를 조회합니다.
+     */
+
+    @Query("""
+        SELECT i 
+        FROM Image i 
+        WHERE NOT EXISTS (
+            SELECT 1 
+            FROM Post p 
+            WHERE p.thumbnail = i.accessUrl 
+               OR p.content LIKE CONCAT('%', i.accessUrl, '%')
+        )
+    """)
+    fun findOrphanImages(): List<Image>
 }
