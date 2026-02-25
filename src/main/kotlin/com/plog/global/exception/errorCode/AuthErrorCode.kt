@@ -1,6 +1,6 @@
-package com.plog.global.exception.errorCode;
+package com.plog.global.exception.errorCode
 
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus
 
 /**
  * 인증/인가 및 유저 조회에서 발생하는 예외에 대한 상수 값을 정의합니다.
@@ -17,7 +17,10 @@ import org.springframework.http.HttpStatus;
  * @see com.plog.global.exception.exceptions.AuthException AuthException
  * @since 2026-01-15
  */
-public enum AuthErrorCode implements ErrorCode {
+enum class AuthErrorCode(
+    override val httpStatus: HttpStatus,
+    override val message: String
+) : ErrorCode {
     // 조회 및 기본 관리
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 사용자를 찾을 수 없습니다."),
     USER_CREATE_FAIL(HttpStatus.BAD_REQUEST, "사용자 생성에 실패하였습니다."),
@@ -35,23 +38,4 @@ public enum AuthErrorCode implements ErrorCode {
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
     TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 토큰입니다."),
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "로그인이 필요한 서비스입니다.");
-
-    private final HttpStatus status;
-    private final String message;
-
-    AuthErrorCode(HttpStatus status, String message) {
-        this.status = status;
-        this.message = message;
-    }
-
-
-    @Override
-    public HttpStatus getHttpStatus() {
-        return status;
-    }
-
-    @Override
-    public String getMessage() {
-        return message;
-    }
 }

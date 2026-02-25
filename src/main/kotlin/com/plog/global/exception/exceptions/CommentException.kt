@@ -1,6 +1,6 @@
-package com.plog.global.exception.exceptions;
+package com.plog.global.exception.exceptions
 
-import com.plog.global.exception.errorCode.CommentErrorCode;
+import com.plog.global.exception.errorCode.CommentErrorCode
 
 /**
  * 게시글 댓글 도메인에서 발생하는 비즈니스 예외를 처리하는 클래스입니다.
@@ -27,16 +27,8 @@ import com.plog.global.exception.errorCode.CommentErrorCode;
  * @see CommentErrorCode
  * @since 2026-01-20
  */
-public class CommentException extends BaseException {
-    public CommentException(CommentErrorCode errorCode) {
-        super(errorCode);
-    }
-
-    public CommentException(CommentErrorCode errorCode, String logMessage) {
-        super(errorCode, logMessage);
-    }
-
-    public CommentException(CommentErrorCode errorCode, String logMessage, String clientMessage) {
-        super(errorCode, logMessage, clientMessage);
-    }
+class CommentException : BaseException {
+    constructor(errorCode: CommentErrorCode) : super(errorCode)
+    constructor(errorCode: CommentErrorCode, logMessage: String) : super(errorCode, logMessage)
+    constructor(errorCode: CommentErrorCode, logMessage: String, clientMessage: String) : super(errorCode, logMessage, clientMessage)
 }

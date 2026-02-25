@@ -1,6 +1,6 @@
-package com.plog.global.exception.errorCode;
+package com.plog.global.exception.errorCode
 
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatus
 
 /**
  * 게시글 관련 로직에서 발생하는 예외에 대한 상수 값을 정의합니다.
@@ -16,7 +16,10 @@ import org.springframework.http.HttpStatus;
  * @see com.plog.global.exception.exceptions.PostException
  * @since 2026-01-16
  */
-public enum PostErrorCode implements ErrorCode {
+enum class PostErrorCode(
+    override val httpStatus: HttpStatus,
+    override val message: String
+) : ErrorCode {
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
     POST_CREATE_FAIL(HttpStatus.BAD_REQUEST, "게시글 작성에 실패했습니다."),
     POST_UPDATE_FAIL(HttpStatus.BAD_REQUEST, "게시글 수정에 실패했습니다."),
@@ -24,22 +27,4 @@ public enum PostErrorCode implements ErrorCode {
 
     POST_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당하는 템플릿을 찾을 수 없습니다."),
     POST_TEMPLATE_AUTH_FAIL(HttpStatus.UNAUTHORIZED, "해당 템플릿의 소유주가 아닙니다");
-
-    private final HttpStatus status;
-    private final String message;
-
-    PostErrorCode(HttpStatus status, String message) {
-        this.status = status;
-        this.message = message;
-    }
-
-    @Override
-    public HttpStatus getHttpStatus() {
-        return status;
-    }
-
-    @Override
-    public String getMessage() {
-        return message;
-    }
 }

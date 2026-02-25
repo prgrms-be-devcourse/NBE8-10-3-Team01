@@ -33,3 +33,4 @@ class ImageException : BaseException {
 
     constructor(errorCode: ErrorCode, logMessage: String, clientMessage: String) : super(errorCode, logMessage, clientMessage)
 }
+
