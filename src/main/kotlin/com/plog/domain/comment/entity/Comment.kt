@@ -63,14 +63,4 @@ class Comment(
         this.deleted = true
         this.content = "[삭제된 댓글입니다.]"
     }
-
-    fun increaseLike() {
-        this.likeCount += 1;
-    }
-
-    fun decreaseLike() {
-        if(this.likeCount > 0){
-            this.likeCount -= 1;
-        }
-    }
 }

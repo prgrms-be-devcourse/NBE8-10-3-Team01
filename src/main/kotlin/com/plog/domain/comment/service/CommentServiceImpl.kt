@@ -176,14 +176,19 @@ class CommentServiceImpl(
 
         val existingLike = commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId)
 
-        return existingLike?.let{
-            commentLikeRepository.delete(it)
-            comment.decreaseLike()
+        return if (existingLike != null) {
+
+            commentLikeRepository.delete(existingLike)
+            commentLikeRepository.flush()
+            commentRepository.decrementLikeCount(commentId)
+
             false
-        } ?: run{
+        } else {
             val newLike = CommentLike(member = member, comment = comment)
+
             commentLikeRepository.save(newLike)
-            comment.increaseLike()
+
+            commentRepository.incrementLikeCount(commentId)
             true
         }
     }

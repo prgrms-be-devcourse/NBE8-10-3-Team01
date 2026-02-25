@@ -3,13 +3,17 @@ package com.plog.domain.comment.service
 import com.plog.domain.comment.dto.CommentCreateReq
 import com.plog.domain.comment.dto.CommentUpdateReq
 import com.plog.domain.comment.entity.Comment
+import com.plog.domain.comment.entity.CommentLike
+import com.plog.domain.comment.repository.CommentLikeRepository
 import com.plog.domain.comment.repository.CommentRepository
 import com.plog.domain.member.entity.Member
 import com.plog.domain.member.repository.MemberRepository
 import com.plog.domain.post.entity.Post
 import com.plog.domain.post.entity.PostStatus
 import com.plog.domain.post.repository.PostRepository
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import org.junit.jupiter.api.DisplayName
@@ -18,6 +22,9 @@ import org.springframework.test.util.ReflectionTestUtils
 import kotlin.test.Test
 import org.assertj.core.api.Assertions.assertThat
 import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
 import org.springframework.data.domain.SliceImpl
@@ -51,11 +58,13 @@ class CommentServiceTest {
     private val commentRepository = mockk<CommentRepository>()
     private val memberRepository = mockk<MemberRepository>()
     private val postRepository = mockk<PostRepository>()
+    private val commentLikeRepository = mockk<CommentLikeRepository>()
 
     private val commentService: CommentService = CommentServiceImpl(
         commentRepository,
         postRepository,
-        memberRepository
+        memberRepository,
+        commentLikeRepository
     )
 
     private fun createMember(id: Long): Member {
@@ -399,6 +408,79 @@ class CommentServiceTest {
         assertThat(result.hasNext()).isTrue()
         assertThat(result.content[0].content).isEqualTo("대댓글 1")
         assertThat(result.content.map { it.content }).doesNotContain("대댓글 6")
+    }
+
+    @Test
+    @DisplayName("좋아요가 없는 상태에서 호출하면 새로운 좋아요가 저장되고 true를 반환한다")
+    fun toggleLike_CreateSuccess() {
+        // given
+        val memberId = 1L
+        val commentId = 100L
+        val content = "테스트 댓글 내용입니다."
+        val member = createMember(memberId)
+        ReflectionTestUtils.setField(member, "id", memberId)
+        val post = Post(
+            "테스트 게시글",
+            "게시글 내용",
+            "요약",
+            PostStatus.PUBLISHED,
+            0,
+            member,
+            mutableListOf(), // 비어있는 리스트
+            "default_thumb.png"
+        )
+        val comment = Comment(member, post, content, null, false)
+
+        every { memberRepository.findById(memberId) } returns Optional.of(member)
+        every { commentRepository.findById(commentId) } returns Optional.of(comment)
+        // 기존에 좋아요가 없음을 가정 (null 반환)
+        every { commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId) } returns null
+        every { commentLikeRepository.save(any()) } returns mockk()
+
+        // when
+        val result = commentService.toggleCommentLike(commentId, memberId)
+
+        // then
+        verify(exactly = 1) { commentLikeRepository.save(any()) }
+        assertEquals(1, comment.likeCount) // 엔티티의 카운트 증가 확인
+        assertTrue(result) // true 반환 확인
+    }
+
+    @Test
+    @DisplayName("이미 좋아요가 있는 상태에서 호출하면 기존 좋아요가 삭제되고 false를 반환한다")
+    fun toggleLike_DeleteSuccess() {
+        // given
+        val memberId = 1L
+        val commentId = 100L
+        val content = "테스트 댓글 내용입니다."
+        val member = createMember(memberId)
+        ReflectionTestUtils.setField(member, "id", memberId)
+        val post = Post(
+            "테스트 게시글",
+            "게시글 내용",
+            "요약",
+            PostStatus.PUBLISHED,
+            0,
+            member,
+            mutableListOf(), // 비어있는 리스트
+            "default_thumb.png"
+        )
+        val comment = Comment(member, post, content, null, false)
+        val existingLike = CommentLike(member = member, comment = comment)
+
+        every { memberRepository.findById(memberId) } returns Optional.of(member)
+        every { commentRepository.findById(commentId) } returns Optional.of(comment)
+        // 기존 좋아요 존재함
+        every { commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId) } returns existingLike
+        every { commentLikeRepository.delete(existingLike) } just Runs
+
+        // when
+        val result = commentService.toggleCommentLike(commentId, memberId)
+
+        // then
+        verify(exactly = 1) { commentLikeRepository.delete(existingLike) }
+        assertEquals(0, comment.likeCount) // 엔티티의 카운트 감소 확인
+        assertFalse(result) // false 반환 확인
     }
 
 }
