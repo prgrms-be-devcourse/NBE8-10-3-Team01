@@ -22,8 +22,8 @@ import org.springframework.http.HttpStatus
  */
 
 enum class ImageErrorCode(
-    private val httpStatus: HttpStatus,
-    private val message: String
+    override val httpStatus: HttpStatus,
+    override val message: String
 ) : ErrorCode {
 
 
@@ -36,7 +36,4 @@ enum class ImageErrorCode(
     EMPTY_FILE(HttpStatus.BAD_REQUEST, "파일이 비어있습니다."),
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 이미지를 찾을 수 없습니다.");
-
-    override fun getHttpStatus(): HttpStatus = httpStatus
-    override fun getMessage(): String = message
 }

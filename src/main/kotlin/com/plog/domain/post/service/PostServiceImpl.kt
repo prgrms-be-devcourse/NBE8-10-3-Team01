@@ -29,6 +29,7 @@ import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.Optional
 
 /**
  * [PostService] 인터페이스의 기본 구현체입니다.
@@ -110,9 +111,9 @@ class PostServiceImpl(
             Sort.by("createDate").ascending()
         )
 
-        val replySlice = commentRepository.findRepliesWithMemberAndImageByParentId(comment.id, replyPageable)
+        val replySlice = commentRepository.findRepliesWithMemberAndImageByParentId(comment.id!!, replyPageable)
 
-        return CommentInfoRes(comment, replySlice.map { ReplyInfoRes(it) })
+        return CommentInfoRes.from(comment, replySlice.map { ReplyInfoRes.from(it) })
     }
 
     @Transactional(readOnly = true)
@@ -218,7 +219,7 @@ class PostServiceImpl(
             val normalizedName = normalizeTag(rawName)
 
             val hashTag = hashTagRepository.findByName(normalizedName)
-                .orElseGet { hashTagRepository.save(HashTag(normalizedName)) }
+                ?: hashTagRepository.save(HashTag(normalizedName))
 
             val postId = post.id ?: throw IllegalStateException("Post ID must not be null")
             val hashTagId = hashTag.id ?: throw IllegalStateException("HashTag ID must not be null")

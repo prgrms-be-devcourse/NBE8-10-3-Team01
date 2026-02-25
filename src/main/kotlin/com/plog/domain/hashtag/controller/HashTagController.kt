@@ -2,6 +2,8 @@ package com.plog.domain.hashtag.controller
 
 import com.plog.domain.hashtag.service.HashTagService
 import com.plog.domain.post.dto.PostListRes
+import com.plog.global.response.CommonResponse
+import com.plog.global.response.Response
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -33,8 +35,8 @@ class HashTagController(
         @RequestParam("keyword") keyword: String?,
         // @PageableDefault를 통해 클라이언트가 파라미터를 보내지 않아도 기본 페이징 전략을 유지
         @PageableDefault(size = 10, sort = ["id"], direction = Sort.Direction.DESC) pageable: Pageable
-    ): ResponseEntity<Page<PostListRes>> {
+    ): ResponseEntity<Response<Page<PostListRes>>> {
         val result = hashTagService.searchPostsByTag(keyword, pageable)
-        return ResponseEntity.ok(result)
+        return ResponseEntity.ok(CommonResponse.success(result, "해시태그 검색 성공"))
     }
 }

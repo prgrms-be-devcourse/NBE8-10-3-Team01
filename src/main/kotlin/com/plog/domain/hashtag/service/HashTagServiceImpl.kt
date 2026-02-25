@@ -54,8 +54,8 @@ class HashTagServiceImpl(
     override fun searchPostsByTag(keyword: String?, pageable: Pageable): Page<PostListRes> {
         if (keyword.isNullOrBlank()) return Page.empty()
         val normalizedKeyword = keyword.trim().lowercase().replace(" ", "_")
-//
-//        return postRepository.findByHashTagName(normalizedKeyword, pageable)
-//            .map { PostListRes.from(it) }
+
+        return postRepository.findByHashTagName(normalizedKeyword, pageable)
+            .map { post -> PostListRes.from(post) }
     }
 }

@@ -1,6 +1,7 @@
 package com.plog.domain.post.repository
 
 import com.plog.domain.post.entity.Post
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
@@ -52,4 +53,15 @@ interface PostRepository : JpaRepository<Post, Long> {
                 "where p.member.id = :memberId"
     )
     fun findAllByMemberId(@Param("memberId") memberId: Long, pageable: Pageable): Slice<Post>
+
+    /**
+     * 특정 해시태그를 포함하는 게시글 조회
+     */
+    @Query(
+        "select distinct p from Post p " +
+                "join p.postHashTags pht " +
+                "join pht.hashTag ht " +
+                "where ht.name = :tagName"
+    )
+    fun findByHashTagName(@Param("tagName") tagName: String, pageable: Pageable): Page<Post>
 }

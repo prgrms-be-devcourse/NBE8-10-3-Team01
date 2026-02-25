@@ -203,10 +203,10 @@ public class PostServiceTest {
         // "spring"은 이미 존재한다고 가정
         HashTag existingTag = new HashTag("spring");
         ReflectionTestUtils.setField(existingTag, "id", 1L);
-        given(hashTagRepository.findByName("spring")).willReturn(Optional.of(existingTag));
+        given(hashTagRepository.findByName("spring")).willReturn(existingTag);
 
         // "kotlin"은 존재하지 않아 새로 생성된다고 가정
-        given(hashTagRepository.findByName("kotlin")).willReturn(Optional.empty());
+        given(hashTagRepository.findByName("kotlin")).willReturn(null);
         given(hashTagRepository.save(any(HashTag.class))).willAnswer(invocation -> {
             HashTag tag = invocation.getArgument(0);
             ReflectionTestUtils.setField(tag, "id", 2L);
