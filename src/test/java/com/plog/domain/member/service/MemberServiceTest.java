@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,12 +43,15 @@ class MemberServiceTest {
         Long userId = 1L;
         given(memberRepository.findById(userId)).willReturn(Optional.of(member));
         given(member.getId()).willReturn(userId);
+        given(member.getEmail()).willReturn("example@email.com");
+        given(member.getNickname()).willReturn("jack");
+        given(member.getCreateDate()).willReturn(LocalDateTime.now());
 
         //when
         MemberInfoRes response = memberService.findMemberWithId(userId);
 
         //then
-        assertThat(response.id()).isEqualTo(userId);
+        assertThat(response.getId()).isEqualTo(userId);
     }
 
     @Test
@@ -71,12 +75,15 @@ class MemberServiceTest {
         String nickname = "jack";
         given(memberRepository.findByNickname(nickname)).willReturn(Optional.of(member));
         given(member.getId()).willReturn(1L);
+        given(member.getNickname()).willReturn(nickname);
+        given(member.getEmail()).willReturn("example@email.com");
+        given(member.getCreateDate()).willReturn(LocalDateTime.now());
 
         // when
         MemberInfoRes response = memberService.findMemberWithNickname(nickname);
 
         // then
-        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.getId()).isEqualTo(1L);
         then(memberRepository).should(times(1)).findByNickname(nickname);
     }
 
@@ -107,7 +114,10 @@ class MemberServiceTest {
 
         // update는 "업데이트된 member"를 리턴한다고 가정
         Member updatedMember = mock(Member.class);
-        given(member.update(dto.nickname())).willReturn(updatedMember);
+        given(member.update(dto.getNickname())).willReturn(updatedMember);
+        given(updatedMember.getNickname()).willReturn("newNick");
+        given(updatedMember.getEmail()).willReturn("example@email.com");
+        given(updatedMember.getCreateDate()).willReturn(LocalDateTime.now());
 
         // save는 보통 void or 반환(member)인데 둘 다 대응 가능
         given(memberRepository.save(updatedMember)).willReturn(updatedMember);
@@ -119,7 +129,7 @@ class MemberServiceTest {
         MemberInfoRes response = memberService.updateMemberInfo(memberId, dto);
 
         // then
-        assertThat(response.id()).isEqualTo(memberId);
+        assertThat(response.getId()).isEqualTo(memberId);
 
         then(memberRepository).should(times(1)).findById(memberId);
         then(member).should(times(1)).update("newNick");
