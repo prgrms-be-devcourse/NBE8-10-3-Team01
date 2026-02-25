@@ -50,4 +50,20 @@ interface ImageRepository : JpaRepository<Image, Long> {
     fun findPendingOrphanIds(@Param("threshold") threshold: LocalDateTime): List<Long>
 
     fun findAllByAccessUrlIn(accessUrls: List<String>): List<Image>
+
+    /**
+     * DB에 저장된 Image 중, Post의 썸네일(thumbnail)로도 사용되지 않고,
+     * Post의 본문(content)에도 해당 URL이 포함되지 않은 고아 이미지를 조회합니다.
+     */
+    @Query("""
+        SELECT i
+        FROM Image i
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM Post p
+            WHERE p.thumbnail = i.accessUrl
+               OR p.content LIKE CONCAT('%', i.accessUrl, '%')
+        )
+    """)
+    fun findOrphanImages(): List<Image>
 }
