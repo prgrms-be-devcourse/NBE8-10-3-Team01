@@ -55,7 +55,7 @@ class HashTagServiceImpl(
         if (keyword.isNullOrBlank()) return Page.empty()
         val normalizedKeyword = keyword.trim().lowercase().replace(" ", "_")
 
-        return postRepository.findByHashTagName(normalizedKeyword, pageable)
+        return postRepository.findByHashTagKeyword(normalizedKeyword, pageable)
             .map { post -> PostListRes.from(post) }
     }
 }

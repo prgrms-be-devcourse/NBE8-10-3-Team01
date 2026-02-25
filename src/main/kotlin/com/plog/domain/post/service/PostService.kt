@@ -4,6 +4,7 @@ import com.plog.domain.post.dto.PostCreateReq
 import com.plog.domain.post.dto.PostInfoRes
 import com.plog.domain.post.dto.PostListRes
 import com.plog.domain.post.dto.PostUpdateReq
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 
@@ -103,4 +104,12 @@ interface PostService {
      * @return 해당 회원이 작성한 최신순 게시물 정보 DTO 리스트
      */
     fun getPostsByMember(memberId: Long, pageable: Pageable): Slice<PostInfoRes>
+
+    /**
+     * 게시글 제목 키워드를 검색하여 페이징된 목록을 반환합니다.
+     * * @param title 검색하고자 하는 제목의 키워드 문자열
+     * @param pageable 페이징 정보 (페이지 번호, 사이즈, 정렬 등)
+     * @return 검색 결과가 담긴 Page 객체 (PostListRes DTO 반환)
+     */
+    fun searchPostsByTitle(title: String, pageable: Pageable): Page<PostListRes>
 }
