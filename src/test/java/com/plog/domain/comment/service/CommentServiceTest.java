@@ -52,7 +52,9 @@ class CommentServiceTest {
     private MemberRepository memberRepository;
 
     private Post createPost(Long id, String title) {
-        Post post = Post.builder().title(title).build();
+        Member mockMember = Member.builder().build();
+        ReflectionTestUtils.setField(mockMember, "id", 1L);
+        Post post = Post.builder().title(title).content("내용").member(mockMember).build();
         ReflectionTestUtils.setField(post, "id", id);
         return post;
     }
