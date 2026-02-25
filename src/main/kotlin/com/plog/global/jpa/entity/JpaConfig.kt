@@ -1,7 +1,7 @@
-package com.plog.global.jpa.entity;
+package com.plog.global.jpa.entity
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.context.annotation.Configuration
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 
 /**
  * JPA Auditing 기능을 활성화하고 관련 설정을 담당하는 설정 클래스입니다.
@@ -31,5 +31,4 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  */
 @Configuration
 @EnableJpaAuditing
-public class JpaConfig {
-}
+class JpaConfig
