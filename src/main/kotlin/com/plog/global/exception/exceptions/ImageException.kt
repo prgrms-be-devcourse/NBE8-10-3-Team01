@@ -26,7 +26,11 @@ import com.plog.global.exception.errorCode.ErrorCode
  * @since 2026-01-21
  */
 class ImageException : BaseException {
+
     constructor(errorCode: ErrorCode) : super(errorCode)
+
     constructor(errorCode: ErrorCode, logMessage: String) : super(errorCode, logMessage)
+
     constructor(errorCode: ErrorCode, logMessage: String, clientMessage: String) : super(errorCode, logMessage, clientMessage)
 }
+

@@ -20,10 +20,13 @@ import org.springframework.http.HttpStatus
  * @see com.plog.global.exception.exceptions.ImageException
  * @since 2026-01-21
  */
+
 enum class ImageErrorCode(
-    override val httpStatus: HttpStatus,
-    override val message: String
+    private val httpStatus: HttpStatus,
+    private val message: String
 ) : ErrorCode {
+
+
     // 500: 서버 내부 에러 (MinIO 연결 실패 등)
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
     IMAGE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다."),
@@ -33,4 +36,7 @@ enum class ImageErrorCode(
     EMPTY_FILE(HttpStatus.BAD_REQUEST, "파일이 비어있습니다."),
     INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 이미지를 찾을 수 없습니다.");
+
+    override fun getHttpStatus(): HttpStatus = httpStatus
+    override fun getMessage(): String = message
 }
