@@ -5,6 +5,8 @@ import com.plog.domain.comment.dto.CommentCreateReq
 import com.plog.domain.comment.dto.CommentInfoRes
 import com.plog.domain.comment.dto.ReplyInfoRes
 import com.plog.domain.comment.entity.Comment
+import com.plog.domain.comment.entity.CommentLike
+import com.plog.domain.comment.repository.CommentLikeRepository
 import com.plog.domain.comment.repository.CommentRepository
 import com.plog.domain.member.repository.MemberRepository
 import com.plog.domain.post.repository.PostRepository
@@ -14,7 +16,10 @@ import com.plog.global.exception.errorCode.PostErrorCode
 import com.plog.global.exception.exceptions.AuthException
 import com.plog.global.exception.exceptions.CommentException
 import com.plog.global.exception.exceptions.PostException
+import jdk.jshell.spi.ExecutionControl
+import org.bouncycastle.asn1.x500.style.RFC4519Style.member
 import org.springframework.data.domain.*
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.PI
@@ -25,6 +30,7 @@ class CommentServiceImpl(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository,
     private val memberRepository: MemberRepository,
+    private val commentLikeRepository: CommentLikeRepository
 ): CommentService {
 
     @Transactional
@@ -144,6 +150,41 @@ class CommentServiceImpl(
             comment.softDelete()
         }else{
             commentRepository.delete(comment)
+        }
+    }
+
+    @Transactional
+    override fun toggleCommentLike(commentId: Long, memberId: Long) : Boolean{
+
+        val member = memberRepository.findById(memberId)
+            .orElseThrow{
+                AuthException(
+                    AuthErrorCode.USER_AUTH_FAIL,
+                    "[CommentService#toggleCommentLike] can't find user with id: $memberId",
+                    "존재하지 않는 회원입니다."
+                )
+            }
+
+        val comment = commentRepository.findById(commentId)
+            .orElseThrow{
+                CommentException(
+                    CommentErrorCode.COMMENT_NOT_FOUND,
+                    "[CommentService#deleteComment] can't find comment with id: $commentId",
+                    "존재하지 않는 댓글입니다."
+                )
+            }
+
+        val existingLike = commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId)
+
+        return existingLike?.let{
+            commentLikeRepository.delete(it)
+            comment.decreaseLike()
+            false
+        } ?: run{
+            val newLike = CommentLike(member = member, comment = comment)
+            commentLikeRepository.save(newLike)
+            comment.increaseLike()
+            true
         }
     }
 

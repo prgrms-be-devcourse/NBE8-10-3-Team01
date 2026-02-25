@@ -45,7 +45,11 @@ class Comment(
     val parent: Comment? = null,
 
     @Column(nullable = false)
-    var deleted: Boolean = false
+    var deleted: Boolean = false,
+
+    @Column(nullable = false)
+    var likeCount: Long = 0
+
 ) : BaseEntity() {
 
     @Formula("(SELECT count(*) FROM comment c WHERE c.parent_id = id AND c.deleted = false)")
@@ -58,5 +62,15 @@ class Comment(
     fun softDelete() {
         this.deleted = true
         this.content = "[삭제된 댓글입니다.]"
+    }
+
+    fun increaseLike() {
+        this.likeCount += 1;
+    }
+
+    fun decreaseLike() {
+        if(this.likeCount > 0){
+            this.likeCount -= 1;
+        }
     }
 }

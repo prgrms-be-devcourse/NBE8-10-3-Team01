@@ -82,4 +82,7 @@ interface CommentService {
      * @throws CommentException 댓글이 존재하지 않거나 삭제 권한이 없을 경우
      */
     fun deleteComment(commentId: Long, memberId: Long)
+
+
+    fun toggleCommentLike(commentId: Long, memberId: Long): Boolean
 }
