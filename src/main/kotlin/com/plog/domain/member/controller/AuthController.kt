@@ -99,7 +99,7 @@ class AuthController(
      * @return 로그아웃 완료 메시지를 포함한 공통 응답 객체 (200 OK)
      */
     @GetMapping("/logout")
-    fun logout(request: HttpServletRequest, response: HttpServletResponse): ResponseEntity<Response<Void>> {
+    fun logout(request: HttpServletRequest, response: HttpServletResponse): ResponseEntity<Response<Void?>> {
         val refreshToken = tokenResolver.resolveRefreshToken(request)
         authService.logout(refreshToken)
         tokenResolver.deleteRefreshTokenCookie(response)
