@@ -172,7 +172,7 @@ class PostControllerTest extends WebMvcTestSupport {
                 .andExpect(jsonPath("$").doesNotExist());
 
         // 서비스의 deletePost 메서드가 호출되었는지 검증합니다.
-        verify(postService).deletePost(any(), any());
+        verify(postService).deletePost(anyLong(), anyLong());
     }
 
     @Test

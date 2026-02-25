@@ -58,12 +58,12 @@ class PostServiceImpl(
     }
 
     @Transactional
-    override fun createPost(memberId: Long?, req: PostCreateReq?): Long? {
-        val member = memberRepository.getReferenceById(memberId!!)
-        val plainText = extractPlainText(req!!.content)
+    override fun createPost(memberId: Long, req: PostCreateReq): Long {
+        val member = memberRepository.getReferenceById(memberId)
+        val plainText = extractPlainText(req.content)
         val summary = extractSummary(plainText)
 
-        var post = Post.builder()
+        val post = Post.builder()
             .title(req.title)
             .content(req.content)
             .summary(summary)
@@ -71,16 +71,16 @@ class PostServiceImpl(
             .status(PostStatus.PUBLISHED)
             .thumbnail(req.thumbnail)
             .build()
-        post = postRepository.save(post)
+        val savedPost = postRepository.save(post)
 
-        applyTags(post, req.hashtags)
+        applyTags(savedPost, req.hashtags)
 
-        return post.id
+        return savedPost.id ?: throw IllegalStateException("Post ID must not be null after save")
     }
 
     @Transactional
-    override fun getPostDetail(id: Long?, pageNumber: Int): PostInfoRes? {
-        val post = postRepository.findByIdWithMember(id!!)
+    override fun getPostDetail(id: Long, pageNumber: Int): PostInfoRes {
+        val post = postRepository.findByIdWithMember(id)
             .orElseThrow {
                 PostException(
                     PostErrorCode.POST_NOT_FOUND,
@@ -116,14 +116,14 @@ class PostServiceImpl(
     }
 
     @Transactional(readOnly = true)
-    override fun getPosts(pageable: Pageable?): Slice<PostListRes>? {
-        return postRepository.findAllWithMember(pageable!!)
+    override fun getPosts(pageable: Pageable): Slice<PostListRes> {
+        return postRepository.findAllWithMember(pageable)
             .map { PostListRes.from(it) }
     }
 
     @Transactional
-    override fun updatePost(memberId: Long?, postId: Long?, req: PostUpdateReq?) {
-        val post = postRepository.findById(postId!!)
+    override fun updatePost(memberId: Long, postId: Long, req: PostUpdateReq) {
+        val post = postRepository.findById(postId)
             .orElseThrow {
                 PostException(
                     PostErrorCode.POST_NOT_FOUND,
@@ -139,7 +139,7 @@ class PostServiceImpl(
             )
         }
 
-        val plainText = extractPlainText(req!!.content)
+        val plainText = extractPlainText(req.content)
         val summary = extractSummary(plainText)
 
         post.update(req.title, req.content, summary, req.thumbnail)
@@ -150,9 +150,9 @@ class PostServiceImpl(
     }
 
     @Transactional
-    override fun deletePost(memberId: Long?, postId: Long?) {
+    override fun deletePost(memberId: Long, postId: Long) {
         // 1. 게시물 존재 여부 확인 및 조회
-        val post = postRepository.findById(postId!!)
+        val post = postRepository.findById(postId)
             .orElseThrow {
                 PostException(
                     PostErrorCode.POST_NOT_FOUND,
@@ -180,8 +180,8 @@ class PostServiceImpl(
     }
 
     @Transactional(readOnly = true)
-    override fun getPostsByMember(memberId: Long?, pageable: Pageable?): Slice<PostInfoRes>? {
-        val postSlice = postRepository.findAllByMemberId(memberId!!, pageable!!)
+    override fun getPostsByMember(memberId: Long, pageable: Pageable): Slice<PostInfoRes> {
+        val postSlice = postRepository.findAllByMemberId(memberId, pageable)
 
         return postSlice.map { PostInfoRes.from(it) }
     }
@@ -204,23 +204,26 @@ class PostServiceImpl(
      * @param plainText 추출된 순수 텍스트
      * @return 가공된 요약본 문자열
      */
-    private fun extractSummary(plainText: String): String {
+    private fun extractSummary(plainText: String): String =
         if (plainText.length <= MAX_SUMMARY_LENGTH) {
-            return plainText
+            plainText
+        } else {
+            plainText.take(MAX_SUMMARY_LENGTH) + "..."
         }
-        return plainText.substring(0, MAX_SUMMARY_LENGTH) + "..."
-    }
 
     private fun applyTags(post: Post, tagNames: List<String>?) {
         if (tagNames.isNullOrEmpty()) return
 
-        for (rawName in tagNames) {
+        tagNames.forEach { rawName ->
             val normalizedName = normalizeTag(rawName)
 
             val hashTag = hashTagRepository.findByName(normalizedName)
                 .orElseGet { hashTagRepository.save(HashTag(normalizedName)) }
 
-            if (!postHashTagRepository.existsByPostIdAndHashTagId(post.id!!, hashTag.id!!)) {
+            val postId = post.id ?: throw IllegalStateException("Post ID must not be null")
+            val hashTagId = hashTag.id ?: throw IllegalStateException("HashTag ID must not be null")
+
+            if (!postHashTagRepository.existsByPostIdAndHashTagId(postId, hashTagId)) {
                 val postHashTag = PostHashTag.builder()
                     .post(post)
                     .hashTag(hashTag)

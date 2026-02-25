@@ -26,60 +26,32 @@ import java.util.ArrayList
  * @see BaseEntity
  */
 @Entity
-class Post : BaseEntity {
+class Post(
     @Column(nullable = false, length = 255)
-    var title: String = ""
-        protected set
+    var title: String = "",
 
     @Lob
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
-    var content: String = ""
-        protected set
+    var content: String = "",
 
     @Column(length = 500)
-    var summary: String? = null
-        protected set
+    var summary: String? = null,
 
     @Enumerated(EnumType.STRING)
-    var status: PostStatus = PostStatus.DRAFT
-        protected set
+    var status: PostStatus = PostStatus.DRAFT,
 
-    var viewCount: Int = 0
-        protected set
+    var viewCount: Int = 0,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    lateinit var member: Member
-        protected set
+    var member: Member,
 
     @OneToMany(mappedBy = "post", cascade = [CascadeType.ALL], orphanRemoval = true)
-    var postHashTags: MutableList<PostHashTag> = ArrayList()
-        protected set
+    var postHashTags: MutableList<PostHashTag> = mutableListOf(),
 
+    @Column(length = 255)
     var thumbnail: String? = null
-        protected set
-
-    protected constructor() : super()
-
-    constructor(
-        title: String,
-        content: String,
-        summary: String?,
-        status: PostStatus,
-        viewCount: Int,
-        member: Member,
-        postHashTags: MutableList<PostHashTag>,
-        thumbnail: String?
-    ) : super() {
-        this.title = title
-        this.content = content
-        this.summary = summary
-        this.status = status
-        this.viewCount = viewCount
-        this.member = member
-        this.postHashTags = postHashTags
-        this.thumbnail = thumbnail
-    }
+) : BaseEntity() {
 
     fun incrementViewCount() {
         this.viewCount++
@@ -94,72 +66,39 @@ class Post : BaseEntity {
 
     companion object {
         @JvmStatic
-        fun builder(): PostBuilder {
-            return PostBuilder()
-        }
+        fun builder() = PostBuilder()
     }
 
+    // Keep builder for Java compatibility or if specifically requested, 
+    // but Kotlin code should use the constructor.
     class PostBuilder {
-        private var title: String? = null
-        private var content: String? = null
+        private var title: String = ""
+        private var content: String = ""
         private var summary: String? = null
         private var status: PostStatus = PostStatus.DRAFT
         private var viewCount: Int = 0
         private var member: Member? = null
-        private var postHashTags: MutableList<PostHashTag> = ArrayList()
+        private var postHashTags: MutableList<PostHashTag> = mutableListOf()
         private var thumbnail: String? = null
 
-        fun title(title: String?): PostBuilder {
-            this.title = title
-            return this
-        }
+        fun title(title: String) = apply { this.title = title }
+        fun content(content: String) = apply { this.content = content }
+        fun summary(summary: String?) = apply { this.summary = summary }
+        fun status(status: PostStatus) = apply { this.status = status }
+        fun viewCount(viewCount: Int) = apply { this.viewCount = viewCount }
+        fun member(member: Member?) = apply { this.member = member }
+        fun postHashTags(postHashTags: MutableList<PostHashTag>) = apply { this.postHashTags = postHashTags }
+        fun thumbnail(thumbnail: String?) = apply { this.thumbnail = thumbnail }
 
-        fun content(content: String?): PostBuilder {
-            this.content = content
-            return this
-        }
-
-        fun summary(summary: String?): PostBuilder {
-            this.summary = summary
-            return this
-        }
-
-        fun status(status: PostStatus): PostBuilder {
-            this.status = status
-            return this
-        }
-
-        fun viewCount(viewCount: Int): PostBuilder {
-            this.viewCount = viewCount
-            return this
-        }
-
-        fun member(member: Member?): PostBuilder {
-            this.member = member
-            return this
-        }
-
-        fun postHashTags(postHashTags: MutableList<PostHashTag>): PostBuilder {
-            this.postHashTags = postHashTags
-            return this
-        }
-
-        fun thumbnail(thumbnail: String?): PostBuilder {
-            this.thumbnail = thumbnail
-            return this
-        }
-
-        fun build(): Post {
-            return Post(
-                title ?: "",
-                content ?: "",
-                summary,
-                status,
-                viewCount,
-                member!!,
-                postHashTags,
-                thumbnail
-            )
-        }
+        fun build() = Post(
+            title = title,
+            content = content,
+            summary = summary,
+            status = status,
+            viewCount = viewCount,
+            member = member!!,
+            postHashTags = postHashTags,
+            thumbnail = thumbnail
+        )
     }
 }

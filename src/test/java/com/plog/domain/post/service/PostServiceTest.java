@@ -69,7 +69,11 @@ public class PostServiceTest {
         given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
 
         given(postRepository.save(any(Post.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
+                .willAnswer(invocation -> {
+                    Post post = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(post, "id", 100L);
+                    return post;
+                });
 
         postService.createPost(memberId, requestDto);
 
@@ -97,7 +101,11 @@ public class PostServiceTest {
         given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
 
         given(postRepository.save(any(Post.class)))
-                .willAnswer(invocation -> invocation.getArgument(0));
+                .willAnswer(invocation -> {
+                    Post post = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(post, "id", 100L);
+                    return post;
+                });
 
         postService.createPost(memberId, requestDto);
 

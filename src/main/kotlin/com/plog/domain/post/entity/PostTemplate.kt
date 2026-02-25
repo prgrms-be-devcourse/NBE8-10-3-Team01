@@ -16,77 +16,50 @@ import jakarta.persistence.*
  * @since 2026-01-26
  */
 @Entity
-class PostTemplate : BaseEntity {
+class PostTemplate(
+    @Column(nullable = false)
+    var name: String = "",
 
     @Column(nullable = false)
-    var name: String = ""
-        protected set
-
-    @Column(nullable = false)
-    var title: String = ""
-        protected set
+    var title: String = "",
 
     @Lob
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
-    var content: String = ""
-        protected set
+    var content: String = "",
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    lateinit var member: Member
-        protected set
+    var member: Member
+) : BaseEntity() {
 
-    protected constructor() : super()
-
-    constructor(name: String, title: String, content: String, member: Member) : super() {
+    fun update(name: String, title: String, content: String): PostTemplate {
         this.name = name
         this.title = title
         this.content = content
-        this.member = member
+        return this
     }
 
     companion object {
         @JvmStatic
-        fun builder(): PostTemplateBuilder {
-            return PostTemplateBuilder()
-        }
+        fun builder() = PostTemplateBuilder()
     }
 
     class PostTemplateBuilder {
-        private var name: String? = null
-        private var title: String? = null
-        private var content: String? = null
+        private var name: String = ""
+        private var title: String = ""
+        private var content: String = ""
         private var member: Member? = null
 
-        fun name(name: String?): PostTemplateBuilder {
-            this.name = name
-            return this
-        }
+        fun name(name: String) = apply { this.name = name }
+        fun title(title: String) = apply { this.title = title }
+        fun content(content: String) = apply { this.content = content }
+        fun member(member: Member?) = apply { this.member = member }
 
-        fun title(title: String?): PostTemplateBuilder {
-            this.title = title
-            return this
-        }
-
-        fun content(content: String?): PostTemplateBuilder {
-            this.content = content
-            return this
-        }
-
-        fun member(member: Member?): PostTemplateBuilder {
-            this.member = member
-            return this
-        }
-
-        fun build(): PostTemplate {
-            return PostTemplate(name ?: "", title ?: "", content ?: "", member!!)
-        }
-    }
-
-    fun update(name: String, title: String, content: String): PostTemplate {
-        this.title = title
-        this.content = content
-        this.name = name
-        return this
+        fun build() = PostTemplate(
+            name = name,
+            title = title,
+            content = content,
+            member = member!!
+        )
     }
 }

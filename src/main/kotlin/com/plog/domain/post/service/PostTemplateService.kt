@@ -24,15 +24,15 @@ interface PostTemplateService {
      * @param dto 생성할 템플릿 정보
      * @return 생성된 템플릿의 식별자
      */
-    fun createPostTemplate(memberId: Long?, dto: PostTemplateInfoDto?): Long?
+    fun createPostTemplate(memberId: Long, dto: PostTemplateInfoDto): Long
 
-    fun getTemplateListByMember(memberId: Long?): List<PostTemplateSummaryRes>?
+    fun getTemplateListByMember(memberId: Long): List<PostTemplateSummaryRes>
 
-    fun updatePostTemplate(memberId: Long?, templateId: Long?, dto: PostTemplateUpdateReq?)
+    fun updatePostTemplate(memberId: Long, templateId: Long, dto: PostTemplateUpdateReq)
 
-    fun getTemplate(memberId: Long?, templateId: Long?): PostTemplateInfoDto?
+    fun getTemplate(memberId: Long, templateId: Long): PostTemplateInfoDto
 
-    fun deleteTemplate(memberId: Long?, templateId: Long?)
+    fun deleteTemplate(memberId: Long, templateId: Long)
 
-    fun initTemplateSeedOfUser(memberId: Long?)
+    fun initTemplateSeedOfUser(memberId: Long)
 }

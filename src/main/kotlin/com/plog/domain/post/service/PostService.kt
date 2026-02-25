@@ -34,7 +34,7 @@ interface PostService {
      * @param req 게시물 생성 요청 정보(title, content)
      * @return 저장된 게시물의 고유 식별자(ID)
      */
-    fun createPost(memberId: Long?, req: PostCreateReq?): Long?
+    fun createPost(memberId: Long, req: PostCreateReq): Long
 
     /**
      * 특정 ID의 게시물을 상세 조회합니다.
@@ -48,7 +48,7 @@ interface PostService {
      * @return 조회된 게시물 정보 DTO
      * @throws com.plog.global.exception.exceptions.PostException 게시물을 찾을 수 없을 때 발생
      */
-    fun getPostDetail(id: Long?, pageNumber: Int): PostInfoRes?
+    fun getPostDetail(id: Long, pageNumber: Int): PostInfoRes
 
     /**
      * 게시물 목록을 페이징하여 조회합니다.
@@ -59,7 +59,7 @@ interface PostService {
      *
      * @return 최신순으로 정렬된 게시물 정보 DTO 리스트
      */
-    fun getPosts(pageable: Pageable?): Slice<PostListRes>?
+    fun getPosts(pageable: Pageable): Slice<PostListRes>
 
     /**
      * 기존 게시물을 수정합니다.
@@ -74,7 +74,7 @@ interface PostService {
      * @throws com.plog.global.exception.exceptions.PostException 게시물을 찾을 수 없을 때 발생
      * @throws com.plog.global.exception.exceptions.AuthException 작성자가 아닌 경우 발생
      */
-    fun updatePost(memberId: Long?, postId: Long?, req: PostUpdateReq?)
+    fun updatePost(memberId: Long, postId: Long, req: PostUpdateReq)
 
     /**
      * 특정 게시물을 삭제합니다.
@@ -88,7 +88,7 @@ interface PostService {
      * @throws com.plog.global.exception.exceptions.PostException 게시물을 찾을 수 없을 때 발생
      * @throws com.plog.global.exception.exceptions.AuthException 작성자가 아닌 경우 발생
      */
-    fun deletePost(memberId: Long?, postId: Long?)
+    fun deletePost(memberId: Long, postId: Long)
 
     /**
      * 특정 회원이 작성한 모든 게시물 목록을 조회합니다.
@@ -102,5 +102,5 @@ interface PostService {
      * @param pageable 페이징 및 정렬 정보 (size, page, sort 등)
      * @return 해당 회원이 작성한 최신순 게시물 정보 DTO 리스트
      */
-    fun getPostsByMember(memberId: Long?, pageable: Pageable?): Slice<PostInfoRes>?
+    fun getPostsByMember(memberId: Long, pageable: Pageable): Slice<PostInfoRes>
 }

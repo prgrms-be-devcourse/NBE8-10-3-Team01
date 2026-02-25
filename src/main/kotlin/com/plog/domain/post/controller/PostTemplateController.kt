@@ -36,7 +36,7 @@ class PostTemplateController(private val postTemplateService: PostTemplateServic
     fun getPostTemplate(
         @PathVariable(name = "id") id: Long,
         @AuthenticationPrincipal securityUser: SecurityUser
-    ): ResponseEntity<Response<PostTemplateInfoDto?>> {
+    ): ResponseEntity<Response<PostTemplateInfoDto>> {
         val response = postTemplateService.getTemplate(securityUser.id, id)
         return ResponseEntity.ok(CommonResponse.success(response, "post template 조회"))
     }
@@ -44,7 +44,7 @@ class PostTemplateController(private val postTemplateService: PostTemplateServic
     @GetMapping
     fun getPostTemplates(
         @AuthenticationPrincipal securityUser: SecurityUser
-    ): ResponseEntity<Response<List<PostTemplateSummaryRes>?>> {
+    ): ResponseEntity<Response<List<PostTemplateSummaryRes>>> {
         val response = postTemplateService.getTemplateListByMember(securityUser.id)
         return ResponseEntity.ok(CommonResponse.success(response, "post template 리스트 조회"))
     }

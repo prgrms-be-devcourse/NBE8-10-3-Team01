@@ -70,7 +70,7 @@ class PostController(private val postService: PostService) {
     fun getPost(
         @PathVariable id: Long,
         @RequestParam(name = "comment_offset", defaultValue = "0") pageNumber: Int
-    ): ResponseEntity<Response<PostInfoRes?>> {
+    ): ResponseEntity<Response<PostInfoRes>> {
         val response = postService.getPostDetail(id, pageNumber)
         return ResponseEntity.ok(CommonResponse.success(response, "게시글 조회 성공"))
     }
@@ -87,7 +87,7 @@ class PostController(private val postService: PostService) {
     @GetMapping
     fun getPosts(
         @PageableDefault(size = 10, sort = ["createDate"], direction = Sort.Direction.DESC) pageable: Pageable
-    ): ResponseEntity<Response<Slice<PostListRes>?>> {
+    ): ResponseEntity<Response<Slice<PostListRes>>> {
         val posts = postService.getPosts(pageable)
         return ResponseEntity.ok(CommonResponse.success(posts, "게시글 목록 조회 성공"))
     }
@@ -149,7 +149,7 @@ class PostController(private val postService: PostService) {
     fun getPostsByMember(
         @PathVariable memberId: Long,
         @PageableDefault(size = 10, sort = ["createDate"], direction = Sort.Direction.DESC) pageable: Pageable
-    ): ResponseEntity<Response<Slice<PostInfoRes>?>> {
+    ): ResponseEntity<Response<Slice<PostInfoRes>>> {
         val posts = postService.getPostsByMember(memberId, pageable)
         return ResponseEntity.ok(CommonResponse.success(posts, "사용자 게시글 목록 조회 성공"))
     }

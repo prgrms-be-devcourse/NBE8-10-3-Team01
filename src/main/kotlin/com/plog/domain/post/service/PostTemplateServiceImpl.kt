@@ -39,34 +39,25 @@ class PostTemplateServiceImpl(
     private val memberRepository: MemberRepository
 ) : PostTemplateService {
 
-    var seeds: List<PostTemplateSeed>? = null
-        internal set
+    private var seeds: List<PostTemplateSeed> = emptyList()
 
     @PostConstruct
     fun init() {
         try {
             val resolver = PathMatchingResourcePatternResolver()
             val resources = resolver.getResources("classpath:postTemplate/*.md")
-            val loads = mutableListOf<PostTemplateSeed>()
+            
+            this.seeds = resources.mapNotNull { resource ->
+                val filename = resource.filename ?: return@mapNotNull null
+                val title = filename.removeSuffix(".md").replace("_", " ")
+                val context = resource.inputStream.use { it.readAllBytes().toString(StandardCharsets.UTF_8) }
 
-            for (resource in resources) {
-                val filename = resource.filename ?: continue
-
-                val title = filename.replace(".md", "").replace("_", " ")
-                val context = String(
-                    resource.inputStream.readAllBytes(),
-                    StandardCharsets.UTF_8
-                )
-
-                loads.add(
-                    PostTemplateSeed.builder()
-                        .title(title)
-                        .name(title)
-                        .content(context)
-                        .build()
-                )
+                PostTemplateSeed.builder()
+                    .title(title)
+                    .name(title)
+                    .content(context)
+                    .build()
             }
-            this.seeds = loads.toList()
         } catch (e: IOException) {
             throw IllegalStateException(
                 "[PostTemplateServiceImpl#init] failed to load postTemplate/*.md", e
@@ -75,69 +66,65 @@ class PostTemplateServiceImpl(
     }
 
     @Transactional
-    override fun createPostTemplate(memberId: Long?, dto: PostTemplateInfoDto?): Long? {
-        val author = memberRepository.getReferenceById(memberId!!)
+    override fun createPostTemplate(memberId: Long, dto: PostTemplateInfoDto): Long {
+        val author = memberRepository.getReferenceById(memberId)
 
         val postTemplate = PostTemplate.builder()
-            .name(dto!!.name)
+            .name(dto.name)
             .title(dto.title)
             .content(dto.content)
             .member(author)
             .build()
 
         val saved = postTemplateRepository.save(postTemplate)
-        return saved.id
+        return saved.id ?: throw IllegalStateException("PostTemplate ID must not be null after save")
     }
 
     @Transactional(readOnly = true)
-    override fun getTemplateListByMember(memberId: Long?): List<PostTemplateSummaryRes>? {
-        val getList = postTemplateRepository.findAllByMember_Id(memberId!!)
-
-        return getList.map { PostTemplateSummaryRes.to(it) }
+    override fun getTemplateListByMember(memberId: Long): List<PostTemplateSummaryRes> {
+        return postTemplateRepository.findAllByMember_Id(memberId)
+            .map { PostTemplateSummaryRes.to(it) }
     }
 
     @Transactional
-    override fun updatePostTemplate(memberId: Long?, templateId: Long?, dto: PostTemplateUpdateReq?) {
-        val postTemplate = findByTemplateId(templateId!!)
+    override fun updatePostTemplate(memberId: Long, templateId: Long, dto: PostTemplateUpdateReq) {
+        val postTemplate = findByTemplateId(templateId)
 
-        validateOwner(memberId!!, postTemplate)
+        validateOwner(memberId, postTemplate)
 
-        postTemplate.update(dto!!.name, dto.title, dto.content)
+        postTemplate.update(dto.name, dto.title, dto.content)
 
         postTemplateRepository.save(postTemplate)
     }
 
     @Transactional(readOnly = true)
-    override fun getTemplate(memberId: Long?, templateId: Long?): PostTemplateInfoDto? {
-        val postTemplate = findByTemplateId(templateId!!)
+    override fun getTemplate(memberId: Long, templateId: Long): PostTemplateInfoDto {
+        val postTemplate = findByTemplateId(templateId)
 
-        validateOwner(memberId!!, postTemplate)
+        validateOwner(memberId, postTemplate)
 
         return PostTemplateInfoDto.to(postTemplate)
     }
 
     @Transactional
-    override fun deleteTemplate(memberId: Long?, templateId: Long?) {
-        val postTemplate = findByTemplateId(templateId!!)
+    override fun deleteTemplate(memberId: Long, templateId: Long) {
+        val postTemplate = findByTemplateId(templateId)
 
-        validateOwner(memberId!!, postTemplate)
+        validateOwner(memberId, postTemplate)
 
         postTemplateRepository.delete(postTemplate)
     }
 
     @Transactional
-    override fun initTemplateSeedOfUser(memberId: Long?) {
-        val member = memberRepository.getReferenceById(memberId!!)
-        val templates = mutableListOf<PostTemplate>()
-        seeds?.forEach { seed ->
-            templates.add(
-                PostTemplate.builder()
-                    .member(member)
-                    .name(seed.name)
-                    .title(seed.title)
-                    .content(seed.content)
-                    .build()
-            )
+    override fun initTemplateSeedOfUser(memberId: Long) {
+        val member = memberRepository.getReferenceById(memberId)
+        val templates = seeds.map { seed ->
+            PostTemplate.builder()
+                .member(member)
+                .name(seed.name)
+                .title(seed.title)
+                .content(seed.content)
+                .build()
         }
 
         postTemplateRepository.saveAll(templates)
