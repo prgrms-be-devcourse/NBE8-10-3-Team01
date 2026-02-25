@@ -1,5 +1,6 @@
 package com.plog.domain.post.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.plog.domain.post.entity.PostTemplate
 
 /**
@@ -9,7 +10,11 @@ import com.plog.domain.post.entity.PostTemplate
  * @since 2026-01-26
  */
 data class PostTemplateSummaryRes(
+    @get:JvmName("name")
+    @JsonProperty("name")
     val name: String,
+    @get:JvmName("id")
+    @JsonProperty("id")
     val id: Long?
 ) {
     companion object {

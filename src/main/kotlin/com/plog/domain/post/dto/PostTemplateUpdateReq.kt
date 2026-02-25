@@ -1,5 +1,6 @@
 package com.plog.domain.post.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.NotBlank
 
 /**
@@ -10,14 +11,17 @@ import jakarta.validation.constraints.NotBlank
  */
 data class PostTemplateUpdateReq(
     @get:JvmName("name")
+    @JsonProperty("name")
     @field:NotBlank
     val name: String,
 
     @get:JvmName("title")
+    @JsonProperty("title")
     @field:NotBlank
     val title: String,
 
     @get:JvmName("content")
+    @JsonProperty("content")
     @field:NotBlank
     val content: String
 )

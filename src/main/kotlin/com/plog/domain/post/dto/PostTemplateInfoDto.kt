@@ -1,5 +1,6 @@
 package com.plog.domain.post.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.plog.domain.post.entity.PostTemplate
 
 /**
@@ -10,12 +11,16 @@ import com.plog.domain.post.entity.PostTemplate
  */
 data class PostTemplateInfoDto @JvmOverloads constructor(
     @get:JvmName("id")
+    @JsonProperty("id")
     val id: Long? = null,
     @get:JvmName("name")
+    @JsonProperty("name")
     val name: String,
     @get:JvmName("title")
+    @JsonProperty("title")
     val title: String,
     @get:JvmName("content")
+    @JsonProperty("content")
     val content: String
 ) {
     companion object {
