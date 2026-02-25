@@ -3,7 +3,9 @@ package com.plog.domain.image.repository
 import com.plog.domain.image.entity.Image
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 import java.util.Optional
 
 /**
@@ -36,14 +38,14 @@ interface ImageRepository : JpaRepository<Image, Long> {
      */
 
     @Query("""
-        SELECT i 
-        FROM Image i 
-        WHERE NOT EXISTS (
-            SELECT 1 
-            FROM Post p 
-            WHERE p.thumbnail = i.accessUrl 
-               OR p.content LIKE CONCAT('%', i.accessUrl, '%')
-        )
-    """)
-    fun findOrphanImages(): List<Image>
+    SELECT i 
+    FROM Image i 
+    WHERE i.createdAt < :threshold
+    AND NOT EXISTS (
+        SELECT 1 FROM Post p 
+        WHERE p.thumbnail = i.accessUrl 
+           OR p.content LIKE CONCAT('%', i.accessUrl, '%')
+    )
+""")
+    fun findOrphanImages(@Param("threshold") threshold: LocalDateTime): List<Image>
 }
