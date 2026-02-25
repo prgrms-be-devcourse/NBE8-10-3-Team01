@@ -1,7 +1,7 @@
 // src/main/kotlin/com/plog/global/security/CaffeineTokenStore.kt
 package com.plog.global.security
 
-import com.plog.global.config.CacheConfig.CACHE_NAME
+import com.plog.global.config.CacheConfig
 import org.springframework.cache.CacheManager
 import org.springframework.stereotype.Component
 
@@ -34,17 +34,17 @@ class CaffeineTokenStore(
 ) : TokenStore {
 
     override fun save(email: String, refreshToken: String) {
-        val refreshTokenCache = cacheManager.getCache(CACHE_NAME)
+        val refreshTokenCache = cacheManager.getCache(CacheConfig.CACHE_NAME)
         refreshTokenCache?.put(email, refreshToken)
     }
 
     override fun get(email: String): String? {
-        val refreshTokenCache = cacheManager.getCache(CACHE_NAME)
+        val refreshTokenCache = cacheManager.getCache(CacheConfig.CACHE_NAME)
         return refreshTokenCache?.get(email, String::class.java)
     }
 
     override fun delete(email: String) {
-        val refreshTokenCache = cacheManager.getCache(CACHE_NAME)
+        val refreshTokenCache = cacheManager.getCache(CacheConfig.CACHE_NAME)
         refreshTokenCache?.evict(email)
     }
 }

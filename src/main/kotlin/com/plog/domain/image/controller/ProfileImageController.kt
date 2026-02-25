@@ -54,7 +54,7 @@ class ProfileImageController(
     @DeleteMapping(value = ["/{memberId}/profile-image"])
     fun deleteProfileImage(
         @PathVariable memberId: Long
-    ): ResponseEntity<CommonResponse<Void>> {
+    ): ResponseEntity<CommonResponse<Void?>> {
         profileImageService.deleteProfileImage(memberId)
         return ResponseEntity.ok(CommonResponse.success(null, "프로필 이미지가 삭제되었습니다."))
     }
