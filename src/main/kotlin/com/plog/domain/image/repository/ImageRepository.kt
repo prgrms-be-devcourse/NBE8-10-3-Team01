@@ -56,14 +56,14 @@ interface ImageRepository : JpaRepository<Image, Long> {
      * Post의 본문(content)에도 해당 URL이 포함되지 않은 고아 이미지를 조회합니다.
      */
     @Query("""
-        SELECT i
-        FROM Image i
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM Post p
-            WHERE p.thumbnail = i.accessUrl
-               OR p.content LIKE CONCAT('%', i.accessUrl, '%')
-        )
-    """)
-    fun findOrphanImages(): List<Image>
+    SELECT i
+    FROM Image i
+    WHERE i.createdAt < :threshold
+    AND NOT EXISTS (
+        SELECT 1 FROM Post p
+        WHERE p.thumbnail = i.accessUrl
+           OR p.content LIKE CONCAT('%', i.accessUrl, '%')
+    )
+""")
+    fun findOrphanImages(@Param("threshold") threshold: LocalDateTime): List<Image>
 }
