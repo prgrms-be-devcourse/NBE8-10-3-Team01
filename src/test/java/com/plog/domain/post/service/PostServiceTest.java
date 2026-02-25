@@ -1,6 +1,8 @@
 package com.plog.domain.post.service;
 
 import com.plog.domain.comment.repository.CommentRepository;
+import com.plog.domain.hashtag.entity.HashTag;
+import com.plog.domain.hashtag.entity.PostHashTag;
 import com.plog.domain.hashtag.repository.HashTagRepository;
 import com.plog.domain.hashtag.repository.PostHashTagRepository;
 import com.plog.domain.member.entity.Member;
@@ -28,10 +30,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.BDDMockito.given;
 
 @ExtendWith(MockitoExtension.class)
@@ -145,6 +145,81 @@ public class PostServiceTest {
         assertThat(result.isLast()).isTrue();
 
         verify(postRepository).findAllWithMember(pageable);
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 시 조회수가 1 증가해야 한다")
+    void getPostDetailIncrementsViewCount() {
+        // [Given]
+        Long postId = 1L;
+        Member author = Member.builder().build();
+        Post post = Post.builder()
+                .title("제목")
+                .content("내용")
+                .member(author)
+                .viewCount(0)
+                .build();
+
+        given(postRepository.findByIdWithMember(postId)).willReturn(Optional.of(post));
+        given(commentRepository.findCommentsWithMemberAndImageByPostId(eq(postId), any(Pageable.class)))
+                .willReturn(new SliceImpl<>(List.of()));
+
+        // [When]
+        postService.getPostDetail(postId, 0);
+
+        // [Then]
+        assertThat(post.getViewCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 시 존재하지 않는 ID면 PostException 발생")
+    void getPostDetailNotFound() {
+        // [Given]
+        given(postRepository.findByIdWithMember(anyLong())).willReturn(Optional.empty());
+
+        // [When & Then]
+        assertThatThrownBy(() -> postService.getPostDetail(99L, 0))
+                .isInstanceOf(PostException.class);
+    }
+
+    @Test
+    @DisplayName("해시태그 적용 시 기존에 존재하는 태그는 재사용하고 새로운 태그는 생성한다")
+    void applyTagsLogic() {
+        // [Given]
+        Long memberId = 1L;
+        List<String> tagNames = List.of("Spring", "Kotlin");
+        PostCreateReq requestDto = new PostCreateReq("제목", "내용", tagNames, null);
+
+        Member mockMember = Member.builder().build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+        given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
+
+        given(postRepository.save(any(Post.class))).willAnswer(invocation -> {
+            Post post = invocation.getArgument(0);
+            ReflectionTestUtils.setField(post, "id", 100L);
+            return post;
+        });
+
+        // "spring"은 이미 존재한다고 가정
+        HashTag existingTag = new HashTag("spring");
+        ReflectionTestUtils.setField(existingTag, "id", 1L);
+        given(hashTagRepository.findByName("spring")).willReturn(Optional.of(existingTag));
+
+        // "kotlin"은 존재하지 않아 새로 생성된다고 가정
+        given(hashTagRepository.findByName("kotlin")).willReturn(Optional.empty());
+        given(hashTagRepository.save(any(HashTag.class))).willAnswer(invocation -> {
+            HashTag tag = invocation.getArgument(0);
+            ReflectionTestUtils.setField(tag, "id", 2L);
+            return tag;
+        });
+
+        // [When]
+        postService.createPost(memberId, requestDto);
+
+        // [Then]
+        // 해시태그 저장 로직 검증
+        verify(hashTagRepository).save(argThat(tag -> tag.getName().equals("kotlin")));
+        verify(postHashTagRepository, times(2)).save(any(PostHashTag.class));
     }
 
     @Test

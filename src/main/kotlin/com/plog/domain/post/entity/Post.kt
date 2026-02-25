@@ -4,7 +4,6 @@ import com.plog.domain.hashtag.entity.PostHashTag
 import com.plog.domain.member.entity.Member
 import com.plog.global.jpa.entity.BaseEntity
 import jakarta.persistence.*
-import java.util.ArrayList
 
 /**
  * 블로그 게시물의 핵심 데이터를 담당하는 엔티티 클래스입니다.

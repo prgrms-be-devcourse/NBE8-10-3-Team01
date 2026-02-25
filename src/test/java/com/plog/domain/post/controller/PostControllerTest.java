@@ -12,14 +12,9 @@ import com.plog.global.security.*;
 import com.plog.testUtil.SecurityTestConfig;
 import com.plog.testUtil.WebMvcTestSupport;
 import com.plog.testUtil.WithCustomMockUser;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
@@ -71,6 +66,40 @@ class PostControllerTest extends WebMvcTestSupport {
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/posts/" + createdPostId));
+    }
+
+    @Test
+    @DisplayName("게시글 생성 시 제목이 비어있으면 400 에러를 반환한다")
+    @WithCustomMockUser
+    void createPostWithEmptyTitle() throws Exception {
+        // [Given]
+        PostCreateReq request = new PostCreateReq("", "게시글 본문", null, null);
+
+        // [When]
+        ResultActions resultActions = mockMvc.perform(post("/api/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print());
+
+        // [Then]
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("게시글 생성 시 본문이 비어있으면 400 에러를 반환한다")
+    @WithCustomMockUser
+    void createPostWithEmptyContent() throws Exception {
+        // [Given]
+        PostCreateReq request = new PostCreateReq("제목", "", null, null);
+
+        // [When]
+        ResultActions resultActions = mockMvc.perform(post("/api/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andDo(print());
+
+        // [Then]
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @Test
@@ -155,6 +184,44 @@ class PostControllerTest extends WebMvcTestSupport {
 
         // [Then]
         resultActions.andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 제목이 비어있으면 400 에러를 반환한다")
+    @WithCustomMockUser
+    void updatePostWithEmptyTitle() throws Exception {
+        // [Given]
+        Long postId = 1L;
+        PostUpdateReq requestDto = new PostUpdateReq("", "수정 본문", null, null);
+
+        // [When]
+        ResultActions resultActions = mockMvc.perform(
+                put("/api/posts/{id}", postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto))
+        ).andDo(print());
+
+        // [Then]
+        resultActions.andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 본문이 비어있으면 400 에러를 반환한다")
+    @WithCustomMockUser
+    void updatePostWithEmptyContent() throws Exception {
+        // [Given]
+        Long postId = 1L;
+        PostUpdateReq requestDto = new PostUpdateReq("제목", "", null, null);
+
+        // [When]
+        ResultActions resultActions = mockMvc.perform(
+                put("/api/posts/{id}", postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto))
+        ).andDo(print());
+
+        // [Then]
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @Test
