@@ -2,6 +2,7 @@ package com.plog.domain.image.repository
 
 import com.plog.domain.image.entity.Image
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -38,7 +39,7 @@ interface ImageRepository : JpaRepository<Image, Long> {
      */
 
     @Query(value = """
-        SELECT i.* FROM image i 
+        SELECT i.id FROM image i 
         WHERE i.create_date < :threshold
         AND NOT EXISTS (
             SELECT 1 FROM post p 
@@ -46,5 +47,15 @@ interface ImageRepository : JpaRepository<Image, Long> {
                OR p.content LIKE CONCAT('%', i.access_url, '%')
         )
     """, nativeQuery = true)
-    fun findOrphanImages(@Param("threshold") threshold: LocalDateTime): List<Image>
+    fun findOrphanImageIds(@Param("threshold") threshold: LocalDateTime): List<Long>
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Image i WHERE i.id IN :ids")
+    fun deleteAllByIdInBatch(@Param("ids") ids: List<Long>)
+
+    /**
+     * ID 리스트로 storedName만 조회 (배치 삭제용)
+     */
+    @Query("SELECT i.storedName FROM Image i WHERE i.id IN :ids")
+    fun findStoredNamesByIds(@Param("ids") ids: List<Long>): List<String>
 }
