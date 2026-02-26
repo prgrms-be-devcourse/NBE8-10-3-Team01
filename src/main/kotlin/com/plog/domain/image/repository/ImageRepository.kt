@@ -55,15 +55,14 @@ interface ImageRepository : JpaRepository<Image, Long> {
      * DB에 저장된 Image 중, Post의 썸네일(thumbnail)로도 사용되지 않고,
      * Post의 본문(content)에도 해당 URL이 포함되지 않은 고아 이미지를 조회합니다.
      */
-    @Query("""
-    SELECT i
-    FROM Image i
-    WHERE i.createdAt < :threshold
-    AND NOT EXISTS (
-        SELECT 1 FROM Post p
-        WHERE p.thumbnail = i.accessUrl
-           OR p.content LIKE CONCAT('%', i.accessUrl, '%')
-    )
-""")
+    @Query(value = """
+        SELECT i.* FROM image i
+        WHERE i.create_date < :threshold
+        AND NOT EXISTS (
+            SELECT 1 FROM post p
+            WHERE p.thumbnail = i.access_url
+               OR p.content LIKE CONCAT('%', i.access_url, '%')
+        )
+    """, nativeQuery = true)
     fun findOrphanImages(@Param("threshold") threshold: LocalDateTime): List<Image>
 }
