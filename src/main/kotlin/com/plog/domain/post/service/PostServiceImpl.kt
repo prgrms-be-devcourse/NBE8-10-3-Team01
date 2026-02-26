@@ -23,10 +23,10 @@ import com.plog.global.exception.exceptions.AuthException
 import com.plog.global.exception.exceptions.PostException
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.text.TextContentRenderer
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
+import org.springframework.data.domain.SliceImpl
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -248,7 +248,11 @@ class PostServiceImpl(
      * @return 검색된 게시글 리스트 (Page 형식)
      */
     @Transactional(readOnly = true)
-    override fun searchPostsByTitle(title: String, pageable: Pageable): Page<PostListRes> {
+    override fun searchPostsByTitle(title: String, pageable: Pageable): Slice<PostListRes> {
+
+        if (title.isNullOrBlank()) {
+            return SliceImpl(emptyList())
+        }
         // 제목 검색은 해시태그와 달리 대소문자나 공백을 엄격하게 정규화하지 않고
         // 앞뒤 공백만 제거하여 검색 유연성을 높입니다.
         val cleanTitle = title.trim()

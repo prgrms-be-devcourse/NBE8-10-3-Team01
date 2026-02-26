@@ -111,5 +111,5 @@ interface PostService {
      * @param pageable 페이징 정보 (페이지 번호, 사이즈, 정렬 등)
      * @return 검색 결과가 담긴 Page 객체 (PostListRes DTO 반환)
      */
-    fun searchPostsByTitle(title: String, pageable: Pageable): Page<PostListRes>
+    fun searchPostsByTitle(title: String, pageable: Pageable): Slice<PostListRes>
 }
