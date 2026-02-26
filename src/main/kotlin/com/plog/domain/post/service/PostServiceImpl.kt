@@ -308,5 +308,4 @@ class PostServiceImpl(
             .map { PostListRes.from(it) }
     }
 
-
 }
