@@ -5,6 +5,8 @@ import com.plog.domain.hashtag.entity.HashTag;
 import com.plog.domain.hashtag.entity.PostHashTag;
 import com.plog.domain.hashtag.repository.HashTagRepository;
 import com.plog.domain.hashtag.repository.PostHashTagRepository;
+import com.plog.domain.image.entity.Image;
+import com.plog.domain.image.repository.ImageRepository;
 import com.plog.domain.member.entity.Member;
 import com.plog.domain.member.repository.MemberRepository;
 import com.plog.domain.post.dto.PostCreateReq;
@@ -15,6 +17,7 @@ import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.repository.PostRepository;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.PostException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +57,14 @@ public class PostServiceTest {
 
     @Mock
     private HashTagRepository hashTagRepository;
+
+    @Mock
+    private ImageRepository imageRepository;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(imageRepository.findAllByAccessUrlIn(anyList())).thenReturn(List.of());
+    }
 
     @Test
     @DisplayName("게시글 저장 시 마크다운이 제거된 요약글이 자동 생성")
@@ -402,5 +413,112 @@ public class PostServiceTest {
 
         // 3. 리포지토리 호출 확인 (새로운 메서드와 파라미터 기준)
         verify(postRepository).findAllByMemberId(memberId, pageable);
+    }
+    @Test
+    @DisplayName("content에 이미지 URL이 있으면 해당 이미지를 USED로 마킹한다")
+    void createPost_withImageInContent_marksImageAsUsed() {
+        // given
+        Long memberId = 1L;
+        String content = "<img src=\"http://minio/bucket/test.jpg\" />";
+        PostCreateReq req = new PostCreateReq("제목", content, List.of(), null);
+
+        Member mockMember = Member.builder().build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+        given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
+        given(postRepository.save(any(Post.class))).willAnswer(invocation -> {
+            Post post = invocation.getArgument(0);
+            ReflectionTestUtils.setField(post, "id", 100L);
+            return post;
+        });
+
+        Image mockImage = mock(Image.class);
+        given(imageRepository.findAllByAccessUrlIn(anyList())).willReturn(List.of(mockImage));
+
+        // when
+        postService.createPost(memberId, req);
+
+        // then
+        verify(imageRepository).findAllByAccessUrlIn(anyList());
+        verify(mockImage).setStatus("USED");
+        verify(mockImage).setDomain("POST");
+        verify(mockImage).setDomainId(100L);
+    }
+
+    @Test
+    @DisplayName("thumbnail URL이 있으면 해당 이미지도 USED로 마킹한다")
+    void createPost_withThumbnail_marksThumbnailAsUsed() {
+        // given
+        Long memberId = 1L;
+        String thumbnail = "http://minio/bucket/thumb.jpg";
+        PostCreateReq req = new PostCreateReq("제목", "본문 내용", List.of(), thumbnail);
+
+        Member mockMember = Member.builder().build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+        given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
+        given(postRepository.save(any(Post.class))).willAnswer(invocation -> {
+            Post post = invocation.getArgument(0);
+            ReflectionTestUtils.setField(post, "id", 100L);
+            return post;
+        });
+
+        Image mockImage = mock(Image.class);
+        given(imageRepository.findAllByAccessUrlIn(anyList())).willReturn(List.of(mockImage));
+
+        // when
+        postService.createPost(memberId, req);
+
+        // then
+        verify(imageRepository).findAllByAccessUrlIn(argThat(urls -> urls.contains(thumbnail)));
+        verify(mockImage).setStatus("USED");
+    }
+
+    @Test
+    @DisplayName("content와 thumbnail 모두 이미지 없으면 imageRepository를 호출하지 않는다")
+    void createPost_noImages_doesNotCallImageRepository() {
+        // given
+        Long memberId = 1L;
+        PostCreateReq req = new PostCreateReq("제목", "이미지 없는 순수 텍스트", List.of(), null);
+
+        Member mockMember = Member.builder().build();
+        ReflectionTestUtils.setField(mockMember, "id", memberId);
+        given(memberRepository.getReferenceById(memberId)).willReturn(mockMember);
+        given(postRepository.save(any(Post.class))).willAnswer(invocation -> {
+            Post post = invocation.getArgument(0);
+            ReflectionTestUtils.setField(post, "id", 100L);
+            return post;
+        });
+
+        // when
+        postService.createPost(memberId, req);
+
+        // then
+        verify(imageRepository, never()).findAllByAccessUrlIn(anyList());
+    }
+
+    @Test
+    @DisplayName("게시글 수정 시 새 이미지 URL도 USED로 마킹한다")
+    void updatePost_withNewImage_marksImageAsUsed() {
+        // given
+        Long memberId = 1L;
+        Long postId = 1L;
+        String newContent = "<img src=\"http://minio/bucket/new.jpg\" />";
+
+        Member member = Member.builder().build();
+        ReflectionTestUtils.setField(member, "id", memberId);
+        Post existingPost = Post.builder().title("기존").content("기존").member(member).build();
+
+        given(postRepository.findById(postId)).willReturn(Optional.of(existingPost));
+
+        Image mockImage = mock(Image.class);
+        given(imageRepository.findAllByAccessUrlIn(anyList())).willReturn(List.of(mockImage));
+
+        // when
+        postService.updatePost(memberId, postId, new PostUpdateReq("수정 제목", newContent, null, null));
+
+        // then
+        verify(imageRepository).findAllByAccessUrlIn(anyList());
+        verify(mockImage).setStatus("USED");
+        verify(mockImage).setDomain("POST");
+        verify(mockImage).setDomainId(postId);
     }
 }
