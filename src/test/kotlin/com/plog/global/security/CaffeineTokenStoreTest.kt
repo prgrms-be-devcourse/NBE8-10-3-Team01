@@ -2,7 +2,7 @@
 package com.plog.global.security
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.plog.global.config.CacheConfig.CACHE_NAME
+import com.plog.global.config.CacheConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -35,7 +35,7 @@ class CaffeineTokenStoreTest {
     @BeforeEach
     fun setUp() {
         // 실제 Caffeine 설정과 유사하게 CacheManager를 수동 생성합니다.
-        cacheManager = CaffeineCacheManager(CACHE_NAME)
+        cacheManager = CaffeineCacheManager(CacheConfig.CACHE_NAME)
         cacheManager.setCaffeine(
             Caffeine.newBuilder()
                 .expireAfterWrite(7, TimeUnit.DAYS)
