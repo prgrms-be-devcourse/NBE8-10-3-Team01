@@ -11,6 +11,8 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import org.apache.catalina.User
+import org.hibernate.annotations.OnDelete
+import org.hibernate.annotations.OnDeleteAction
 
 /**
  * 특정 댓글에 대한 사용자의 '좋아요' 이력을 관리하는 엔티티입니다.
@@ -35,7 +37,7 @@ import org.apache.catalina.User
  * @see Comment
  */
 @Entity
-@Table(uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "comment_id"])])
+@Table(uniqueConstraints = [UniqueConstraint(columnNames = ["member_id", "comment_id"])])
 class CommentLike (
 
     @Id
@@ -48,5 +50,6 @@ class CommentLike (
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     val comment: Comment
 )
