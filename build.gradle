@@ -49,6 +49,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'com.github.ben-manes.caffeine:caffeine'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.retry:spring-retry:2.0.11'
+    implementation 'org.springframework.boot:spring-boot-starter-aop:3.4.1'
 
     // 4. API Documentation (SpringDoc v3)
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0'
