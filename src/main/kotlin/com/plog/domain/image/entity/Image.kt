@@ -38,16 +38,31 @@ class Image protected constructor() : BaseEntity() {
     @JoinColumn(name = "member_id", nullable = false)
     var uploader: Member? = null
 
+    @Column
+    var domain: String? = null      // "POST", "PROFILE"
+
+    @Column
+    var status: String? = "PENDING" // "PENDING", "USED"
+
+    @Column
+    var domainId: Long? = null     // 123L (Post ID 등)
+
     constructor(
         originalName: String,
         storedName: String,
         accessUrl: String,
-        uploader: Member?
+        uploader: Member?,
+        domain: String? = null,
+        status: String? = "PENDING",
+        domainId: Long? = null
     ) : this() {
         this.originalName = originalName
         this.storedName = storedName
         this.accessUrl = accessUrl
         this.uploader = uploader
+        this.domain = domain
+        this.status = status
+        this.domainId = domainId
     }
 
     companion object {
@@ -61,12 +76,19 @@ class Image protected constructor() : BaseEntity() {
         private var storedName: String = ""
         private var accessUrl: String = ""
         private var uploader: Member? = null
+        private var domain: String? = null
+        private var status: String? = "PENDING"
+        private var domainId: Long? = null
 
         fun originalName(originalName: String) = apply { this.originalName = originalName }
         fun storedName(storedName: String) = apply { this.storedName = storedName }
         fun accessUrl(accessUrl: String) = apply { this.accessUrl = accessUrl }
         fun uploader(uploader: Member?) = apply { this.uploader = uploader }
+        fun domain(domain: String?) = apply { this.domain = domain }
+        fun status(status: String?) = apply { this.status = status }
+        fun domainId(domainId: Long?) = apply { this.domainId = domainId }
 
-        fun build() = Image(originalName, storedName, accessUrl, uploader)
+        fun build() = Image(originalName, storedName, accessUrl, uploader,
+            domain, status, domainId)
     }
 }

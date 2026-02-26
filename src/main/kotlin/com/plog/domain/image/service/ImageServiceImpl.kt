@@ -61,6 +61,7 @@ class ImageServiceImpl(
             .storedName(storedFileName)
             .accessUrl(accessUrl)
             .uploader(uploader)
+            .status("PENDING")
             .build()
 
         imageRepository.save(image)
