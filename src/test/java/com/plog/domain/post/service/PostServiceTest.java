@@ -55,6 +55,9 @@ public class PostServiceTest {
     @Mock
     private HashTagRepository hashTagRepository;
 
+    @Mock
+    private ViewCountService viewCountService;
+
     @Test
     @DisplayName("게시글 저장 시 마크다운이 제거된 요약글이 자동 생성")
     void createPostSuccess() {
@@ -148,10 +151,11 @@ public class PostServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 상세 조회 시 조회수가 1 증가해야 한다")
+    @DisplayName("게시글 상세 조회 시 ViewCountService.incrementViewCount가 호출되어야 한다")
     void getPostDetailIncrementsViewCount() {
         // [Given]
         Long postId = 1L;
+        String userId = "user1";
         Member author = Member.builder().build();
         Post post = Post.builder()
                 .title("제목")
@@ -165,10 +169,10 @@ public class PostServiceTest {
                 .willReturn(new SliceImpl<>(List.of()));
 
         // [When]
-        postService.getPostDetail(postId, 0);
+        postService.getPostDetail(postId, userId, 0);
 
         // [Then]
-        assertThat(post.getViewCount()).isEqualTo(1);
+        verify(viewCountService).incrementViewCount(postId, userId);
     }
 
     @Test
@@ -178,7 +182,7 @@ public class PostServiceTest {
         given(postRepository.findByIdWithMember(anyLong())).willReturn(Optional.empty());
 
         // [When & Then]
-        assertThatThrownBy(() -> postService.getPostDetail(99L, 0))
+        assertThatThrownBy(() -> postService.getPostDetail(99L, "user1", 0))
                 .isInstanceOf(PostException.class);
     }
 

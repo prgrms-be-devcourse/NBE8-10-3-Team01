@@ -50,7 +50,8 @@ class PostServiceImpl(
     private val commentRepository: CommentRepository,
     private val memberRepository: MemberRepository,
     private val postHashTagRepository: PostHashTagRepository,
-    private val hashTagRepository: HashTagRepository
+    private val hashTagRepository: HashTagRepository,
+    private val viewCountService: ViewCountService
 ) : PostService {
 
     companion object {
@@ -80,7 +81,7 @@ class PostServiceImpl(
     }
 
     @Transactional
-    override fun getPostDetail(id: Long, pageNumber: Int): PostInfoRes {
+    override fun getPostDetail(id: Long, userId: String, pageNumber: Int): PostInfoRes {
         val post = postRepository.findByIdWithMember(id)
             .orElseThrow {
                 PostException(
@@ -89,7 +90,7 @@ class PostServiceImpl(
                 )
             }
 
-        post.incrementViewCount()
+        viewCountService.incrementViewCount(id, userId)
 
         val pageable = PageRequest.of(
             pageNumber,
