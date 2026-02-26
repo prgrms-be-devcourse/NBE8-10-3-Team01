@@ -46,7 +46,6 @@ class ImageCleanupServiceTest {
 
     @Test
     fun `고아 이미지가 있을 때 성공적으로 삭제`() {
-<<<<<<< HEAD
         // given
         val orphanIds = listOf(1L, 2L)
         val storedNames = listOf("test1.jpg", "test2.jpg")
