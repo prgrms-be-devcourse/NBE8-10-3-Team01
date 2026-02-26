@@ -156,14 +156,7 @@ class CommentServiceImpl(
     @Transactional
     override fun toggleCommentLike(commentId: Long, memberId: Long) : Boolean{
 
-        val member = memberRepository.findById(memberId)
-            .orElseThrow{
-                AuthException(
-                    AuthErrorCode.USER_AUTH_FAIL,
-                    "[CommentService#toggleCommentLike] can't find user with id: $memberId",
-                    "존재하지 않는 회원입니다."
-                )
-            }
+        val member = memberRepository.getReferenceById(memberId)
 
         val comment = commentRepository.findById(commentId)
             .orElseThrow{
@@ -179,7 +172,7 @@ class CommentServiceImpl(
         return if (existingLike != null) {
 
             commentLikeRepository.delete(existingLike)
-            commentLikeRepository.flush()
+
             commentRepository.decrementLikeCount(commentId)
 
             false

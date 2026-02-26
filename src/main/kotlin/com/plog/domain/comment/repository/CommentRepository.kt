@@ -69,7 +69,7 @@ interface CommentRepository : JpaRepository<Comment, Long> {
     @Query("UPDATE Comment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :commentId")
     fun incrementLikeCount(commentId: Long): Int
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Comment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :commentId AND c.likeCount > 0")
     fun decrementLikeCount(commentId: Long): Int
 }
