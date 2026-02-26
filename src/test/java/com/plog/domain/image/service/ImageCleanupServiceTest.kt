@@ -25,12 +25,13 @@ class ImageCleanupServiceTest {
     fun `고아 이미지가 없을 때`() {
         // given
         every { mockRepo.findOrphanImageIds(any()) } returns emptyList()
+        every { mockRepo.findPendingOrphanIds(any()) } returns emptyList()
 
         // when
         service.cleanupOrphanImages()
 
         // then
-        verify(exactly = 1) { mockRepo.findOrphanImageIds(any()) }
+        verify(exactly = 1) { mockRepo.findPendingOrphanIds(any()) }
         verify(exactly = 0) { mockRepo.findStoredNamesByIds(any<List<Long>>()) }
         verify(exactly = 0) { mockRepo.deleteAllByIdInBatch(any()) }
     }
@@ -42,6 +43,7 @@ class ImageCleanupServiceTest {
         val storedNames = listOf("test1.jpg", "test2.jpg")
 
         every { mockRepo.findOrphanImageIds(any()) } returns orphanIds
+        every { mockRepo.findPendingOrphanIds(any()) } returns orphanIds
         every { mockRepo.findStoredNamesByIds(orphanIds) } returns storedNames
         every { mockStorage.delete(any()) } just Runs
         every { mockRepo.deleteAllByIdInBatch(orphanIds) } just Runs
@@ -50,7 +52,7 @@ class ImageCleanupServiceTest {
         service.cleanupOrphanImages()
 
         // then
-        verify(exactly = 1) { mockRepo.findOrphanImageIds(any()) }
+        verify(exactly = 1) { mockRepo.findPendingOrphanIds(any()) }
         verify(exactly = 1) { mockRepo.findStoredNamesByIds(orphanIds) }
         verify(exactly = storedNames.size) { mockStorage.delete(any()) }
         verify(exactly = 1) { mockRepo.deleteAllByIdInBatch(orphanIds) }

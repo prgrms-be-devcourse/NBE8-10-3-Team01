@@ -23,7 +23,7 @@ class ImageCleanupService(
         val threshold = LocalDateTime.now().minusHours(24)
 
         // ID만 조회
-        val orphanIds = imageRepository.findOrphanImageIds(threshold)
+        val orphanIds = imageRepository.findPendingOrphanIds(threshold)
         if (orphanIds.isEmpty()) {
             log.info("[ImageCleanupService] 삭제할 고아 이미지가 없습니다.")
             return

@@ -58,4 +58,10 @@ interface ImageRepository : JpaRepository<Image, Long> {
      */
     @Query("SELECT i.storedName FROM Image i WHERE i.id IN :ids")
     fun findStoredNamesByIds(@Param("ids") ids: List<Long>): List<String>
+
+    /**
+     * PENDING 상태 + 만료된 고아 이미지만 빠르게 조회
+     */
+    @Query("SELECT i.id FROM Image i WHERE i.status = 'PENDING' AND i.createDate < :threshold")
+    fun findPendingOrphanIds(@Param("threshold") threshold: LocalDateTime): List<Long>
 }
