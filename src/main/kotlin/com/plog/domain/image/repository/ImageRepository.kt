@@ -64,4 +64,6 @@ interface ImageRepository : JpaRepository<Image, Long> {
      */
     @Query("SELECT i.id FROM Image i WHERE i.status = 'PENDING' AND i.createDate < :threshold")
     fun findPendingOrphanIds(@Param("threshold") threshold: LocalDateTime): List<Long>
+
+    fun findAllByAccessUrlIn(accessUrls: List<String>): List<Image>
 }
