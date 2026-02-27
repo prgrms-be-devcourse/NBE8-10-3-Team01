@@ -86,6 +86,9 @@ class ProfileImageServiceImpl(
             .storedName(storedName)
             .accessUrl(accessUrl)
             .uploader(member)
+            .status("USED")
+            .domain("PROFILE")
+            .domainId(memberId)
             .build()
 
         imageRepository.save(newImage)
