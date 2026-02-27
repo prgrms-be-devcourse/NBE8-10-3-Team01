@@ -16,11 +16,11 @@ class ImageCleanupService(
 
     /**
      * 고아 이미지를 조회하여 스토리지와 DB에서 모두 삭제합니다.
-     * 업로드 후 24시간 이내의 이미지는 삭제 대상에서 제외합니다.
+     * 업로드 후 3일 이내의 이미지는 삭제 대상에서 제외합니다.
      */
     @Transactional
     fun cleanupOrphanImages() {
-        val threshold = LocalDateTime.now().minusHours(24)
+        val threshold = LocalDateTime.now().minusDays(3)
 
         // ID만 조회
         val orphanIds = imageRepository.findPendingOrphanIds(threshold)
