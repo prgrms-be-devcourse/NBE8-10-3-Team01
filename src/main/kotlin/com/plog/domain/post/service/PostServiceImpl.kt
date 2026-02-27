@@ -31,6 +31,10 @@ import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.util.Optional
+import com.plog.domain.image.entity.Image
+import com.plog.domain.image.repository.ImageRepository
+
 
 /**
  * [PostService] 인터페이스의 기본 구현체입니다.
@@ -52,7 +56,7 @@ class PostServiceImpl(
     private val memberRepository: MemberRepository,
     private val postHashTagRepository: PostHashTagRepository,
     private val hashTagRepository: HashTagRepository,
-    private val viewCountRedisRepository: ViewCountRedisRepository
+    private val imageRepository: ImageRepository
 ) : PostService {
 
     companion object {
@@ -79,6 +83,8 @@ class PostServiceImpl(
         val savedPost = postRepository.save(post)
 
         applyTags(savedPost, req.hashtags)
+
+        updateImageStatusUsed(req.content, req.thumbnail, savedPost.id!!)
 
         return savedPost.id ?: throw IllegalStateException("Post ID must not be null after save")
     }
@@ -159,6 +165,8 @@ class PostServiceImpl(
         postHashTagRepository.deleteAllByPostId(postId)
 
         applyTags(post, req.hashtags)
+
+        updateImageStatusUsed(req.content, req.thumbnail, postId)
     }
 
     @Transactional
@@ -247,7 +255,34 @@ class PostServiceImpl(
         }
     }
 
+    /**
+     * 게시글의 content/thumbnail에서 이미지 URL 추출하여 상태를 USED로 업데이트
+     */
+    private fun updateImageStatusUsed(content: String, thumbnail: String?, postId: Long) {
+        val imageUrls = extractImageUrls(content) + listOfNotNull(thumbnail)
+        if (imageUrls.isEmpty()) return
+
+        val images = imageRepository.findAllByAccessUrlIn(imageUrls)
+        images.forEach { image ->
+            image.status = Image.ImageStatus.USED
+            image.domain = Image.ImageDomain.POST
+            image.domainId = postId
+        }
+    }
+
+    private fun extractImageUrls(markdown: String): List<String> {
+        // <img src="..." /> 또는 markdown ![alt](url) 패턴
+        val imgRegex = Regex("""src=["']([^"']+)["']""")
+        val mdRegex = Regex("""!\[.*?\]\(([^)]+)\)""")
+
+        return (imgRegex.findAll(markdown) + mdRegex.findAll(markdown))
+            .map { it.groupValues[1] }
+            .distinct()
+            .toList()
+    }
+
     private fun normalizeTag(name: String): String {
         return name.trim().lowercase().replace(" ", "_")
     }
+
 }

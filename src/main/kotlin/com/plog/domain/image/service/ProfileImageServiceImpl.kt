@@ -2,6 +2,8 @@ package com.plog.domain.image.service
 
 import com.plog.domain.image.dto.ProfileImageUploadRes
 import com.plog.domain.image.entity.Image
+import com.plog.domain.image.entity.Image.ImageDomain
+import com.plog.domain.image.entity.Image.ImageStatus
 import com.plog.domain.image.repository.ImageRepository
 import com.plog.domain.member.entity.Member
 import com.plog.domain.member.repository.MemberRepository
@@ -86,6 +88,9 @@ class ProfileImageServiceImpl(
             .storedName(storedName)
             .accessUrl(accessUrl)
             .uploader(member)
+            .domain(ImageDomain.POST)
+            .status(ImageStatus.PENDING)
+            .domainId(memberId)
             .build()
 
         imageRepository.save(newImage)

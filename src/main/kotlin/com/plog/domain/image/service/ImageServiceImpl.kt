@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
+import com.plog.domain.image.entity.Image.ImageDomain
+import com.plog.domain.image.entity.Image.ImageStatus
 
 /**
  * 이미지 업로드 및 메타데이터 관리를 담당하는 서비스 구현체입니다.
@@ -61,6 +63,9 @@ class ImageServiceImpl(
             .storedName(storedFileName)
             .accessUrl(accessUrl)
             .uploader(uploader)
+            .domain(ImageDomain.POST)
+            .status(ImageStatus.PENDING)
+            .domainId(null)
             .build()
 
         imageRepository.save(image)

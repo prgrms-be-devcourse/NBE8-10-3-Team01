@@ -25,6 +25,14 @@ import jakarta.persistence.*
 @Entity
 class Image protected constructor() : BaseEntity() {
 
+    enum class ImageDomain {
+        POST, PROFILE
+    }
+
+    enum class ImageStatus {
+        PENDING, USED
+    }
+
     @Column(nullable = false)
     var originalName: String = ""
 
@@ -38,16 +46,33 @@ class Image protected constructor() : BaseEntity() {
     @JoinColumn(name = "member_id", nullable = false)
     var uploader: Member? = null
 
+    @Column(nullable = false)  // nullable=false 로 변경!
+    @Enumerated(EnumType.STRING)
+    var domain: ImageDomain = ImageDomain.POST  // ← enum + 기본값!
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    var status: ImageStatus = ImageStatus.PENDING  // ← enum + 기본값!
+
+    @Column
+    var domainId: Long? = null     // 123L (Post ID 등)
+
     constructor(
         originalName: String,
         storedName: String,
         accessUrl: String,
-        uploader: Member?
+        uploader: Member?,
+        domain: ImageDomain = ImageDomain.POST,
+        status: ImageStatus = ImageStatus.PENDING,
+        domainId: Long? = null
     ) : this() {
         this.originalName = originalName
         this.storedName = storedName
         this.accessUrl = accessUrl
         this.uploader = uploader
+        this.domain = domain
+        this.status = status
+        this.domainId = domainId
     }
 
     companion object {
@@ -61,12 +86,19 @@ class Image protected constructor() : BaseEntity() {
         private var storedName: String = ""
         private var accessUrl: String = ""
         private var uploader: Member? = null
+        private var domain: ImageDomain = ImageDomain.POST
+        private var status: ImageStatus = ImageStatus.PENDING
+        private var domainId: Long? = null
 
         fun originalName(originalName: String) = apply { this.originalName = originalName }
         fun storedName(storedName: String) = apply { this.storedName = storedName }
         fun accessUrl(accessUrl: String) = apply { this.accessUrl = accessUrl }
         fun uploader(uploader: Member?) = apply { this.uploader = uploader }
+        fun domain(domain: ImageDomain) = apply { this.domain = domain }
+        fun status(status: ImageStatus) = apply { this.status = status }
+        fun domainId(domainId: Long?) = apply { this.domainId = domainId }
 
-        fun build() = Image(originalName, storedName, accessUrl, uploader)
+        fun build() = Image(originalName, storedName, accessUrl, uploader,
+            domain, status, domainId)
     }
 }
