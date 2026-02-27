@@ -6,19 +6,28 @@ import com.plog.global.minio.storage.ObjectStorage
 import io.mockk.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import com.plog.global.util.TimeUtil
+import java.time.LocalDateTime
+
 
 class ImageCleanupServiceTest {
 
     private lateinit var mockRepo: ImageRepository
     private lateinit var mockStorage: ObjectStorage
     private lateinit var service: ImageCleanupService
+    private lateinit var mockTimeUtil: TimeUtil
 
     @BeforeEach
     fun setUp() {
         MockKAnnotations.init(this, relaxUnitFun = true)
         mockRepo = mockk()
         mockStorage = mockk()
-        service = ImageCleanupService(mockRepo, mockStorage)
+        mockTimeUtil = mockk()
+
+        val fixedTime = LocalDateTime.of(2026, 2, 27, 12, 0)
+        every { mockTimeUtil.getNowKST() } returns fixedTime
+
+        service = ImageCleanupService(mockRepo, mockStorage, mockTimeUtil)
     }
 
     @Test

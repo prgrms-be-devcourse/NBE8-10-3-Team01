@@ -5,12 +5,13 @@ import com.plog.global.minio.storage.ObjectStorage
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
+import com.plog.global.util.TimeUtil
 
 @Service
 class ImageCleanupService(
     private val imageRepository: ImageRepository,
-    private val objectStorage: ObjectStorage
+    private val objectStorage: ObjectStorage,
+    private val timeUtil: TimeUtil
 ) {
     private val log = LoggerFactory.getLogger(ImageCleanupService::class.java)
 
@@ -20,7 +21,7 @@ class ImageCleanupService(
      */
     @Transactional
     fun cleanupOrphanImages() {
-        val threshold = LocalDateTime.now().minusDays(3)
+        val threshold = timeUtil.getNowKST().minusDays(3)
 
         // ID만 조회
         val orphanIds = imageRepository.findPendingOrphanIds(threshold)
