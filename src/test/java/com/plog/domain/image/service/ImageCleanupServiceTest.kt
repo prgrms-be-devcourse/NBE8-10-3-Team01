@@ -64,6 +64,7 @@ class ImageCleanupServiceTest {
         verify(exactly = storedNames.size) { mockStorage.delete(any()) }
         verify(exactly = 1) { mockRepo.deleteAllByIdInBatch(orphanIds) }
     }
+
     @Test
     fun `스토리지 삭제 실패해도 DB 삭제는 반드시 실행된다`() {
         // given
