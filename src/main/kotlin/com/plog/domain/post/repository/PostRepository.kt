@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -64,4 +65,8 @@ interface PostRepository : JpaRepository<Post, Long> {
                 "where ht.name = :tagName"
     )
     fun findByHashTagName(@Param("tagName") tagName: String, pageable: Pageable): Page<Post>
+
+    @Modifying(clearAutomatically = true)
+    @Query("update Post p set p.viewCount = p.viewCount + :count where p.id = :id")
+    fun updateViewCount(@Param("id") id: Long, @Param("count") count: Long)
 }

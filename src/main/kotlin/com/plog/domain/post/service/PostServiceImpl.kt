@@ -17,6 +17,8 @@ import com.plog.domain.post.dto.PostUpdateReq
 import com.plog.domain.post.entity.Post
 import com.plog.domain.post.entity.PostStatus
 import com.plog.domain.post.repository.PostRepository
+import com.plog.domain.post.repository.ViewCountRedisRepository
+import com.plog.global.util.HashUtils
 import com.plog.global.exception.errorCode.AuthErrorCode
 import com.plog.global.exception.errorCode.PostErrorCode
 import com.plog.global.exception.exceptions.AuthException
@@ -60,6 +62,8 @@ class PostServiceImpl(
     companion object {
         /** 요약본 생성을 위한 최대 글자 수 기준입니다. */
         private const val MAX_SUMMARY_LENGTH = 150
+        /** 조회수 중복 방지를 위한 TTL (초) - 2시간 */
+        private const val VIEW_COUNT_LIMIT_TTL = 7200L
     }
 
     @Transactional
@@ -86,7 +90,7 @@ class PostServiceImpl(
     }
 
     @Transactional
-    override fun getPostDetail(id: Long, pageNumber: Int): PostInfoRes {
+    override fun getPostDetail(id: Long, userId: String, pageNumber: Int): PostInfoRes {
         val post = postRepository.findByIdWithMember(id)
             .orElseThrow {
                 PostException(
@@ -95,8 +99,15 @@ class PostServiceImpl(
                 )
             }
 
-        post.incrementViewCount()
+        // 1. Redis 기반 조회수 증가 로직 (Throttling 적용)
+        val hashedUserId = HashUtils.sha256(userId)
+        val isFirstView = viewCountRedisRepository.setIfAbsentWithTtl(id, hashedUserId, VIEW_COUNT_LIMIT_TTL)
+        if (isFirstView) {
+            viewCountRedisRepository.incrementCount(id)
+            viewCountRedisRepository.addToPending(id)
+        }
 
+        // 2. 댓글 정보 조회
         val pageable = PageRequest.of(
             pageNumber,
             CommentConstants.COMMENT_PAGE_SIZE,
