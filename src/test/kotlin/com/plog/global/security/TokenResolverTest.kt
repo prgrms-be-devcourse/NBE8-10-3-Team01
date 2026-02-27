@@ -92,4 +92,37 @@ class TokenResolverTest {
         assertThat(tokenResolver.resolveAccessToken(request)).isNull()
         assertThat(tokenResolver.resolveRefreshToken(request)).isNull()
     }
+
+    @Test
+    @DisplayName("소셜 로그인: 이중 쿠키 확인 - AT와 RT가 각각의 정책대로 한 응답에 담긴다")
+    fun setDoubleCookie_test() {
+        // given
+        val response = MockHttpServletResponse()
+        val access = "new-access-token"
+        val refresh = "new-refresh-token"
+
+        // when
+        tokenResolver.setAccessTokenCookie(response, access)
+        tokenResolver.setRefreshTokenCookie(response, refresh)
+
+        // then
+        // Access Token 쿠키 검증 (프론트엔드 접근용)
+        val atCookie = response.getCookie("accessToken")
+        assertThat(atCookie).isNotNull
+        assertThat(atCookie!!.value).isEqualTo(access)
+        assertThat(atCookie.isHttpOnly).isFalse
+        assertThat(atCookie.maxAge).isEqualTo(60)
+
+        // Refresh Token 쿠키 검증 (보안 저장용)
+        val rtCookie = response.getCookie("refreshToken")
+        assertThat(rtCookie).isNotNull
+        assertThat(rtCookie!!.value).isEqualTo(refresh)
+        assertThat(rtCookie.isHttpOnly).isTrue
+        assertThat(rtCookie.maxAge).isEqualTo(EXPIRATION / 1000)
+        
+        assertThat(atCookie.path).isEqualTo("/")
+        assertThat(rtCookie.path).isEqualTo("/")
+
+        assertThat(response.getHeaders("Set-Cookie")).hasSize(2)
+    }
 }
