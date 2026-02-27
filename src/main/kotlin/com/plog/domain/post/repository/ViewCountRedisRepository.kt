@@ -95,6 +95,63 @@ class ViewCountRedisRepository(private val redisTemplate: RedisTemplate<String, 
     }
 
     /**
+     * 여러 게시물의 조회수를 한 번에 차감하고, Pending Set에서도 한 번에 제거합니다.
+     * Lua Script를 사용하여 단일 네트워크 라운드트립으로 처리합니다.
+     *
+     * @param counts 차감할 게시물 ID와 수치의 맵
+     * @param allPostIds Pending Set에서 제거할 전체 게시물 ID 목록 (조회수가 0인 경우 포함)
+     */
+    fun decrementCountsAndRemoveFromPending(counts: Map<Long, Long>, allPostIds: List<Long>) {
+        if (allPostIds.isEmpty()) return
+
+        val script = """
+            -- ARGV[1]: Pending Set Key
+            -- ARGV[2]: Count Key Prefix
+            -- ARGV[3...]: Pairs of [postId, decrementAmount] then [remaining postIds to remove from pending]
+            
+            local pendingSetKey = ARGV[1]
+            local countKeyPrefix = ARGV[2]
+            local pairCount = tonumber(ARGV[3])
+            
+            -- 1. Decrement counts
+            for i = 1, pairCount do
+                local postId = ARGV[3 + (i-1)*2 + 1]
+                local amount = tonumber(ARGV[3 + (i-1)*2 + 2])
+                local key = countKeyPrefix .. postId
+                redis.call('DECRBY', key, amount)
+            end
+            
+            -- 2. Remove all from pending set
+            local startIdx = 3 + pairCount * 2 + 1
+            for i = startIdx, #ARGV do
+                redis.call('SREM', pendingSetKey, ARGV[i])
+            end
+            
+            return true
+        """.trimIndent()
+
+        val args = mutableListOf<String>()
+        args.add(PENDING_POSTS_KEY)
+        args.add(COUNT_KEY_PREFIX)
+        args.add(counts.size.toString())
+        
+        // Add pairs for decrement
+        counts.forEach { (id, count) ->
+            args.add(id.toString())
+            args.add(count.toString())
+        }
+        
+        // Add all IDs for removal from pending
+        allPostIds.forEach { args.add(it.toString()) }
+
+        redisTemplate.execute(
+            DefaultRedisScript(script, Boolean::class.java),
+            emptyList<String>(), // No KEYS used, all passed via ARGV to handle dynamic list
+            *args.toTypedArray()
+        )
+    }
+
+    /**
      * DB 동기화 대상 목록에서 여러 게시물 ID를 한 번에 제거합니다.
      *
      * @param postIds 게시물 ID 목록

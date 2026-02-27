@@ -81,10 +81,7 @@ class ViewCountSyncTask(
         // 트랜잭션이 성공적으로 커밋된 후에만 Redis 상태 반영 및 Pending Set에서 제거
         TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
             override fun afterCommit() {
-                counts.forEach { (postId, count) ->
-                    viewCountRedisRepository.decrementCount(postId, count)
-                }
-                viewCountRedisRepository.removeAllFromPending(longPostIds)
+                viewCountRedisRepository.decrementCountsAndRemoveFromPending(counts, longPostIds)
             }
         })
     }

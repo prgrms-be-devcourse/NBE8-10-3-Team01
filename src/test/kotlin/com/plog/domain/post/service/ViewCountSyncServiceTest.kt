@@ -71,9 +71,7 @@ class ViewCountSyncTaskTest {
         
         val syncSlot = slot<TransactionSynchronization>()
         every { TransactionSynchronizationManager.registerSynchronization(capture(syncSlot)) } just Runs
-        every { viewCountRedisRepository.decrementCount(1L, 10L) } just Runs
-        every { viewCountRedisRepository.decrementCount(2L, 5L) } just Runs
-        every { viewCountRedisRepository.removeAllFromPending(longChunk) } just Runs
+        every { viewCountRedisRepository.decrementCountsAndRemoveFromPending(any(), any()) } just Runs
 
         // [When]
         viewCountSyncTask.processChunkWithRetry(chunk)
@@ -86,8 +84,11 @@ class ViewCountSyncTaskTest {
         
         // Manual trigger of afterCommit to verify bulk removal and count decrement
         syncSlot.captured.afterCommit()
-        verify { viewCountRedisRepository.decrementCount(1L, 10L) }
-        verify { viewCountRedisRepository.decrementCount(2L, 5L) }
-        verify { viewCountRedisRepository.removeAllFromPending(longChunk) }
+        verify { 
+            viewCountRedisRepository.decrementCountsAndRemoveFromPending(
+                mapOf(1L to 10L, 2L to 5L), 
+                longChunk
+            ) 
+        }
     }
 }
