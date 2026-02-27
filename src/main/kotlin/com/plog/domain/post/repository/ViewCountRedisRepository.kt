@@ -66,28 +66,32 @@ class ViewCountRedisRepository(private val redisTemplate: RedisTemplate<String, 
     }
 
     /**
-     * 특정 게시물의 누적 조회수를 원자적으로 조회하고 0으로 초기화합니다.
-     * Lua Script를 사용하여 조회와 초기화 사이의 데이터 불일치를 방지합니다.
+     * 특정 게시물의 현재 누적 조회수를 조회합니다. (초기화하지 않음)
      *
      * @param postId 게시물 ID
      * @return 누적 조회수
      */
-    fun getAndResetCount(postId: Long): Long {
+    fun getCount(postId: Long): Long {
         val key = "$COUNT_KEY_PREFIX$postId"
-        val script = """
-            local count = redis.call('GET', KEYS[1])
-            if count then
-                redis.call('SET', KEYS[1], '0')
-                return tonumber(count)
-            else
-                return 0
-            end
-        """.trimIndent()
-        
-        return redisTemplate.execute(
-            DefaultRedisScript(script, Long::class.java),
-            listOf(key)
-        ) ?: 0L
+        val value = redisTemplate.opsForValue().get(key)
+        return when (value) {
+            is Number -> value.toLong()
+            is String -> value.toLongOrNull() ?: 0L
+            else -> 0L
+        }
+    }
+
+    /**
+     * Redis에 저장된 특정 게시물의 조회수를 특정 수치만큼 감소시킵니다.
+     * DB 동기화 완료 후 호출되어 동기화된 만큼만 차감합니다.
+     *
+     * @param postId 게시물 ID
+     * @param count 차감할 수치
+     */
+    fun decrementCount(postId: Long, count: Long) {
+        if (count <= 0) return
+        val key = "$COUNT_KEY_PREFIX$postId"
+        redisTemplate.opsForValue().decrement(key, count)
     }
 
     /**

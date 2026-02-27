@@ -65,25 +65,29 @@ class ViewCountSyncTaskTest {
         val chunk = listOf("1", "2")
         val longChunk = listOf(1L, 2L)
         
-        every { viewCountRedisRepository.getAndResetCount(1L) } returns 10L
-        every { viewCountRedisRepository.getAndResetCount(2L) } returns 5L
+        every { viewCountRedisRepository.getCount(1L) } returns 10L
+        every { viewCountRedisRepository.getCount(2L) } returns 5L
         every { postRepository.updateViewCount(any(), any()) } just Runs
         
         val syncSlot = slot<TransactionSynchronization>()
         every { TransactionSynchronizationManager.registerSynchronization(capture(syncSlot)) } just Runs
+        every { viewCountRedisRepository.decrementCount(1L, 10L) } just Runs
+        every { viewCountRedisRepository.decrementCount(2L, 5L) } just Runs
         every { viewCountRedisRepository.removeAllFromPending(longChunk) } just Runs
 
         // [When]
         viewCountSyncTask.processChunkWithRetry(chunk)
 
         // [Then]
-        verify { viewCountRedisRepository.getAndResetCount(1L) }
-        verify { viewCountRedisRepository.getAndResetCount(2L) }
+        verify { viewCountRedisRepository.getCount(1L) }
+        verify { viewCountRedisRepository.getCount(2L) }
         verify { postRepository.updateViewCount(1L, 10L) }
         verify { postRepository.updateViewCount(2L, 5L) }
         
-        // Manual trigger of afterCommit to verify bulk removal
+        // Manual trigger of afterCommit to verify bulk removal and count decrement
         syncSlot.captured.afterCommit()
+        verify { viewCountRedisRepository.decrementCount(1L, 10L) }
+        verify { viewCountRedisRepository.decrementCount(2L, 5L) }
         verify { viewCountRedisRepository.removeAllFromPending(longChunk) }
     }
 }

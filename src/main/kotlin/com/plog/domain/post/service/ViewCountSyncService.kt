@@ -68,17 +68,22 @@ class ViewCountSyncTask(
     fun processChunkWithRetry(postIds: List<String>) {
         log.debug("[ViewCountSyncTask] Processing chunk of size {}", postIds.size)
         val longPostIds = postIds.map { it.toLong() }
+        val counts = mutableMapOf<Long, Long>()
         
         for (postId in longPostIds) {
-            val count = viewCountRedisRepository.getAndResetCount(postId)
+            val count = viewCountRedisRepository.getCount(postId)
             if (count > 0) {
                 postRepository.updateViewCount(postId, count)
+                counts[postId] = count
             }
         }
 
-        // 트랜잭션이 성공적으로 커밋된 후에만 Pending Set에서 제거
+        // 트랜잭션이 성공적으로 커밋된 후에만 Redis 상태 반영 및 Pending Set에서 제거
         TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
             override fun afterCommit() {
+                counts.forEach { (postId, count) ->
+                    viewCountRedisRepository.decrementCount(postId, count)
+                }
                 viewCountRedisRepository.removeAllFromPending(longPostIds)
             }
         })
