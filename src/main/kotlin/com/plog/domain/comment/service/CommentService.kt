@@ -82,4 +82,14 @@ interface CommentService {
      * @throws CommentException 댓글이 존재하지 않거나 삭제 권한이 없을 경우
      */
     fun deleteComment(commentId: Long, memberId: Long)
+
+    /**
+     * 댓글에 대한 댓글 좋아요 객체를 생성, 삭제하며 좋아요 여부를 판단한다.
+     *
+     * @param commentId 삭제할 댓글 식별자
+     * @param memberId 작성자 식별자 (권한 검증용)
+     * @throws CommentException 댓글이 존재하지 않을 경우
+     */
+
+    fun toggleCommentLike(commentId: Long, memberId: Long): Boolean
 }

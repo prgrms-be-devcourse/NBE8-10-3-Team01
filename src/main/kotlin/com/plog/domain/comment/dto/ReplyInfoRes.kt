@@ -27,6 +27,7 @@ data class ReplyInfoRes(
     val nickname: String,
     val email: String,
     val profileUrl: String?,
+    val likesCount: Long,
     val createDate: LocalDateTime,
     val modifyDate: LocalDateTime,
     ){
@@ -40,6 +41,7 @@ data class ReplyInfoRes(
                 nickname = comment.author.nickname,
                 email = comment.author.email,
                 profileUrl = comment.author.profileImage?.accessUrl,
+                likesCount = comment.likeCount,
                 createDate = comment.createDate!!,
                 modifyDate = comment.modifyDate!!
             )

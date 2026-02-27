@@ -45,7 +45,11 @@ class Comment(
     val parent: Comment? = null,
 
     @Column(nullable = false)
-    var deleted: Boolean = false
+    var deleted: Boolean = false,
+
+    @Column(nullable = false)
+    var likeCount: Long = 0
+
 ) : BaseEntity() {
 
     @Formula("(SELECT count(*) FROM comment c WHERE c.parent_id = id AND c.deleted = false)")
