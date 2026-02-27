@@ -59,8 +59,6 @@ interface PostRepository : JpaRepository<Post, Long> {
     @Query(
         value = "select distinct p from Post p" +
                 "join fetch p.member " +
-                "left join fetch p.postHashTags ph" +
-                "left join fetch ph.hashTag" +
                 "where p.title LIKE %:title% and p.status = 'PUBLISHED'"
     )
     fun findByTitleContaining(@Param("title") title: String, pageable: Pageable): Slice<Post>
