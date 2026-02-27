@@ -1,37 +1,30 @@
 package com.plog.domain.comment.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.plog.domain.comment.dto.CommentCreateReq
 import com.plog.domain.comment.dto.CommentUpdateReq
 import com.plog.domain.comment.service.CommentService
 import com.plog.global.exception.errorCode.CommentErrorCode
 import com.plog.global.exception.exceptions.CommentException
-import com.plog.global.security.*
-import org.junit.jupiter.api.BeforeEach
+import com.plog.global.security.SecurityUser
+import com.plog.testUtil.SecurityTestConfig
+import com.plog.testUtil.WebMvcTestSupport
+import com.plog.testUtil.WithCustomMockUser
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.*
 import org.mockito.BDDMockito.given
 import org.mockito.BDDMockito.willDoNothing
-import org.springframework.beans.factory.annotation.Autowired
-
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
-import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
-import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers.print
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
-import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import org.springframework.web.context.WebApplicationContext
 
 /**
  * 댓글 관련 API(CommentController)에 대한 통합 슬라이싱 테스트.
@@ -41,45 +34,22 @@ import org.springframework.web.context.WebApplicationContext
  * @since 2026-02-24
  */
 @WebMvcTest(CommentController::class)
-@Import(SecurityConfig::class)
-class CommentControllerTest {
-
-    private lateinit var mockMvc: MockMvc
-
-    @Autowired
-    private lateinit var context: WebApplicationContext
-
-    @MockitoBean
-    private lateinit var springObjectMapper: ObjectMapper
-
-    private val objectMapper = ObjectMapper()
-        .registerModule(KotlinModule.Builder().build())
-        .registerModule(JavaTimeModule())
+@Import(SecurityTestConfig::class)
+@ActiveProfiles("test")
+@WithCustomMockUser
+class CommentControllerTest : WebMvcTestSupport() {
 
     @MockitoBean private lateinit var commentService: CommentService
-    @MockitoBean private lateinit var jwtUtils: JwtUtils
-    @MockitoBean private lateinit var tokenResolver: TokenResolver
-    @MockitoBean private lateinit var customUserDetailsService: CustomUserDetailsService
-    @MockitoBean private lateinit var tokenStore: TokenStore
 
     // 공통 테스트 데이터
     private val memberId = 1L
-    private val securityUser = SecurityUser.securityUserBuilder()
-        .id(memberId)
-        .email("test@example.com")
-        .password("password")
-        .nickname("테스터")
-        .authorities(listOf(SimpleGrantedAuthority("ROLE_USER")))
-        .build()
-
-    @BeforeEach
-    fun setUp() {
-        // MockMvc가 @AuthenticationPrincipal을 인식하도록 Resolver를 설정합니다.
-        mockMvc = MockMvcBuilders
-            .webAppContextSetup(context) // WebApplicationContext 주입 필요
-            .apply<DefaultMockMvcBuilder>(springSecurity())
-            .build()
-    }
+    private val securityUser = SecurityUser(
+        id = memberId,
+        email = "test@example.com",
+        password = "password",
+        nickname = "테스터",
+        authorities = listOf(SimpleGrantedAuthority("ROLE_USER"))
+    )
 
     @Test
     @DisplayName("댓글 생성 성공: 201 Created를 반환한다")
