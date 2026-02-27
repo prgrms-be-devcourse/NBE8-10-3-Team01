@@ -22,6 +22,19 @@ class MemberController(
     private val memberService: MemberService
 ) {
 
+    @GetMapping("/me")
+    fun getMyInfo(
+        @AuthenticationPrincipal securityUser: SecurityUser
+    ): ResponseEntity<Response<MemberInfoRes>> {
+        val response = MemberInfoRes(
+            id = securityUser.id,
+            email = securityUser.email,
+            nickname = securityUser.nickname
+        )
+
+        return ResponseEntity.ok(CommonResponse.success(response))
+    }
+
     @GetMapping("/id/{id}")
     fun findMemberWithId(@PathVariable("id") id: Long): ResponseEntity<Response<MemberInfoRes>> {
         val response = memberService.findMemberWithId(id)
