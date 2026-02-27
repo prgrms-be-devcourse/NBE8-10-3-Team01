@@ -13,6 +13,8 @@ import com.plog.domain.post.dto.PostListRes;
 import com.plog.domain.post.dto.PostUpdateReq;
 import com.plog.domain.post.entity.Post;
 import com.plog.domain.post.repository.PostRepository;
+import com.plog.domain.post.repository.ViewCountRedisRepository;
+import com.plog.global.util.HashUtils;
 import com.plog.global.exception.exceptions.AuthException;
 import com.plog.global.exception.exceptions.PostException;
 import org.junit.jupiter.api.DisplayName;
@@ -54,6 +56,9 @@ public class PostServiceTest {
 
     @Mock
     private HashTagRepository hashTagRepository;
+
+    @Mock
+    private ViewCountRedisRepository viewCountRedisRepository;
 
     @Test
     @DisplayName("게시글 저장 시 마크다운이 제거된 요약글이 자동 생성")
@@ -148,10 +153,12 @@ public class PostServiceTest {
     }
 
     @Test
-    @DisplayName("게시글 상세 조회 시 조회수가 1 증가해야 한다")
+    @DisplayName("게시글 상세 조회 시 ViewCountRedisRepository의 증가 로직이 호출되어야 한다 (해싱 적용)")
     void getPostDetailIncrementsViewCount() {
         // [Given]
         Long postId = 1L;
+        String userId = "user1";
+        String hashedUserId = HashUtils.INSTANCE.sha256(userId);
         Member author = Member.builder().build();
         Post post = Post.builder()
                 .title("제목")
@@ -163,12 +170,16 @@ public class PostServiceTest {
         given(postRepository.findByIdWithMember(postId)).willReturn(Optional.of(post));
         given(commentRepository.findCommentsWithMemberAndImageByPostId(eq(postId), any(Pageable.class)))
                 .willReturn(new SliceImpl<>(List.of()));
+        
+        given(viewCountRedisRepository.setIfAbsentWithTtl(eq(postId), eq(hashedUserId), anyLong())).willReturn(true);
 
         // [When]
-        postService.getPostDetail(postId, 0);
+        postService.getPostDetail(postId, userId, 0);
 
         // [Then]
-        assertThat(post.getViewCount()).isEqualTo(1);
+        verify(viewCountRedisRepository).setIfAbsentWithTtl(eq(postId), eq(hashedUserId), anyLong());
+        verify(viewCountRedisRepository).incrementCount(postId);
+        verify(viewCountRedisRepository).addToPending(postId);
     }
 
     @Test
@@ -178,7 +189,7 @@ public class PostServiceTest {
         given(postRepository.findByIdWithMember(anyLong())).willReturn(Optional.empty());
 
         // [When & Then]
-        assertThatThrownBy(() -> postService.getPostDetail(99L, 0))
+        assertThatThrownBy(() -> postService.getPostDetail(99L, "user1", 0))
                 .isInstanceOf(PostException.class);
     }
 

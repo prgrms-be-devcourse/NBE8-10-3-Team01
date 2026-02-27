@@ -8,6 +8,7 @@ import com.plog.domain.post.service.PostService
 import com.plog.global.response.CommonResponse
 import com.plog.global.response.Response
 import com.plog.global.security.SecurityUser
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
@@ -69,9 +70,13 @@ class PostController(private val postService: PostService) {
     @GetMapping("/{id}")
     fun getPost(
         @PathVariable id: Long,
-        @RequestParam(name = "comment_offset", defaultValue = "0") pageNumber: Int
+        @RequestParam(name = "comment_offset", defaultValue = "0") pageNumber: Int,
+        @AuthenticationPrincipal user: SecurityUser?,
+        request: HttpServletRequest
     ): ResponseEntity<Response<PostInfoRes>> {
-        val response = postService.getPostDetail(id, pageNumber)
+        println("Current User: $user")
+        val userId = user?.id?.toString() ?: request.remoteAddr
+        val response = postService.getPostDetail(id, userId, pageNumber)
         return ResponseEntity.ok(CommonResponse.success(response, "게시글 조회 성공"))
     }
 
