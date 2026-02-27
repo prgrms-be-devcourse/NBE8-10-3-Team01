@@ -15,7 +15,6 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.test.util.ReflectionTestUtils
-import java.util.*
 
 /**
  * [CustomUserDetailsService]에 대한 단위 테스트입니다.
@@ -50,7 +49,7 @@ class CustomUserDetailsServiceTest {
             nickname = "plogger"
         )
         ReflectionTestUtils.setField(member, "id", 1L)
-        given(memberRepository.findByEmail(email)).willReturn(Optional.of(member))
+        given(memberRepository.findByEmail(email)).willReturn(member)
 
         // when
         val userDetails = userDetailsService.loadUserByUsername(email) as SecurityUser
@@ -67,7 +66,7 @@ class CustomUserDetailsServiceTest {
     fun loadUserByUsername_fail_notFound() {
         // given
         val email = "non-exist@plog.com"
-        given(memberRepository.findByEmail(email)).willReturn(Optional.empty())
+        given(memberRepository.findByEmail(email)).willReturn(null)
 
         // when
         val ex = assertThrows(AuthException::class.java) {
