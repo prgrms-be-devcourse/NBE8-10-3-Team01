@@ -64,12 +64,11 @@ interface CommentRepository : JpaRepository<Comment, Long> {
 
     fun existsByParent(parent: Comment): Boolean
 
-
-    @Modifying(clearAutomatically = true)
+    @Modifying
     @Query("UPDATE Comment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :commentId")
     fun incrementLikeCount(commentId: Long): Int
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying
     @Query("UPDATE Comment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :commentId AND c.likeCount > 0")
     fun decrementLikeCount(commentId: Long): Int
 }
