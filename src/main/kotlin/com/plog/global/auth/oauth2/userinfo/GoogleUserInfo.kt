@@ -1,6 +1,8 @@
 package com.plog.global.auth.oauth2.userinfo
 
 import com.plog.domain.member.entity.SocialAuthProvider
+import com.plog.global.exception.errorCode.AuthErrorCode
+import com.plog.global.exception.exceptions.AuthException
 
 
 /**
@@ -31,7 +33,14 @@ class GoogleUserInfo(
 ) : OAuth2UserInfo {
 
     override fun getProvider(): SocialAuthProvider = SocialAuthProvider.GOOGLE
-    override fun getProviderId(): String = attributes["sub"] as String
+
+    override fun getProviderId(): String = attributes["sub"] as? String
+        ?: throw AuthException(
+            AuthErrorCode.OAUTH_DATA_ACCESS_FAIL,
+            "[GoogleUserInfo#getProviderId] can't find provider id (sub) from attributes: $attributes",
+            "구글 계정 정보를 불러오는 데 실패했습니다."
+        )
+
     override fun getEmail(): String? = attributes["email"] as? String
     override fun getNickname(): String? = attributes["name"] as? String
 }

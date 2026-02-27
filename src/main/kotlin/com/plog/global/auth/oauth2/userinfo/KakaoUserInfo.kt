@@ -1,6 +1,8 @@
 package com.plog.global.auth.oauth2.userinfo
 
 import com.plog.domain.member.entity.SocialAuthProvider
+import com.plog.global.exception.errorCode.AuthErrorCode
+import com.plog.global.exception.exceptions.AuthException
 
 
 /**
@@ -29,11 +31,19 @@ import com.plog.domain.member.entity.SocialAuthProvider
 class KakaoUserInfo(
     private val attributes: Map<String, Any>
 ) : OAuth2UserInfo {
+
     private val kakaoAccount = attributes["kakao_account"] as? Map<*, *>
     private val kakaoProfile = kakaoAccount?.get("profile") as? Map<*, *>
 
     override fun getProvider(): SocialAuthProvider = SocialAuthProvider.KAKAO
-    override fun getProviderId(): String = attributes["id"].toString()
-    override fun getEmail(): String = kakaoAccount?.get("email").toString()
-    override fun getNickname(): String = kakaoProfile?.get("nickname").toString()
+
+    override fun getProviderId(): String = attributes["id"]?.toString()
+        ?: throw AuthException(
+            AuthErrorCode.OAUTH_DATA_ACCESS_FAIL,
+            "[KakaoUserInfo#getProviderId] can't find provider id from attributes: $attributes",
+            "카카오 계정 정보를 불러오는 데 실패했습니다."
+        )
+
+    override fun getEmail(): String? = kakaoAccount?.get("email") as? String
+    override fun getNickname(): String? = kakaoProfile?.get("nickname") as? String
 }

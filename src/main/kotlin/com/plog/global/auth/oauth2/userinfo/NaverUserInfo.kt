@@ -1,6 +1,8 @@
 package com.plog.global.auth.oauth2.userinfo
 
 import com.plog.domain.member.entity.SocialAuthProvider
+import com.plog.global.exception.errorCode.AuthErrorCode
+import com.plog.global.exception.exceptions.AuthException
 
 
 /**
@@ -33,7 +35,12 @@ class NaverUserInfo(
     private val response = attributes["response"] as? Map<*, *>
 
     override fun getProvider(): SocialAuthProvider = SocialAuthProvider.NAVER
-    override fun getProviderId(): String = response?.get("id") as? String ?: ""
+    override fun getProviderId(): String = response?.get("id") as? String
+        ?: throw AuthException(
+            AuthErrorCode.OAUTH_DATA_ACCESS_FAIL,
+            "[NaverUserInfo#getProviderId] can't find provider id from response: $response",
+            "네이버 계정 정보를 불러오는 데 실패했습니다."
+        )
     override fun getEmail(): String? = response?.get("email") as? String
     override fun getNickname(): String? = response?.get("name") as? String
 }
