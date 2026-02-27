@@ -1,4 +1,4 @@
-package com.plog.global.auth.oauth2.handler
+package com.plog.global.security.oauth2.handler
 
 import com.plog.domain.member.dto.MemberInfoRes
 import com.plog.global.security.JwtUtils

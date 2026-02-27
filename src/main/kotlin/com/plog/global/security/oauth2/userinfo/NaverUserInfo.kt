@@ -1,4 +1,4 @@
-package com.plog.global.auth.oauth2.userinfo
+package com.plog.global.security.oauth2.userinfo
 
 import com.plog.domain.member.entity.SocialAuthProvider
 import com.plog.global.exception.errorCode.AuthErrorCode
@@ -28,19 +28,19 @@ import com.plog.global.exception.exceptions.AuthException
  * @see
  */
 
-class GoogleUserInfo(
+class NaverUserInfo(
     private val attributes: Map<String, Any>
 ) : OAuth2UserInfo {
 
-    override fun getProvider(): SocialAuthProvider = SocialAuthProvider.GOOGLE
+    private val response = attributes["response"] as? Map<*, *>
 
-    override fun getProviderId(): String = attributes["sub"] as? String
+    override fun getProvider(): SocialAuthProvider = SocialAuthProvider.NAVER
+    override fun getProviderId(): String = response?.get("id") as? String
         ?: throw AuthException(
             AuthErrorCode.OAUTH_DATA_ACCESS_FAIL,
-            "[GoogleUserInfo#getProviderId] can't find provider id (sub) from attributes: $attributes",
-            "구글 계정 정보를 불러오는 데 실패했습니다."
+            "[NaverUserInfo#getProviderId] can't find provider id from response: $response",
+            "네이버 계정 정보를 불러오는 데 실패했습니다."
         )
-
-    override fun getEmail(): String? = attributes["email"] as? String
-    override fun getNickname(): String? = attributes["name"] as? String
+    override fun getEmail(): String? = response?.get("email") as? String
+    override fun getNickname(): String? = response?.get("name") as? String
 }

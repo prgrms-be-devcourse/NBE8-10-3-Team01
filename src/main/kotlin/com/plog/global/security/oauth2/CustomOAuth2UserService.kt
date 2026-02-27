@@ -1,4 +1,4 @@
-package com.plog.global.auth
+package com.plog.global.security.oauth2
 
 import com.plog.domain.member.entity.Member
 import com.plog.domain.member.entity.SocialAuth
@@ -6,7 +6,6 @@ import com.plog.domain.member.entity.SocialAuthProvider
 import com.plog.domain.member.repository.MemberRepository
 import com.plog.domain.member.repository.SocialAuthRepository
 import com.plog.domain.member.util.RandomNicknameGenerator
-import com.plog.global.auth.oauth2.OAuth2Attributes
 import com.plog.global.security.SecurityUser
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
@@ -16,7 +15,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
-
 
 /** TODO: 주석 채우기
  * 코드에 대한 전체적인 역할을 적습니다.

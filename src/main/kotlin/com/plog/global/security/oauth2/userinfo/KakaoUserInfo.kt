@@ -1,4 +1,4 @@
-package com.plog.global.auth.oauth2.userinfo
+package com.plog.global.security.oauth2.userinfo
 
 import com.plog.domain.member.entity.SocialAuthProvider
 import com.plog.global.exception.errorCode.AuthErrorCode
@@ -28,19 +28,22 @@ import com.plog.global.exception.exceptions.AuthException
  * @see
  */
 
-class NaverUserInfo(
+class KakaoUserInfo(
     private val attributes: Map<String, Any>
 ) : OAuth2UserInfo {
 
-    private val response = attributes["response"] as? Map<*, *>
+    private val kakaoAccount = attributes["kakao_account"] as? Map<*, *>
+    private val kakaoProfile = kakaoAccount?.get("profile") as? Map<*, *>
 
-    override fun getProvider(): SocialAuthProvider = SocialAuthProvider.NAVER
-    override fun getProviderId(): String = response?.get("id") as? String
+    override fun getProvider(): SocialAuthProvider = SocialAuthProvider.KAKAO
+
+    override fun getProviderId(): String = attributes["id"]?.toString()
         ?: throw AuthException(
             AuthErrorCode.OAUTH_DATA_ACCESS_FAIL,
-            "[NaverUserInfo#getProviderId] can't find provider id from response: $response",
-            "네이버 계정 정보를 불러오는 데 실패했습니다."
+            "[KakaoUserInfo#getProviderId] can't find provider id from attributes: $attributes",
+            "카카오 계정 정보를 불러오는 데 실패했습니다."
         )
-    override fun getEmail(): String? = response?.get("email") as? String
-    override fun getNickname(): String? = response?.get("name") as? String
+
+    override fun getEmail(): String? = kakaoAccount?.get("email") as? String
+    override fun getNickname(): String? = kakaoProfile?.get("nickname") as? String
 }

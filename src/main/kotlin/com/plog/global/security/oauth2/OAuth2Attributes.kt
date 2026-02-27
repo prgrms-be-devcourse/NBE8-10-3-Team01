@@ -1,10 +1,10 @@
-package com.plog.global.auth.oauth2
+package com.plog.global.security.oauth2
 
 import com.plog.domain.member.entity.SocialAuthProvider
-import com.plog.global.auth.oauth2.userinfo.GoogleUserInfo
-import com.plog.global.auth.oauth2.userinfo.KakaoUserInfo
-import com.plog.global.auth.oauth2.userinfo.NaverUserInfo
-import com.plog.global.auth.oauth2.userinfo.OAuth2UserInfo
+import com.plog.global.security.oauth2.userinfo.GoogleUserInfo
+import com.plog.global.security.oauth2.userinfo.KakaoUserInfo
+import com.plog.global.security.oauth2.userinfo.NaverUserInfo
+import com.plog.global.security.oauth2.userinfo.OAuth2UserInfo
 
 
 /**

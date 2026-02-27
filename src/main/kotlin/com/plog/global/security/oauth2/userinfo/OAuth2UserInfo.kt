@@ -1,4 +1,4 @@
-package com.plog.global.auth.oauth2.userinfo
+package com.plog.global.security.oauth2.userinfo
 
 import com.plog.domain.member.entity.SocialAuthProvider
 

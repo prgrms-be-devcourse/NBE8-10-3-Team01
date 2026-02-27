@@ -2,8 +2,8 @@
 package com.plog.global.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.plog.global.auth.CustomOAuth2UserService
-import com.plog.global.auth.oauth2.handler.OAuth2SuccessHandler
+import com.plog.global.security.oauth2.CustomOAuth2UserService
+import com.plog.global.security.oauth2.handler.OAuth2SuccessHandler
 import com.plog.global.exception.errorCode.AuthErrorCode
 import com.plog.global.response.CommonResponse
 import jakarta.servlet.ServletException
