@@ -1,6 +1,7 @@
 package com.plog.domain.image.service
 
 import com.plog.domain.image.repository.ImageRepository
+import com.plog.domain.image.verifier.ImageUsageVerifier
 import com.plog.global.minio.storage.ObjectStorage
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -13,7 +14,8 @@ import org.springframework.retry.annotation.Backoff
 class ImageCleanupService(
     private val imageRepository: ImageRepository,
     private val objectStorage: ObjectStorage,
-    private val timeUtil: TimeUtil
+    private val timeUtil: TimeUtil,
+    private val verifiers: List<ImageUsageVerifier>
 ) {
     private val log = LoggerFactory.getLogger(ImageCleanupService::class.java)
 
@@ -54,15 +56,48 @@ class ImageCleanupService(
 
         if (orphanIds.isEmpty()) {
             log.info("[ImageCleanupService] 삭제할 고아 이미지가 없습니다.")
+        } else {
+            log.info("[ImageCleanupService] 총 ${orphanIds.size}개 → 청크 처리 시작 (500개)")
+
+            orphanIds.chunked(500).forEach { chunk ->
+                deleteOrphanChunk(chunk)
+            }
+
+            log.info("[ImageCleanupService] 전체 청크 처리 완료")
+        }
+
+        cleanupStaleUsedImages()
+    }
+
+    private fun cleanupStaleUsedImages() {
+        val usedImages = imageRepository.findAllUsedImages()
+        if (usedImages.isEmpty()) return
+
+        val staleIds = usedImages
+            .filter { image ->
+                val domain = image.domain ?: return@filter false
+                val verifier = verifiers.find { it.supports(domain) } ?: return@filter false
+                !verifier.isInUse(image)
+            }
+            .mapNotNull { it.id }
+
+        if (staleIds.isEmpty()) {
+            log.info("[ImageCleanupService] 실사용되지 않는 USED 이미지가 없습니다.")
             return
         }
 
-        log.info("[ImageCleanupService] 총 ${orphanIds.size}개 → 청크 처리 시작 (500개)")
+        log.info("[ImageCleanupService] 실사용되지 않는 USED 이미지 ${staleIds.size}개 삭제 시작")
 
-        orphanIds.chunked(500).forEach { chunk ->
-            deleteOrphanChunk(chunk)
+        val staleStoredNames = imageRepository.findStoredNamesByIds(staleIds)
+        for (storedName in staleStoredNames) {
+            try {
+                objectStorage.delete(storedName)
+            } catch (e: Exception) {
+                log.error("[ImageCleanupService] USED 이미지 파일 삭제 실패 - storedName: $storedName")
+            }
         }
 
-        log.info("[ImageCleanupService] 전체 청크 처리 완료")
+        imageRepository.deleteAllByIdInBatch(staleIds)
+        log.info("[ImageCleanupService] USED 이미지 정리 완료. DB: ${staleIds.size}")
     }
 }
