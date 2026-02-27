@@ -60,9 +60,11 @@ class OAuth2SuccessHandler(
             nickname = user.nickname
         )
 
-        // Header는 리다이렉트 시 유실되기 때문에 쿠키만 세팅해서 보내고 AT는 자동 재발급 처리
+        val accessToken = jwtUtils.createAccessToken(memberInfo)
         val refreshToken = jwtUtils.createRefreshToken(user.email)
-        tokenResolver.setCookie(response, refreshToken)
+
+        tokenResolver.setAccessTokenCookie(response, accessToken)
+        tokenResolver.setRefreshTokenCookie(response, refreshToken)
         tokenStore.save(user.email, refreshToken)
 
         val frontBaseUrl = allowedOrigins.split(",")[0].trim()

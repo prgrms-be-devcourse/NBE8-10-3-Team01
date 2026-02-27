@@ -70,7 +70,7 @@ class TokenResolverTest {
 
         // when
         tokenResolver.setHeader(response, access)
-        tokenResolver.setCookie(response, refresh)
+        tokenResolver.setRefreshTokenCookie(response, refresh)
 
         // then
         assertThat(response.getHeader("Authorization")).isEqualTo("Bearer new-access")

@@ -107,7 +107,7 @@ class LoginFilter(
         val accessToken = jwtUtils.createAccessToken(memberInfo)
         val refreshToken = jwtUtils.createRefreshToken(user.email)
         tokenResolver.setHeader(response, accessToken)
-        tokenResolver.setCookie(response, refreshToken)
+        tokenResolver.setRefreshTokenCookie(response, refreshToken)
         tokenStore.save(user.email, refreshToken)
 
         response.contentType = "application/json;charset=UTF-8"
