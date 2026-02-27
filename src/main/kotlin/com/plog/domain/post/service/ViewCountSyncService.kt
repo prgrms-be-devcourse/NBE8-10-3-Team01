@@ -3,19 +3,19 @@ package com.plog.domain.post.service
 import com.plog.domain.post.repository.PostRepository
 import com.plog.domain.post.repository.ViewCountRedisRepository
 import org.slf4j.LoggerFactory
+import org.springframework.dao.TransientDataAccessException
 import org.springframework.retry.annotation.Backoff
-import org.springframework.retry.annotation.EnableRetry
-import org.springframework.retry.annotation.Recover
 import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /**
  * Redis에 축적된 조회수를 DB에 동기화하는 비즈니스 로직을 담당하는 서비스 클래스입니다.
  */
 @Service
-@EnableRetry
 class ViewCountSyncService(
     private val viewCountRedisRepository: ViewCountRedisRepository,
     private val viewCountSyncTask: ViewCountSyncTask
@@ -61,33 +61,26 @@ class ViewCountSyncTask(
      */
     @Transactional
     @Retryable(
-        retryFor = [Exception::class],
+        retryFor = [TransientDataAccessException::class],
         maxAttempts = 3,
         backoff = Backoff(delay = 1000, multiplier = 2.0, random = true)
     )
     fun processChunkWithRetry(postIds: List<String>) {
         log.debug("[ViewCountSyncTask] Processing chunk of size {}", postIds.size)
-        for (postIdStr in postIds) {
-            val postId = postIdStr.toLong()
-            val count = viewCountRedisRepository.getCount(postId)
+        val longPostIds = postIds.map { it.toLong() }
+        
+        for (postId in longPostIds) {
+            val count = viewCountRedisRepository.getAndResetCount(postId)
             if (count > 0) {
                 postRepository.updateViewCount(postId, count)
-                viewCountRedisRepository.decrementCount(postId, count)
             }
-            viewCountRedisRepository.removeFromPending(postId)
         }
-    }
 
-    /**
-     * 모든 재시도가 실패했을 때 호출되는 복구 메서드입니다.
-     * 실패한 게시물 ID들을 Dead Letter Queue(DLQ)로 이동시켜 추후 검사가 가능하게 합니다.
-     */
-    @Recover
-    fun recover(e: Exception, postIds: List<String>) {
-        log.error("[ViewCountSyncTask] Sync failed after max retries. Moving {} posts to DLQ", postIds.size, e)
-        postIds.forEach { postIdStr ->
-            viewCountRedisRepository.addToDlq(postIdStr.toLong())
-            viewCountRedisRepository.removeFromPending(postIdStr.toLong())
-        }
+        // 트랜잭션이 성공적으로 커밋된 후에만 Pending Set에서 제거
+        TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
+            override fun afterCommit() {
+                viewCountRedisRepository.removeAllFromPending(longPostIds)
+            }
+        })
     }
 }

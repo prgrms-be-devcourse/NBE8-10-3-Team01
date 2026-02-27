@@ -2,24 +2,27 @@ package com.plog.domain.post.service
 
 import com.plog.domain.post.repository.PostRepository
 import com.plog.domain.post.repository.ViewCountRedisRepository
+import io.mockk.*
+import io.mockk.impl.annotations.InjectMockKs
+import io.mockk.impl.annotations.MockK
+import io.mockk.junit5.MockKExtension
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
-import org.mockito.Mock
-import org.mockito.Mockito.*
-import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
-@ExtendWith(MockitoExtension::class)
+@ExtendWith(MockKExtension::class)
 class ViewCountSyncServiceTest {
 
-    @InjectMocks
+    @InjectMockKs
     private lateinit var viewCountSyncService: ViewCountSyncService
 
-    @Mock
+    @MockK
     private lateinit var viewCountSyncTask: ViewCountSyncTask
 
-    @Mock
+    @MockK
     private lateinit var viewCountRedisRepository: ViewCountRedisRepository
 
     @Test
@@ -27,63 +30,60 @@ class ViewCountSyncServiceTest {
     fun syncViewCountsToDbInChunks() {
         // [Given]
         val pendingPostIds = (1..150).map { it.toString() }.toSet()
-        `when`(viewCountRedisRepository.getPendingPostIds()).thenReturn(pendingPostIds)
+        every { viewCountRedisRepository.getPendingPostIds() } returns pendingPostIds
+        every { viewCountSyncTask.processChunkWithRetry(any()) } just Runs
 
         // [When]
         viewCountSyncService.syncViewCountsToDb()
 
         // [Then]
-        // 100개씩 Chunking 하므로 2번 호출되어야 함 (100개, 50개)
-        verify(viewCountSyncTask, times(2)).processChunkWithRetry(anyList())
+        verify(exactly = 2) { viewCountSyncTask.processChunkWithRetry(any()) }
     }
 }
 
-@ExtendWith(MockitoExtension::class)
+@ExtendWith(MockKExtension::class)
 class ViewCountSyncTaskTest {
 
-    @InjectMocks
+    @InjectMockKs
     private lateinit var viewCountSyncTask: ViewCountSyncTask
 
-    @Mock
+    @MockK
     private lateinit var viewCountRedisRepository: ViewCountRedisRepository
 
-    @Mock
+    @MockK
     private lateinit var postRepository: PostRepository
+
+    @BeforeEach
+    fun setUp() {
+        mockkStatic(TransactionSynchronizationManager::class)
+    }
 
     @Test
     @DisplayName("Task 실행 시 개별 포스트의 조회수를 DB에 반영하고 Redis 상태를 갱신한다")
     fun processChunk() {
         // [Given]
         val chunk = listOf("1", "2")
-        `when`(viewCountRedisRepository.getCount(1L)).thenReturn(10)
-        `when`(viewCountRedisRepository.getCount(2L)).thenReturn(5)
+        val longChunk = listOf(1L, 2L)
+        
+        every { viewCountRedisRepository.getAndResetCount(1L) } returns 10L
+        every { viewCountRedisRepository.getAndResetCount(2L) } returns 5L
+        every { postRepository.updateViewCount(any(), any()) } just Runs
+        
+        val syncSlot = slot<TransactionSynchronization>()
+        every { TransactionSynchronizationManager.registerSynchronization(capture(syncSlot)) } just Runs
+        every { viewCountRedisRepository.removeAllFromPending(longChunk) } just Runs
 
         // [When]
         viewCountSyncTask.processChunkWithRetry(chunk)
 
         // [Then]
-        verify(postRepository).updateViewCount(1L, 10L)
-        verify(postRepository).updateViewCount(2L, 5L)
-        verify(viewCountRedisRepository).decrementCount(1L, 10L)
-        verify(viewCountRedisRepository).decrementCount(2L, 5L)
-        verify(viewCountRedisRepository).removeFromPending(1L)
-        verify(viewCountRedisRepository).removeFromPending(2L)
-    }
-
-    @Test
-    @DisplayName("복구(Recover) 시 실패한 포스트들을 DLQ로 이동시킨다")
-    fun recoverFailedPosts() {
-        // [Given]
-        val chunk = listOf("1", "2")
-        val exception = RuntimeException("Sync error")
-
-        // [When]
-        viewCountSyncTask.recover(exception, chunk)
-
-        // [Then]
-        verify(viewCountRedisRepository).addToDlq(1L)
-        verify(viewCountRedisRepository).addToDlq(2L)
-        verify(viewCountRedisRepository).removeFromPending(1L)
-        verify(viewCountRedisRepository).removeFromPending(2L)
+        verify { viewCountRedisRepository.getAndResetCount(1L) }
+        verify { viewCountRedisRepository.getAndResetCount(2L) }
+        verify { postRepository.updateViewCount(1L, 10L) }
+        verify { postRepository.updateViewCount(2L, 5L) }
+        
+        // Manual trigger of afterCommit to verify bulk removal
+        syncSlot.captured.afterCommit()
+        verify { viewCountRedisRepository.removeAllFromPending(longChunk) }
     }
 }

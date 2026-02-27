@@ -1,6 +1,7 @@
 package com.plog.domain.post.repository
 
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
@@ -65,25 +66,39 @@ class ViewCountRedisRepository(private val redisTemplate: RedisTemplate<String, 
     }
 
     /**
-     * 특정 게시물의 누적 조회수를 조회합니다.
+     * 특정 게시물의 누적 조회수를 원자적으로 조회하고 0으로 초기화합니다.
+     * Lua Script를 사용하여 조회와 초기화 사이의 데이터 불일치를 방지합니다.
      *
      * @param postId 게시물 ID
      * @return 누적 조회수
      */
-    fun getCount(postId: Long): Long {
+    fun getAndResetCount(postId: Long): Long {
         val key = "$COUNT_KEY_PREFIX$postId"
-        return (redisTemplate.opsForValue().get(key) as? Number)?.toLong() ?: 0L
+        val script = """
+            local count = redis.call('GET', KEYS[1])
+            if count then
+                redis.call('SET', KEYS[1], '0')
+                return tonumber(count)
+            else
+                return 0
+            end
+        """.trimIndent()
+        
+        return redisTemplate.execute(
+            DefaultRedisScript(script, Long::class.java),
+            listOf(key)
+        ) ?: 0L
     }
 
     /**
-     * DB 반영이 완료된 조회수만큼 Redis 카운트에서 차감합니다.
+     * DB 동기화 대상 목록에서 여러 게시물 ID를 한 번에 제거합니다.
      *
-     * @param postId 게시물 ID
-     * @param count 차감할 수치
+     * @param postIds 게시물 ID 목록
      */
-    fun decrementCount(postId: Long, count: Long) {
-        val key = "$COUNT_KEY_PREFIX$postId"
-        redisTemplate.opsForValue().decrement(key, count)
+    fun removeAllFromPending(postIds: List<Long>) {
+        if (postIds.isEmpty()) return
+        val postIdStrings = postIds.map { it.toString() }.toTypedArray()
+        redisTemplate.opsForSet().remove(PENDING_POSTS_KEY, *postIdStrings)
     }
 
     /**
@@ -93,14 +108,5 @@ class ViewCountRedisRepository(private val redisTemplate: RedisTemplate<String, 
      */
     fun removeFromPending(postId: Long) {
         redisTemplate.opsForSet().remove(PENDING_POSTS_KEY, postId.toString())
-    }
-
-    /**
-     * 최종적으로 동기화에 실패한 게시물 ID를 Dead Letter Queue(DLQ)에 저장합니다.
-     *
-     * @param postId 게시물 ID
-     */
-    fun addToDlq(postId: Long) {
-        redisTemplate.opsForSet().add(SYNC_FAILED_KEY, postId.toString())
     }
 }
