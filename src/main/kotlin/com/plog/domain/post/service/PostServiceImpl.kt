@@ -33,6 +33,7 @@ import java.util.Optional
 import com.plog.domain.image.entity.Image
 import com.plog.domain.image.repository.ImageRepository
 
+
 /**
  * [PostService] 인터페이스의 기본 구현체입니다.
  * <p>
@@ -252,8 +253,8 @@ class PostServiceImpl(
 
         val images = imageRepository.findAllByAccessUrlIn(imageUrls)
         images.forEach { image ->
-            image.status = "USED"
-            image.domain = "POST"
+            image.status = Image.ImageStatus.USED
+            image.domain = Image.ImageDomain.POST
             image.domainId = postId
         }
     }

@@ -439,8 +439,8 @@ public class PostServiceTest {
 
         // then
         verify(imageRepository).findAllByAccessUrlIn(anyList());
-        verify(mockImage).setStatus("USED");
-        verify(mockImage).setDomain("POST");
+        verify(mockImage).setStatus(Image.ImageStatus.USED);
+        verify(mockImage).setDomain(Image.ImageDomain.POST);
         verify(mockImage).setDomainId(100L);
     }
 
@@ -469,7 +469,7 @@ public class PostServiceTest {
 
         // then
         verify(imageRepository).findAllByAccessUrlIn(argThat(urls -> urls.contains(thumbnail)));
-        verify(mockImage).setStatus("USED");
+        verify(mockImage).setStatus(Image.ImageStatus.USED);
     }
 
     @Test
@@ -517,8 +517,8 @@ public class PostServiceTest {
 
         // then
         verify(imageRepository).findAllByAccessUrlIn(anyList());
-        verify(mockImage).setStatus("USED");
-        verify(mockImage).setDomain("POST");
+        verify(mockImage).setStatus(Image.ImageStatus.USED);
+        verify(mockImage).setDomain(Image.ImageDomain.POST);
         verify(mockImage).setDomainId(postId);
     }
 }
