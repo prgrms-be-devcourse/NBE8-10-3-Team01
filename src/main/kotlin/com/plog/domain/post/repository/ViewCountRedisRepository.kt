@@ -57,12 +57,18 @@ class ViewCountRedisRepository(private val redisTemplate: RedisTemplate<String, 
 
     /**
      * DB 동기화가 필요한 모든 게시물 ID 목록을 조회합니다.
+     * SSCAN을 사용하여 대량의 데이터를 비차단(non-blocking) 방식으로 가져옵니다.
      *
      * @return 게시물 ID 목록
      */
     fun getPendingPostIds(): Set<String> {
-        val members = redisTemplate.opsForSet().members(PENDING_POSTS_KEY) ?: return emptySet()
-        return members.map { it.toString() }.toSet()
+        val postIds = mutableSetOf<String>()
+        redisTemplate.opsForSet().scan(PENDING_POSTS_KEY, org.springframework.data.redis.core.ScanOptions.NONE).use { cursor ->
+            while (cursor.hasNext()) {
+                postIds.add(cursor.next().toString())
+            }
+        }
+        return postIds
     }
 
     /**
