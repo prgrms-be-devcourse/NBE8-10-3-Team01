@@ -64,6 +64,8 @@ class ViewCountSyncTaskTest {
         // [Given]
         val chunk = listOf("1", "2")
         val longChunk = listOf(1L, 2L)
+
+        every { TransactionSynchronizationManager.isSynchronizationActive() } returns true
         
         every { viewCountRedisRepository.getCount(1L) } returns 10L
         every { viewCountRedisRepository.getCount(2L) } returns 5L
