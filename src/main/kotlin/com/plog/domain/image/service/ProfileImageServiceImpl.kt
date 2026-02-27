@@ -88,8 +88,8 @@ class ProfileImageServiceImpl(
             .storedName(storedName)
             .accessUrl(accessUrl)
             .uploader(member)
-            .domain(ImageDomain.POST)
-            .status(ImageStatus.PENDING)
+            .domain(ImageDomain.PROFILE)
+            .status(ImageStatus.USED)
             .domainId(memberId)
             .build()
 
