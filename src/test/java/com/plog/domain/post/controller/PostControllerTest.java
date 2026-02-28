@@ -115,7 +115,7 @@ class PostControllerTest extends WebMvcTestSupport {
 
         Slice<CommentInfoRes> mockComments = new SliceImpl<>(Collections.emptyList());
 
-        given(postService.getPostDetail(anyLong(), anyInt())).willReturn(PostInfoRes.from(mockPost));
+        given(postService.getPostDetail(anyLong(), anyString(), anyInt())).willReturn(PostInfoRes.from(mockPost));
 
         // [When]
         ResultActions resultActions = mockMvc

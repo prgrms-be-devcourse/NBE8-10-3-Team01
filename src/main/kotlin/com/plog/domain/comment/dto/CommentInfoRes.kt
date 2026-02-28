@@ -34,6 +34,7 @@ data class CommentInfoRes(
     val createDate : LocalDateTime,
     val modifyDate : LocalDateTime,
     val replyCount : Long,
+    val likeCount : Long,
     val previewReplies : Slice<ReplyInfoRes>
     ) {
 
@@ -50,6 +51,7 @@ data class CommentInfoRes(
                 createDate = comment.createDate!!,
                 modifyDate = comment.modifyDate!!,
                 replyCount = comment.replyCount,
+                likeCount = comment.likeCount,
                 previewReplies = previewReplies
             )
         }
