@@ -1,7 +1,6 @@
 package com.plog.domain.post.repository
 
 import com.plog.domain.post.entity.Post
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
@@ -56,15 +55,27 @@ interface PostRepository : JpaRepository<Post, Long> {
     fun findAllByMemberId(@Param("memberId") memberId: Long, pageable: Pageable): Slice<Post>
 
     /**
-     * 특정 해시태그를 포함하는 게시글 조회
+     * 게시글 제목에 키워드가 포함된 게시글을 검색합니다. (LIKE %title% 방식)
      */
     @Query(
-        "select distinct p from Post p " +
-                "join p.postHashTags pht " +
-                "join pht.hashTag ht " +
-                "where ht.name = :tagName"
+        value = "select distinct p from Post p" +
+                "join fetch p.member " +
+                "where p.title LIKE %:title% and p.status = 'PUBLISHED'"
     )
-    fun findByHashTagName(@Param("tagName") tagName: String, pageable: Pageable): Page<Post>
+    fun findByTitleContaining(@Param("title") title: String, pageable: Pageable): Slice<Post>
+
+
+    /**
+     * 해시태그 이름에 키워드가 포함된 게시글을 검색합니다. (LIKE %keyword% 방식)
+     */
+    @Query(
+        value = "select distinct p from Post p " +
+                "join fetch p.member " +
+                "join fetch p.postHashTags ph" +
+                "join fetch ph.hashTag h" +
+                "where h.name LIKE %:keyword% and p.status = 'PUBLISHED'"
+    )
+    fun findByHashTagContaining(@Param("hashTag") hashTag: String, pageable: Pageable): Slice<Post>
 
     @Modifying(clearAutomatically = true)
     @Query("update Post p set p.viewCount = p.viewCount + :count where p.id = :id")

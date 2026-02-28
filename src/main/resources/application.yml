@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: "file:./.env[.properties]"
   application:
     name: plog
   profiles:
@@ -32,6 +34,7 @@ spring:
       ddl-auto: update
     properties:
       hibernate:
+        default_batch_fetch_size: 100
         format_sql: false
         highlight_sql: false
         use_sql_comments: false

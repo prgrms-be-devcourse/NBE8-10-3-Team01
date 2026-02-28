@@ -5,6 +5,7 @@ import com.plog.domain.post.dto.PostInfoRes
 import com.plog.domain.post.dto.PostListRes
 import com.plog.domain.post.dto.PostUpdateReq
 import com.plog.domain.post.service.PostService
+import com.plog.domain.hashtag.service.HashTagService
 import com.plog.global.response.CommonResponse
 import com.plog.global.response.Response
 import com.plog.global.security.SecurityUser
@@ -17,6 +18,7 @@ import org.springframework.data.web.PageableDefault
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
+import org.springframework.data.domain.SliceImpl
 import java.net.URI
 
 /**
@@ -44,7 +46,11 @@ import java.net.URI
  */
 @RestController
 @RequestMapping("/api/posts")
-class PostController(private val postService: PostService) {
+class PostController(
+    private val postService: PostService,
+    private val hashTagService: HashTagService
+
+) {
 
     /**
      * 새로운 게시물을 생성합니다.
@@ -78,6 +84,46 @@ class PostController(private val postService: PostService) {
         val userId = user?.id?.toString() ?: request.remoteAddr
         val response = postService.getPostDetail(id, userId, pageNumber)
         return ResponseEntity.ok(CommonResponse.success(response, "게시글 조회 성공"))
+    }
+
+    /**
+     * [통합 게시글 검색 API]
+     * 제목(?title=) 또는 해시태그(?hashTag=) 파라미터에 따라 검색을 수행합니다.
+     * * 최적화 및 방어 로직 상세:
+     * 1. Slice 적용: 무한 스크롤 환경에 맞춰 전체 카운트 쿼리를 생략하여 성능을 개선했습니다.
+     * 2. N+1 방어: Fetch Join을 통해 작성자 및 태그 정보를 단일 쿼리로 벌크 로드합니다.
+     * 3. Blank Guard: 공백만 입력된 검색어는 DB 쿼리 전 차단하여 Full Table Scan을 방지합니다.
+     * 4. 타입 안정성: Pair에 명시적 타입을 지정하여 Kotlin 컴파일러의 타입 추론 오류를 방지했습니다.
+     *
+     * @param title 제목 검색 키워드 (Optional)
+     * @param hashTag 해시태그 검색 키워드 (Optional)
+     * @param pageable 페이징 및 정렬 정보 (기본값: 10개씩, 생성일 최신순)
+     * @return 통합 검색 응답 (Slice 규격)
+     */
+    @GetMapping("/search")
+    fun searchPosts(
+        @RequestParam(value = "title", required = false) title: String?, // 1. String?로 변경
+        @RequestParam(value = "hashTag", required = false) hashTag: String?,
+        @PageableDefault(size = 10, sort = ["createDate"], direction = Sort.Direction.DESC) pageable: Pageable
+    ): ResponseEntity<CommonResponse<Slice<PostListRes>>> {
+
+        // result와 message의 타입을 명확히 하기 위해 Pair를 사용합니다.
+        val (result, message) = when {
+            !title.isNullOrBlank() -> {
+                postService.searchPostsByTitle(title, pageable) to "제목으로 게시글 검색 성공"
+            }
+            !hashTag.isNullOrBlank() -> {
+                hashTagService.searchPostsByTag(hashTag, pageable) to "해시태그로 게시글 검색 성공"
+            }
+            else -> {
+                // 2. emptyList<PostListRes>()로 타입을 명확히 지정
+                SliceImpl(emptyList<PostListRes>(), pageable, false) to "검색어가 없어 빈 목록을 반환합니다"
+            }
+        }
+
+        return ResponseEntity.ok(
+            CommonResponse.success(result, message)
+        )
     }
 
     /**

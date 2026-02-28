@@ -28,6 +28,7 @@ import org.commonmark.renderer.text.TextContentRenderer
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
+import org.springframework.data.domain.SliceImpl
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -250,4 +251,25 @@ class PostServiceImpl(
     private fun normalizeTag(name: String): String {
         return name.trim().lowercase().replace(" ", "_")
     }
+    /**
+     * 게시글 제목을 기준으로 키워드 검색을 수행합니다.
+     * 검색어의 앞뒤 공백을 제거한 후, 제목에 해당 키워드가 포함된 게시글을 페이지 단위로 조회합니다.
+     * * @param title 검색할 제목 키워드
+     * @param pageable 페이징 및 정렬 정보
+     * @return 검색된 게시글 리스트 (Page 형식)
+     */
+    @Transactional(readOnly = true)
+    override fun searchPostsByTitle(title: String, pageable: Pageable): Slice<PostListRes> {
+
+        if (title.isNullOrBlank()) {
+            return SliceImpl(emptyList())
+        }
+        // 제목 검색은 해시태그와 달리 대소문자나 공백을 엄격하게 정규화하지 않고
+        // 앞뒤 공백만 제거하여 검색 유연성을 높입니다.
+        val cleanTitle = title.trim()
+
+        return postRepository.findByTitleContaining(cleanTitle, pageable)
+            .map { PostListRes.from(it) }
+    }
+
 }
