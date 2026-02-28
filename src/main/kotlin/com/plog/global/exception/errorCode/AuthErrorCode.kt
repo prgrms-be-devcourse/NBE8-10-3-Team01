@@ -33,6 +33,10 @@ enum class AuthErrorCode(
     USER_ALREADY_EXIST(HttpStatus.CONFLICT, "이미 존재하는 사용자입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 일치하지 않습니다."),
 
+    // 소셜 로그인
+    SOCIAL_LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "소셜 로그인에 실패하였습니다."),
+    OAUTH_DATA_ACCESS_FAIL(HttpStatus.UNAUTHORIZED, "소셜 계정 정보를 불러오는 데 실패했습니다."),
+
     // 인증 및 권한
     USER_AUTH_FAIL(HttpStatus.FORBIDDEN, "사용자 권한 인증에 실패하였습니다."),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),

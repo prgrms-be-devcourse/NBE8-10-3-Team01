@@ -2,6 +2,8 @@
 package com.plog.global.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.plog.global.security.oauth2.CustomOAuth2UserService
+import com.plog.global.security.oauth2.handler.OAuth2SuccessHandler
 import com.plog.global.exception.errorCode.AuthErrorCode
 import com.plog.global.response.CommonResponse
 import jakarta.servlet.ServletException
@@ -58,7 +60,9 @@ class SecurityConfig(
     private val authenticationConfiguration: AuthenticationConfiguration,
     @Value("\${custom.cors.allowed-origins}") private val allowedOrigins: List<String>,
     private val tokenResolver: TokenResolver,
-    private val tokenStore: TokenStore
+    private val tokenStore: TokenStore,
+    private val customOAuth2UserService: CustomOAuth2UserService,
+    private val oAuth2SuccessHandler: OAuth2SuccessHandler
 ) {
 
     @Throws(Exception::class)
@@ -82,6 +86,13 @@ class SecurityConfig(
                     .requestMatchers(HttpMethod.GET, *AccessURL.GET_PUBLIC.urls.toTypedArray()).permitAll()
                     .requestMatchers(*AccessURL.PUBLIC.urls.toTypedArray()).permitAll()
                     .anyRequest().authenticated()
+            }
+            .oauth2Login { oauth2 ->
+                oauth2
+                    .userInfoEndpoint { userInfo ->
+                        userInfo.userService(customOAuth2UserService)
+                    }
+                    .successHandler(oAuth2SuccessHandler)
             }
             .headers { headers ->
                 headers.frameOptions { it.sameOrigin() }
@@ -131,7 +142,7 @@ class SecurityConfig(
             errorCode = AuthErrorCode.LOGIN_REQUIRED
         }
 
-        response.status = errorCode!!.httpStatus.value()
+        response.status = errorCode.httpStatus.value()
         response.writer.write(
             objectMapper.writeValueAsString(
                 CommonResponse.fail<Any>(errorCode.message)
@@ -182,11 +193,12 @@ class SecurityConfig(
 
         // 허용할 헤더 설정
         configuration.allowedHeaders = listOf("*")
-        configuration.exposedHeaders = listOf("Authorization")
+        configuration.exposedHeaders = listOf("Authorization", "Set-Cookie")
 
         // CORS 설정을 소스에 등록
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/api/**", configuration)
+        source.registerCorsConfiguration("/login/oauth2/**", configuration)
 
         return source
     }

@@ -40,13 +40,11 @@ class MemberServiceImpl(
     @Transactional(readOnly = true)
     override fun findMemberWithNickname(nickname: String): MemberInfoRes {
         val member = memberRepository.findByNickname(nickname)
-            .orElseThrow {
-                AuthException(
-                    AuthErrorCode.USER_NOT_FOUND,
-                    "[MemberServiceImpl#findMemberWithNickname] can't find user by nickname",
-                    "존재하지 않는 사용자입니다."
-                )
-            }
+            ?: throw AuthException(
+                AuthErrorCode.USER_NOT_FOUND,
+                "[MemberServiceImpl#findMemberWithNickname] can't find user by nickname",
+                "존재하지 않는 사용자입니다."
+            )
 
         return MemberInfoRes.from(member)
     }
