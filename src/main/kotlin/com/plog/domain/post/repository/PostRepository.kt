@@ -4,6 +4,7 @@ import com.plog.domain.post.entity.Post
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -74,5 +75,9 @@ interface PostRepository : JpaRepository<Post, Long> {
                 "join fetch ph.hashTag h" +
                 "where h.name LIKE %:keyword% and p.status = 'PUBLISHED'"
     )
-    fun  findByHashTagContaining(@Param("hashTag") hashTag: String, pageable: Pageable): Slice<Post>
+    fun findByHashTagContaining(@Param("hashTag") hashTag: String, pageable: Pageable): Slice<Post>
+
+    @Modifying(clearAutomatically = true)
+    @Query("update Post p set p.viewCount = p.viewCount + :count where p.id = :id")
+    fun updateViewCount(@Param("id") id: Long, @Param("count") count: Long)
 }

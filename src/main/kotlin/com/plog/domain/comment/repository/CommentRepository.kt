@@ -16,6 +16,12 @@ import org.springframework.data.repository.query.Param
  *   댓글 다건 조회 + 페이징 기능
  *   댓글 저장 및 삭제
  *   댓글 수정
+ *   데이터베이스 레벨의 원자적 업데이트(Atomic Update)를 통한 좋아요 카운트 관리
+ *
+ * 동시성 제어:
+ *   좋아요 증감 시 {@link Modifying}과 직접적인 UPDATE 쿼리를 사용하여
+ *   레이스 컨디션(Race Condition)을 방지하며, {@code clearAutomatically = true} 설정을 통해
+ *   영속성 컨텍스트와의 데이터 일관성을 유지합니다.
  *
  * @author 노정원
  * @since 2026-02-23
@@ -57,4 +63,12 @@ interface CommentRepository : JpaRepository<Comment, Long> {
     fun deleteParentsByPostId(@Param("postId") postId: Long)
 
     fun existsByParent(parent: Comment): Boolean
+
+    @Modifying
+    @Query("UPDATE Comment c SET c.likeCount = c.likeCount + 1 WHERE c.id = :commentId")
+    fun incrementLikeCount(commentId: Long): Int
+
+    @Modifying
+    @Query("UPDATE Comment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :commentId AND c.likeCount > 0")
+    fun decrementLikeCount(commentId: Long): Int
 }

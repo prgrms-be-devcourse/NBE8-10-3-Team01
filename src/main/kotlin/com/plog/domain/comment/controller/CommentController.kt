@@ -120,5 +120,17 @@ class CommentController(
         )
     }
 
+    @PostMapping("/comments/{commentId}")
+    fun toggleLike(
+        @PathVariable commentId: Long,
+        @AuthenticationPrincipal securityUser: SecurityUser
+    ): ResponseEntity<CommonResponse<Long>>{
+
+        val likeStatus = commentService.toggleCommentLike(commentId, securityUser.id)
+
+        return ResponseEntity.ok(
+            CommonResponse.success(commentId, if(likeStatus) "좋아요" else "좋아요 취소")
+        )
+    }
 
 }
