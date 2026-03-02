@@ -2,7 +2,6 @@ package com.plog.domain.post.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.plog.domain.comment.dto.CommentInfoRes
-import com.plog.domain.hashtag.entity.PostHashTag
 import com.plog.domain.post.entity.Post
 import org.springframework.data.domain.Slice
 import java.time.LocalDateTime
@@ -41,7 +40,7 @@ data class PostInfoRes(
     val content: String,
     @get:JvmName("viewCount")
     @JsonProperty("viewCount")
-    val viewCount: Int,
+    val viewCount: Long,
     @get:JvmName("createDate")
     @JsonProperty("createDate")
     val createDate: LocalDateTime?,
@@ -75,8 +74,13 @@ data class PostInfoRes(
          * @return 필드값이 매핑된 PostInfoRes 객체
          */
         @JvmStatic
+        fun from(post: Post, cachedCount: Long): PostInfoRes {
+            return from(post, cachedCount)
+        }
+
+        @JvmStatic
         fun from(post: Post): PostInfoRes {
-            return from(post, null)
+            return from(post, 0L)
         }
 
         /**
@@ -87,12 +91,12 @@ data class PostInfoRes(
          * @return 필드값과 댓글 목록이 매핑된 PostInfoRes 객체
          */
         @JvmStatic
-        fun from(post: Post, comments: Slice<CommentInfoRes>?): PostInfoRes {
+        fun from(post: Post, comments: Slice<CommentInfoRes>?, cachedCount : Long): PostInfoRes {
             return PostInfoRes(
                 id = post.id,
                 title = post.title,
                 content = post.content,
-                viewCount = post.viewCount,
+                viewCount = post.viewCount + cachedCount,
                 createDate = post.createDate,
                 modifyDate = post.modifyDate,
                 comments = comments,

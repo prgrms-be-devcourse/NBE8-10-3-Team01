@@ -30,7 +30,5 @@ data class CommentCreateReq(
     @field:Size(max = 1000, message = "댓글은 1000자 이내로 작성 가능합니다.")
     val content: String,
 
-    val authorId: Long,
-
     val parentCommentId: Long? = null
 )

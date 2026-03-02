@@ -105,9 +105,9 @@ class ViewCountRedisRepository(private val redisTemplate: RedisTemplate<String, 
      * Lua Script를 사용하여 단일 네트워크 라운드트립으로 처리합니다.
      *
      * @param counts 차감할 게시물 ID와 수치의 맵
-     * @param allPostIds Pending Set에서 제거할 전체 게시물 ID 목록 (조회수가 0인 경우 포함)
+     * @param allPostIds Pending Set에서 제거할 전체 게시물 ID 목록 (Redis Set raw member 값)
      */
-    fun decrementCountsAndRemoveFromPending(counts: Map<Long, Long>, allPostIds: List<Long>) {
+    fun decrementCountsAndRemoveFromPending(counts: Map<Long, Long>, allPostIds: List<String>) {
         if (allPostIds.isEmpty()) return
 
         val script = """
@@ -148,7 +148,7 @@ class ViewCountRedisRepository(private val redisTemplate: RedisTemplate<String, 
         }
         
         // Add all IDs for removal from pending
-        allPostIds.forEach { args.add(it.toString()) }
+        allPostIds.forEach { args.add(it) }
 
         redisTemplate.execute(
             DefaultRedisScript(script, Boolean::class.java),

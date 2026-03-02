@@ -57,24 +57,28 @@ interface PostRepository : JpaRepository<Post, Long> {
     /**
      * 게시글 제목에 키워드가 포함된 게시글을 검색합니다. (LIKE %title% 방식)
      */
-    @Query(
-        value = "select distinct p from Post p" +
-                "join fetch p.member " +
-                "where p.title LIKE %:title% and p.status = 'PUBLISHED'"
-    )
+    @Query("""
+        select distinct p
+        from Post p
+        join fetch p.member
+        where p.title like concat('%', :title, '%')
+          and p.status = com.plog.domain.post.entity.PostStatus.PUBLISHED
+    """)
     fun findByTitleContaining(@Param("title") title: String, pageable: Pageable): Slice<Post>
 
 
     /**
      * 해시태그 이름에 키워드가 포함된 게시글을 검색합니다. (LIKE %keyword% 방식)
      */
-    @Query(
-        value = "select distinct p from Post p " +
-                "join fetch p.member " +
-                "join fetch p.postHashTags ph" +
-                "join fetch ph.hashTag h" +
-                "where h.name LIKE %:keyword% and p.status = 'PUBLISHED'"
-    )
+    @Query("""
+        select distinct p
+        from Post p
+        join fetch p.member
+        join fetch p.postHashTags ph
+        join fetch ph.hashTag h
+        where h.name like concat('%', :hashTag, '%')
+          and p.status = com.plog.domain.post.entity.PostStatus.PUBLISHED
+    """)
     fun findByHashTagContaining(@Param("hashTag") hashTag: String, pageable: Pageable): Slice<Post>
 
     @Modifying(clearAutomatically = true)

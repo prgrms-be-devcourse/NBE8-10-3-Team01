@@ -67,7 +67,16 @@ class ViewCountSyncTask(
     )
     fun processChunkWithRetry(postIds: List<String>) {
         log.debug("[ViewCountSyncTask] Processing chunk of size {}", postIds.size)
-        val longPostIds = postIds.map { it.toLong() }
+        val longPostIds = postIds.mapNotNull { rawId ->
+            val normalized = rawId.trim().removeSurrounding("\"")
+            normalized.toLongOrNull() ?: run {
+                log.warn("[ViewCountSyncTask] Skipping invalid postId from Redis pending set: {}", rawId)
+                null
+            }
+        }.distinct()
+
+        if (longPostIds.isEmpty()) return
+
         val counts = mutableMapOf<Long, Long>()
         
         for (postId in longPostIds) {
@@ -82,7 +91,8 @@ class ViewCountSyncTask(
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(object : TransactionSynchronization {
                 override fun afterCommit() {
-                    viewCountRedisRepository.decrementCountsAndRemoveFromPending(counts, longPostIds)
+                    // Remove pending entries using raw Redis members to clean up legacy quoted values as well.
+                    viewCountRedisRepository.decrementCountsAndRemoveFromPending(counts, postIds)
                 }
             })
         }
