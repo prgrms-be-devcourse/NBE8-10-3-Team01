@@ -32,7 +32,6 @@ import org.springframework.data.domain.SliceImpl
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.util.Optional
 import com.plog.domain.image.entity.Image
 import com.plog.domain.image.repository.ImageRepository
 
@@ -57,7 +56,8 @@ class PostServiceImpl(
     private val memberRepository: MemberRepository,
     private val postHashTagRepository: PostHashTagRepository,
     private val hashTagRepository: HashTagRepository,
-    private val imageRepository: ImageRepository
+    private val imageRepository: ImageRepository,
+    private val viewCountRedisRepository: ViewCountRedisRepository
 ) : PostService {
 
     companion object {
@@ -108,6 +108,8 @@ class PostServiceImpl(
             viewCountRedisRepository.addToPending(id)
         }
 
+        val cachedCount = viewCountRedisRepository.getCount(id)
+
         // 2. 댓글 정보 조회
         val pageable = PageRequest.of(
             pageNumber,
@@ -119,7 +121,7 @@ class PostServiceImpl(
 
         val commentResSlice = comments.map { convertToCommentInfoRes(it) }
 
-        return PostInfoRes.from(post, commentResSlice)
+        return PostInfoRes.from(post, commentResSlice, cachedCount)
     }
 
     private fun convertToCommentInfoRes(comment: Comment): CommentInfoRes {

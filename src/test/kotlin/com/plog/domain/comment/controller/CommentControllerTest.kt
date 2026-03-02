@@ -57,7 +57,7 @@ class CommentControllerTest : WebMvcTestSupport() {
         // 1. 준비
         val postId = 1L
         val memberId = 1L // 테스트 클래스에 정의된 memberId 값을 명시적으로 확인
-        val req = CommentCreateReq("테스트 댓글", memberId, null)
+        val req = CommentCreateReq("테스트 댓글", null)
 
         // 2. Mock 설정: Matcher(eq, any)를 완전히 제거합니다.
         // 인자값이 Primitive Long일 경우 Matcher 없이 넣는 것이 Kotlin에서 가장 안전합니다.
@@ -81,7 +81,7 @@ class CommentControllerTest : WebMvcTestSupport() {
     fun createComment_Fail_Validation() {
         val postId = 1L
         val longContent = "a".repeat(1001)
-        val req = CommentCreateReq(longContent, memberId, null)
+        val req = CommentCreateReq(longContent, null)
 
         mockMvc.perform(
             post("/api/posts/$postId/comments")

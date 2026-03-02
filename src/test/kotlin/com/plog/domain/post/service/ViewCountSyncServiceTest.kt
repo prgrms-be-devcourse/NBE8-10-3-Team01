@@ -63,7 +63,7 @@ class ViewCountSyncTaskTest {
     fun processChunk() {
         // [Given]
         val chunk = listOf("1", "2")
-        val longChunk = listOf(1L, 2L)
+        val rawChunk = listOf("1", "2")
 
         every { TransactionSynchronizationManager.isSynchronizationActive() } returns true
         
@@ -89,7 +89,7 @@ class ViewCountSyncTaskTest {
         verify { 
             viewCountRedisRepository.decrementCountsAndRemoveFromPending(
                 mapOf(1L to 10L, 2L to 5L), 
-                longChunk
+                rawChunk
             ) 
         }
     }

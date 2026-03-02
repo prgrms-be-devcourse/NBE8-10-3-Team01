@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.data.redis.serializer.RedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
 @Configuration
@@ -15,7 +14,7 @@ class RedisConfig {
         val template = RedisTemplate<String, Any>()
         template.connectionFactory = connectionFactory
         template.keySerializer = StringRedisSerializer()
-        template.valueSerializer = RedisSerializer.json()
+        template.valueSerializer = StringRedisSerializer() //RedisSerializer.json()
         return template
     }
 }
