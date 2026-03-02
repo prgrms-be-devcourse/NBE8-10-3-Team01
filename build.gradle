@@ -32,6 +32,7 @@ repositories {
 dependencies {
     // 1. Security & JWT
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
@@ -63,6 +64,7 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation("io.mockk:mockk:1.13.10")
 
     // 코틀린 표준 라이브러리 및 리플렉션
     implementation 'org.jetbrains.kotlin:kotlin-stdlib'
