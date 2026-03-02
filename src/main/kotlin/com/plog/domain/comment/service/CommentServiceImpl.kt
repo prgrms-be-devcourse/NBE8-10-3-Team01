@@ -158,7 +158,7 @@ class CommentServiceImpl(
 
         val member = memberRepository.getReferenceById(memberId)
 
-        val comment = commentRepository.findById(commentId)
+        val comment = commentRepository.findByIdWithLock(commentId)
             .orElseThrow{
                 CommentException(
                     CommentErrorCode.COMMENT_NOT_FOUND,
