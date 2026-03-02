@@ -2,7 +2,11 @@ package com.plog.domain.image.repository
 
 import com.plog.domain.image.entity.Image
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 import java.util.Optional
 
 /**
@@ -28,4 +32,22 @@ import java.util.Optional
 @Repository
 interface ImageRepository : JpaRepository<Image, Long> {
     fun findByAccessUrl(accessUrl: String): Optional<Image>
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Image i WHERE i.id IN :ids")
+    fun deleteAllByIdInBatch(@Param("ids") ids: List<Long>)
+
+    /**
+     * ID 리스트로 storedName만 조회 (배치 삭제용)
+     */
+    @Query("SELECT i.storedName FROM Image i WHERE i.id IN :ids")
+    fun findStoredNamesByIds(@Param("ids") ids: List<Long>): List<String>
+
+    /**
+     * PENDING 상태 + 만료된 고아 이미지만 빠르게 조회
+     */
+    @Query("SELECT i.id FROM Image i WHERE i.status = 'PENDING' AND i.createDate < :threshold")
+    fun findPendingOrphanIds(@Param("threshold") threshold: LocalDateTime): List<Long>
+
+    fun findAllByAccessUrlIn(accessUrls: List<String>): List<Image>
 }
