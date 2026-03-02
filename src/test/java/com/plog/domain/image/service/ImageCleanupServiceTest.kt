@@ -154,15 +154,16 @@ class ImageCleanupServiceTest {
     }
 
     private fun makeImage(id: Long, domain: String?, accessUrl: String): Image {
-        val image = Image(
-            originalName = "test.jpg",
-            storedName = "post/image/$id/uuid.jpg",
-            accessUrl = accessUrl,
-            uploader = null,
-            domain = domain,
-            status = "USED",
-            domainId = id
-        )
+        val imageDomain = domain?.let { runCatching { Image.ImageDomain.valueOf(it) }.getOrNull() }
+        val image = Image.builder()
+            .originalName("test.jpg")
+            .storedName("post/image/$id/uuid.jpg")
+            .accessUrl(accessUrl)
+            .uploader(null)
+            .domain(imageDomain)
+            .status(Image.ImageStatus.USED)
+            .domainId(id)
+            .build()
         ReflectionTestUtils.setField(image, "id", id)
         return image
     }

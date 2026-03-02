@@ -46,9 +46,9 @@ class Image protected constructor() : BaseEntity() {
     @JoinColumn(name = "member_id", nullable = false)
     var uploader: Member? = null
 
-    @Column(nullable = false)
+    @Column
     @Enumerated(EnumType.STRING)
-    var domain: ImageDomain = ImageDomain.POST
+    var domain: ImageDomain? = null
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -62,7 +62,7 @@ class Image protected constructor() : BaseEntity() {
         storedName: String,
         accessUrl: String,
         uploader: Member?,
-        domain: ImageDomain = ImageDomain.POST,
+        domain: ImageDomain? = null,
         status: ImageStatus = ImageStatus.PENDING,
         domainId: Long? = null
     ) : this() {
@@ -86,7 +86,7 @@ class Image protected constructor() : BaseEntity() {
         private var storedName: String = ""
         private var accessUrl: String = ""
         private var uploader: Member? = null
-        private var domain: ImageDomain = ImageDomain.POST
+        private var domain: ImageDomain? = null
         private var status: ImageStatus = ImageStatus.PENDING
         private var domainId: Long? = null
 
@@ -94,7 +94,7 @@ class Image protected constructor() : BaseEntity() {
         fun storedName(storedName: String) = apply { this.storedName = storedName }
         fun accessUrl(accessUrl: String) = apply { this.accessUrl = accessUrl }
         fun uploader(uploader: Member?) = apply { this.uploader = uploader }
-        fun domain(domain: ImageDomain) = apply { this.domain = domain }
+        fun domain(domain: ImageDomain?) = apply { this.domain = domain }
         fun status(status: ImageStatus) = apply { this.status = status }
         fun domainId(domainId: Long?) = apply { this.domainId = domainId }
 

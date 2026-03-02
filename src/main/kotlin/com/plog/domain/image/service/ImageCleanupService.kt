@@ -48,7 +48,7 @@ class ImageCleanupService(
 
         val staleIds = usedImages
             .filter { image ->
-                val domain = image.domain ?: return@filter false
+                val domain = image.domain?.name ?: return@filter false
                 val verifier = verifiers.find { it.supports(domain) } ?: return@filter false
                 !verifier.isInUse(image)
             }

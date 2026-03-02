@@ -84,13 +84,13 @@ class ProfileImageVerifierTest {
         assertFalse(verifier.isInUse(image))
     }
 
-    private fun makeImage(domainId: Long?, accessUrl: String) = Image(
-        originalName = "profile.jpg",
-        storedName = "profile/image/uuid.jpg",
-        accessUrl = accessUrl,
-        uploader = null,
-        domain = "PROFILE",
-        status = "USED",
-        domainId = domainId
-    )
+    private fun makeImage(domainId: Long?, accessUrl: String) = Image.builder()
+        .originalName("profile.jpg")
+        .storedName("profile/image/uuid.jpg")
+        .accessUrl(accessUrl)
+        .uploader(null)
+        .domain(Image.ImageDomain.PROFILE)
+        .status(Image.ImageStatus.USED)
+        .domainId(domainId)
+        .build()
 }

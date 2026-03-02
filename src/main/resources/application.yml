@@ -22,11 +22,6 @@ spring:
     multipart:
       max-file-size: 20MB
       max-request-size: 100MB
-  task:
-    scheduling:
-      pool:
-        size: 5
-
   security:
     oauth2:
       client:
