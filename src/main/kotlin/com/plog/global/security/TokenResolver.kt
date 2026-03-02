@@ -88,6 +88,27 @@ class TokenResolver(
     }
 
     /**
+     * HTTP 응답 쿠키에 Access Token을 보안 설정과 함께 추가합니다.
+     * 소셜 로그인 후 리다이렉트 시 Header 유실 문제를 해결하기 위해 쿠키로 전달합니다.
+     *
+     * 적용된 보안 설정: HttpOnly, SameSite.Lax, Secure
+     *
+     * @param response HTTP 응답 객체
+     * @param refresh 전달할 Refresh Token 문자열
+     */
+    fun setAccessTokenCookie(response: HttpServletResponse, access: String) {
+        val cookie = ResponseCookie.from("accessToken", access)
+            .path("/")
+            .domain(if (cookieDomain == "localhost") null else cookieDomain)
+            .secure(cookieSecure)
+            .httpOnly(false)
+            .sameSite("Lax")
+            .maxAge(60) // 1분
+            .build()
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
+    }
+
+    /**
      * HTTP 응답 쿠키에 Refresh Token을 보안 설정과 함께 추가합니다.
      *
      * 적용된 보안 설정: HttpOnly, SameSite.Lax, Secure
@@ -95,7 +116,7 @@ class TokenResolver(
      * @param response HTTP 응답 객체
      * @param refresh 전달할 Refresh Token 문자열
      */
-    fun setCookie(response: HttpServletResponse, refresh: String) {
+    fun setRefreshTokenCookie(response: HttpServletResponse, refresh: String) {
         val cookie = ResponseCookie.from("refreshToken", refresh)
             .path("/")
             .domain(if (cookieDomain == "localhost") null else cookieDomain)

@@ -42,13 +42,11 @@ class CustomUserDetailsService(
     @Throws(UsernameNotFoundException::class)
     override fun loadUserByUsername(email: String): UserDetails {
         val member = memberRepository.findByEmail(email)
-            .orElseThrow {
-                AuthException(
-                    AuthErrorCode.USER_NOT_FOUND,
-                    "[CustomUserDetailsService#loadUserByUsername] can't find user by email: $email",
-                    "존재하지 않는 사용자입니다."
-                )
-            }
+            ?: throw AuthException(
+                AuthErrorCode.USER_NOT_FOUND,
+                "[CustomUserDetailsService#loadUserByUsername] can't find user by email: $email",
+                "존재하지 않는 사용자입니다."
+            )
 
         return SecurityUser(
             id = member.id!!, // TODO: BaseEntity 마이그레이션 후 !! 삭제

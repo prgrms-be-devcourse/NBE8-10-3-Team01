@@ -3,6 +3,7 @@ package com.plog.global.security
 
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.User
+import org.springframework.security.oauth2.core.user.OAuth2User
 
 /**
  * Spring Security의 인증 인터페이스를 구현한 사용자 정의 인증 객체입니다.
@@ -29,10 +30,11 @@ import org.springframework.security.core.userdetails.User
 class SecurityUser(
     val id: Long,
     email: String,
-    password: String,
+    password: String = "",
     val nickname: String,
-    authorities: Collection<GrantedAuthority>
-) : User(email, password, authorities) {
+    authorities: Collection<GrantedAuthority>,
+    private val attributes: Map<String, Any> = emptyMap()
+) : User(email, password, authorities), OAuth2User {
 
     /**
      * 부모 클래스(User)의 username 필드(이메일)를 반환하는 getter
@@ -93,4 +95,7 @@ class SecurityUser(
             )
         }
     }
+
+    override fun getAttributes(): Map<String, Any> = attributes
+    override fun getName(): String = email
 }

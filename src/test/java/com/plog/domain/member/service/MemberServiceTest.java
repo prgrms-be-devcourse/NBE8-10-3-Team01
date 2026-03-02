@@ -73,7 +73,7 @@ class MemberServiceTest {
     void findMemberWithNickname_success() {
         // given
         String nickname = "jack";
-        given(memberRepository.findByNickname(nickname)).willReturn(Optional.of(member));
+        given(memberRepository.findByNickname(nickname)).willReturn(member);
         given(member.getId()).willReturn(1L);
         given(member.getNickname()).willReturn(nickname);
         given(member.getEmail()).willReturn("example@email.com");
@@ -91,7 +91,7 @@ class MemberServiceTest {
     void findMemberWithNickname_fail_userNotFound() {
         // given
         String nickname = "jack";
-        given(memberRepository.findByNickname(nickname)).willReturn(Optional.empty());
+        given(memberRepository.findByNickname(nickname)).willReturn(null);
 
         // when
         AuthException ex = assertThrows(AuthException.class,
