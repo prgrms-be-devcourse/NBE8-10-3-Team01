@@ -1,12 +1,15 @@
 package com.plog.domain.comment.repository
 
 import com.plog.domain.comment.entity.Comment
+import jakarta.persistence.LockModeType
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import java.util.Optional
 
 /**
  * Spring Data JPA의 {@link JpaRepository}를 상속하여
@@ -71,4 +74,8 @@ interface CommentRepository : JpaRepository<Comment, Long> {
     @Modifying
     @Query("UPDATE Comment c SET c.likeCount = c.likeCount - 1 WHERE c.id = :commentId AND c.likeCount > 0")
     fun decrementLikeCount(commentId: Long): Int
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Comment c WHERE c.id = :id")
+    fun findByIdWithLock(@Param("id") id: Long): Optional<Comment>
 }
