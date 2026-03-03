@@ -42,60 +42,6 @@ class SecurityUser(
     val email: String
         get() = super.getUsername()
 
-    // TODO: 마이그레이션 완료 후 삭제 필요
-    companion object {
-        @JvmStatic
-        fun securityUserBuilder(): SecurityUserBuilder {
-            return SecurityUserBuilder()
-        }
-    }
-
-    /**
-     * 자바 호환성을 위한 수동 빌더 클래스
-     */
-    class SecurityUserBuilder {
-        private var id: Long? = null
-        private var email: String? = null
-        private var password: String? = null
-        private var nickname: String? = null
-        private var authorities: Collection<GrantedAuthority>? = null
-
-        fun id(id: Long): SecurityUserBuilder {
-            this.id = id
-            return this
-        }
-
-        fun email(email: String): SecurityUserBuilder {
-            this.email = email
-            return this
-        }
-
-        fun password(password: String): SecurityUserBuilder {
-            this.password = password
-            return this
-        }
-
-        fun nickname(nickname: String): SecurityUserBuilder {
-            this.nickname = nickname
-            return this
-        }
-
-        fun authorities(authorities: Collection<GrantedAuthority>): SecurityUserBuilder {
-            this.authorities = authorities
-            return this
-        }
-
-        fun build(): SecurityUser {
-            return SecurityUser(
-                id = id ?: throw IllegalArgumentException("id is required"),
-                email = email ?: throw IllegalArgumentException("email is required"),
-                password = password ?: throw IllegalArgumentException("password is required"),
-                nickname = nickname ?: throw IllegalArgumentException("nickname is required"),
-                authorities = authorities ?: emptyList()
-            )
-        }
-    }
-
     override fun getAttributes(): Map<String, Any> = attributes
     override fun getName(): String = email
 }

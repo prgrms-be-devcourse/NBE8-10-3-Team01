@@ -43,7 +43,7 @@ class Post(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    var member: Member,
+    var member: Member? = null,
 
     @OneToMany(mappedBy = "post", cascade = [CascadeType.ALL], orphanRemoval = true)
     var postHashTags: MutableList<PostHashTag> = mutableListOf(),
@@ -61,43 +61,5 @@ class Post(
         this.content = content
         this.summary = summary
         this.thumbnail = thumbnail
-    }
-
-    companion object {
-        @JvmStatic
-        fun builder() = PostBuilder()
-    }
-
-    // Keep builder for Java compatibility or if specifically requested, 
-    // but Kotlin code should use the constructor.
-    class PostBuilder {
-        private var title: String = ""
-        private var content: String = ""
-        private var summary: String? = null
-        private var status: PostStatus = PostStatus.DRAFT
-        private var viewCount: Int = 0
-        private var member: Member? = null
-        private var postHashTags: MutableList<PostHashTag> = mutableListOf()
-        private var thumbnail: String? = null
-
-        fun title(title: String) = apply { this.title = title }
-        fun content(content: String) = apply { this.content = content }
-        fun summary(summary: String?) = apply { this.summary = summary }
-        fun status(status: PostStatus) = apply { this.status = status }
-        fun viewCount(viewCount: Int) = apply { this.viewCount = viewCount }
-        fun member(member: Member?) = apply { this.member = member }
-        fun postHashTags(postHashTags: MutableList<PostHashTag>) = apply { this.postHashTags = postHashTags }
-        fun thumbnail(thumbnail: String?) = apply { this.thumbnail = thumbnail }
-
-        fun build() = Post(
-            title = title,
-            content = content,
-            summary = summary,
-            status = status,
-            viewCount = viewCount,
-            member = member!!,
-            postHashTags = postHashTags,
-            thumbnail = thumbnail
-        )
     }
 }

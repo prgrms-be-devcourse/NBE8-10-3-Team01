@@ -16,14 +16,35 @@ import jakarta.persistence.*
  * **생명주기 관리:**
  * 스프링 빈이 아니며, JPA 영속성 컨텍스트(Persistence Context)에 의해 생명주기가 관리됩니다.
  *
- * **주요 패턴:**
- * `protected` 기본 생성자로 무분별한 기본 생성자 호출을 방지합니다.
- *
  * @author Jaewon Ryu
  * @since 2026-01-20
  */
 @Entity
-class Image protected constructor() : BaseEntity() {
+class Image(
+    @Column(nullable = false)
+    var originalName: String = "",
+
+    @Column(nullable = false, unique = true)
+    var storedName: String = "",
+
+    @Column(nullable = false)
+    var accessUrl: String = "",
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    var uploader: Member? = null,
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    var domain: ImageDomain? = null,
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    var status: ImageStatus = ImageStatus.PENDING,
+
+    @Column
+    var domainId: Long? = null     // 123L (Post ID 등)
+) : BaseEntity() {
 
     enum class ImageDomain {
         POST, PROFILE
@@ -32,47 +53,4 @@ class Image protected constructor() : BaseEntity() {
     enum class ImageStatus {
         PENDING, USED
     }
-
-    @Column(nullable = false)
-    var originalName: String = ""
-
-    @Column(nullable = false, unique = true)
-    var storedName: String = ""
-
-    @Column(nullable = false)
-    var accessUrl: String = ""
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
-    var uploader: Member? = null
-
-    @Column
-    @Enumerated(EnumType.STRING)
-    var domain: ImageDomain? = null
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    var status: ImageStatus = ImageStatus.PENDING
-
-    @Column
-    var domainId: Long? = null     // 123L (Post ID 등)
-
-    constructor(
-        originalName: String,
-        storedName: String,
-        accessUrl: String,
-        uploader: Member?,
-        domain: ImageDomain? = null,
-        status: ImageStatus = ImageStatus.PENDING,
-        domainId: Long? = null
-    ) : this() {
-        this.originalName = originalName
-        this.storedName = storedName
-        this.accessUrl = accessUrl
-        this.uploader = uploader
-        this.domain = domain
-        this.status = status
-        this.domainId = domainId
-    }
-
 }

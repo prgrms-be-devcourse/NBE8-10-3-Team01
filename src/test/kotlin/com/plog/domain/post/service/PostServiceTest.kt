@@ -76,7 +76,7 @@ class PostServiceTest {
         val memberId = 1L
         val requestDto = PostCreateReq("테스트 제목", "# Hello\n**Spring Boot**", emptyList(), "example.com")
 
-        val mockMember = Member.builder().build()
+        val mockMember = Member()
         ReflectionTestUtils.setField(mockMember, "id", memberId)
 
         whenever(memberRepository.getReferenceById(memberId)).thenReturn(mockMember)
@@ -96,7 +96,7 @@ class PostServiceTest {
         val savedPost = postCaptor.firstValue
         assertThat(savedPost.title).isEqualTo("테스트 제목")
         assertThat(savedPost.summary).isEqualTo("Hello\nSpring Boot")
-        assertThat(savedPost.member.id).isEqualTo(memberId)
+        assertThat(savedPost.member?.id).isEqualTo(memberId)
     }
 
     @Test
@@ -106,7 +106,7 @@ class PostServiceTest {
         val longContent = "가".repeat(200)
         val requestDto = PostCreateReq("제목", longContent, emptyList(), "example.com")
 
-        val mockMember = Member.builder().build()
+        val mockMember = Member()
         ReflectionTestUtils.setField(mockMember, "id", memberId)
 
         whenever(memberRepository.getReferenceById(memberId)).thenReturn(mockMember)
@@ -132,13 +132,13 @@ class PostServiceTest {
     @DisplayName("전체 게시글 조회 시 리포지토리의 결과를 Slice DTO로 변환하여 반환한다")
     fun getPostsSuccess() {
         // [Given]
-        val author = Member("email", "password", "nickname", null)
+        val author = Member(email = "email", password = "password", nickname = "nickname")
         val pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "id"))
-        val post = Post.builder()
-            .title("테스트 제목")
-            .content("테스트 내용")
-            .member(author)
-            .build()
+        val post = Post(
+            title = "테스트 제목",
+            content = "테스트 내용",
+            member = author
+        )
 
         val mockPage = PageImpl(listOf(post), pageable, 1)
         whenever(postRepository.findAllWithMember(any())).thenReturn(mockPage)
@@ -162,25 +162,25 @@ class PostServiceTest {
         val postId = 1L
         val userId = "user1"
         val hashedUserId = HashUtils.sha256(userId)
-        val author = Member.builder().build()
-        val post = Post.builder()
-            .title("제목")
-            .content("내용")
-            .member(author)
-            .viewCount(0)
-            .build()
+        val author = Member()
+        val post = Post(
+            title = "제목",
+            content = "내용",
+            member = author,
+            viewCount = 0
+        )
 
         whenever(postRepository.findByIdWithMember(postId)).thenReturn(Optional.of(post))
         whenever(commentRepository.findCommentsWithMemberAndImageByPostId(eq(postId), any()))
             .thenReturn(SliceImpl(emptyList()))
 
-        whenever(viewCountRedisRepository.setIfAbsentWithTtl(eq(postId), eq(hashedUserId), any<Long>())).thenReturn(true)
+        whenever(viewCountRedisRepository.setIfAbsentWithTtl(eq(postId), eq(hashedUserId), any())).thenReturn(true)
 
         // [When]
         postService.getPostDetail(postId, userId, 0)
 
         // [Then]
-        verify(viewCountRedisRepository).setIfAbsentWithTtl(eq(postId), eq(hashedUserId), any<Long>())
+        verify(viewCountRedisRepository).setIfAbsentWithTtl(eq(postId), eq(hashedUserId), any())
         verify(viewCountRedisRepository).incrementCount(postId)
         verify(viewCountRedisRepository).addToPending(postId)
     }
@@ -204,7 +204,7 @@ class PostServiceTest {
         val tagNames = listOf("Spring", "Kotlin")
         val requestDto = PostCreateReq("제목", "내용", tagNames, null)
 
-        val mockMember = Member.builder().build()
+        val mockMember = Member()
         ReflectionTestUtils.setField(mockMember, "id", memberId)
         whenever(memberRepository.getReferenceById(memberId)).thenReturn(mockMember)
 
@@ -242,15 +242,15 @@ class PostServiceTest {
         val memberId = 1L
         val postId = 1L
 
-        val member = Member.builder().build()
+        val member = Member()
         ReflectionTestUtils.setField(member, "id", memberId)
 
-        val existingPost = Post.builder()
-            .title("기존 제목")
-            .content("기존 본문")
-            .member(member)
-            .summary("기존 요약")
-            .build()
+        val existingPost = Post(
+            title = "기존 제목",
+            content = "기존 본문",
+            member = member,
+            summary = "기존 요약"
+        )
 
         whenever(postRepository.findById(postId)).thenReturn(Optional.of(existingPost))
 
@@ -287,10 +287,10 @@ class PostServiceTest {
         val otherMemberId = 2L
         val postId = 1L
 
-        val owner = Member.builder().build()
+        val owner = Member()
         ReflectionTestUtils.setField(owner, "id", ownerId)
 
-        val post = Post.builder().member(owner).build()
+        val post = Post(member = owner)
         whenever(postRepository.findById(postId)).thenReturn(Optional.of(post))
 
         // [When & Then]
@@ -306,14 +306,14 @@ class PostServiceTest {
         val memberId = 1L
         val postId = 1L
 
-        val member = Member.builder().build()
+        val member = Member()
         ReflectionTestUtils.setField(member, "id", memberId)
 
-        val post = Post.builder()
-            .title("삭제될 제목")
-            .content("삭제될 본문")
-            .member(member)
-            .build()
+        val post = Post(
+            title = "삭제될 제목",
+            content = "삭제될 본문",
+            member = member
+        )
 
         whenever(postRepository.findById(postId)).thenReturn(Optional.of(post))
 
@@ -352,10 +352,10 @@ class PostServiceTest {
         val otherMemberId = 2L
         val postId = 1L
 
-        val owner = Member.builder().build()
+        val owner = Member()
         ReflectionTestUtils.setField(owner, "id", ownerId)
 
-        val post = Post.builder().member(owner).build()
+        val post = Post(member = owner)
         whenever(postRepository.findById(postId)).thenReturn(Optional.of(post))
 
         // [When & Then]
@@ -371,16 +371,16 @@ class PostServiceTest {
     fun getPostsByMemberSuccess() {
         // [Given]
         val memberId = 1L
-        val author = Member("email", "password", "nickname", null)
+        val author = Member(email = "email", password = "password", nickname = "nickname")
         val pageable = PageRequest.of(0, 10)
 
-        val post = Post.builder()
-            .title("테스트 제목")
-            .content("테스트 본문")
-            .summary("테스트 요약")
-            .member(author)
-            .viewCount(10)
-            .build()
+        val post = Post(
+            title = "테스트 제목",
+            content = "테스트 본문",
+            summary = "테스트 요약",
+            member = author,
+            viewCount = 10
+        )
 
         val mockSlice = SliceImpl(listOf(post), pageable, false)
         whenever(postRepository.findAllByMemberId(memberId, pageable)).thenReturn(mockSlice)
@@ -408,7 +408,7 @@ class PostServiceTest {
         val content = "<img src=\"http://minio/bucket/test.jpg\" />"
         val req = PostCreateReq("제목", content, emptyList(), null)
 
-        val mockMember = Member.builder().build()
+        val mockMember = Member()
         ReflectionTestUtils.setField(mockMember, "id", memberId)
         whenever(memberRepository.getReferenceById(memberId)).thenReturn(mockMember)
         whenever(postRepository.save(any<Post>())).thenAnswer { invocation ->
@@ -438,7 +438,7 @@ class PostServiceTest {
         val thumbnail = "http://minio/bucket/thumb.jpg"
         val req = PostCreateReq("제목", "본문 내용", emptyList(), thumbnail)
 
-        val mockMember = Member.builder().build()
+        val mockMember = Member()
         ReflectionTestUtils.setField(mockMember, "id", memberId)
         whenever(memberRepository.getReferenceById(memberId)).thenReturn(mockMember)
         whenever(postRepository.save(any<Post>())).thenAnswer { invocation ->
@@ -465,7 +465,7 @@ class PostServiceTest {
         val memberId = 1L
         val req = PostCreateReq("제목", "이미지 없는 순수 텍스트", emptyList(), null)
 
-        val mockMember = Member.builder().build()
+        val mockMember = Member()
         ReflectionTestUtils.setField(mockMember, "id", memberId)
         whenever(memberRepository.getReferenceById(memberId)).thenReturn(mockMember)
         whenever(postRepository.save(any<Post>())).thenAnswer { invocation ->
@@ -489,9 +489,9 @@ class PostServiceTest {
         val postId = 1L
         val newContent = "<img src=\"http://minio/bucket/new.jpg\" />"
 
-        val member = Member.builder().build()
+        val member = Member()
         ReflectionTestUtils.setField(member, "id", memberId)
-        val existingPost = Post.builder().title("기존").content("기존").member(member).build()
+        val existingPost = Post(title = "기존", content = "기존", member = member)
 
         whenever(postRepository.findById(postId)).thenReturn(Optional.of(existingPost))
 

@@ -29,12 +29,12 @@ class MemberControllerTest : WebMvcTestSupport() {
         //given
         val userId = 3L
 
-        val res = MemberInfoRes.builder()
-            .id(userId)
-            .email("example@email.com")
-            .nickname("nickname")
-            .createDate(LocalDateTime.of(2026, 1, 1, 0, 0))
-            .build()
+        val res = MemberInfoRes(
+            id = userId,
+            email = "example@email.com",
+            nickname = "nickname",
+            createDate = LocalDateTime.of(2026, 1, 1, 0, 0)
+        )
         val expected = CommonResponse.success(res)
         whenever(memberService.findMemberWithId(userId)).thenReturn(res)
 
@@ -53,12 +53,12 @@ class MemberControllerTest : WebMvcTestSupport() {
         //given
         val nickname = "nickname"
 
-        val res = MemberInfoRes.builder()
-            .id(1L)
-            .email("example@email.com")
-            .nickname(nickname)
-            .createDate(LocalDateTime.of(2026, 1, 1, 0, 0))
-            .build()
+        val res = MemberInfoRes(
+            id = 1L,
+            email = "example@email.com",
+            nickname = nickname,
+            createDate = LocalDateTime.of(2026, 1, 1, 0, 0)
+        )
         val expected = CommonResponse.success(res)
         whenever(memberService.findMemberWithNickname(nickname)).thenReturn(res)
 

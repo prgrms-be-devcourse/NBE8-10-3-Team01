@@ -19,13 +19,13 @@ class WithSecurityMockUserContextFactory : WithSecurityContextFactory<WithCustom
 
         val authorities = AuthorityUtils.NO_AUTHORITIES
 
-        val user = SecurityUser.securityUserBuilder()
-            .id(id)
-            .email(email)
-            .password("test-password")
-            .nickname(nickname)
-            .authorities(authorities)
-            .build()
+        val user = SecurityUser(
+            id = id,
+            email = email,
+            password = "test-password",
+            nickname = nickname,
+            authorities = authorities
+        )
 
         val auth = UsernamePasswordAuthenticationToken(user, "test-password", user.authorities)
 

@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotBlank
  * @author jack8
  * @since 2026-01-26
  */
-data class PostTemplateInfoDto constructor(
+data class PostTemplateInfoDto(
     @get:JvmName("id")
     @JsonProperty("id")
     val id: Long? = null,
@@ -18,24 +18,19 @@ data class PostTemplateInfoDto constructor(
     @get:JvmName("name")
     @JsonProperty("name")
     @field:NotBlank
-    val name: String,
+    val name: String = "",
 
     @get:JvmName("title")
     @JsonProperty("title")
     @field:NotBlank
-    val title: String,
+    val title: String = "",
 
     @get:JvmName("content")
     @JsonProperty("content")
     @field:NotBlank
-    val content: String
+    val content: String = ""
 ) {
     companion object {
-        @JvmStatic
-        fun builder(): PostTemplateInfoDtoBuilder {
-            return PostTemplateInfoDtoBuilder()
-        }
-
         @JvmStatic
         fun to(template: PostTemplate): PostTemplateInfoDto {
             return PostTemplateInfoDto(
@@ -44,37 +39,6 @@ data class PostTemplateInfoDto constructor(
                 title = template.title,
                 content = template.content
             )
-        }
-    }
-
-    class PostTemplateInfoDtoBuilder {
-        private var id: Long? = null
-        private var name: String? = null
-        private var title: String? = null
-        private var content: String? = null
-
-        fun id(id: Long?): PostTemplateInfoDtoBuilder {
-            this.id = id
-            return this
-        }
-
-        fun name(name: String?): PostTemplateInfoDtoBuilder {
-            this.name = name
-            return this
-        }
-
-        fun title(title: String?): PostTemplateInfoDtoBuilder {
-            this.title = title
-            return this
-        }
-
-        fun content(content: String?): PostTemplateInfoDtoBuilder {
-            this.content = content
-            return this
-        }
-
-        fun build(): PostTemplateInfoDto {
-            return PostTemplateInfoDto(id, name ?: "", title ?: "", content ?: "")
         }
     }
 }

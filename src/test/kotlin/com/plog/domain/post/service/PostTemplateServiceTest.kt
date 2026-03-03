@@ -13,7 +13,11 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.*
+import org.mockito.ArgumentMatchers.any
+import org.mockito.BDDMockito.given
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.mockito.Mockito.verify
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.test.context.ActiveProfiles
@@ -39,7 +43,7 @@ class PostTemplateServiceTest {
         // [Given]
         val memberId = 1L
         val dto = PostTemplateInfoDto(null, "이름", "제목", "내용")
-        val member = Member.builder().build()
+        val member = Member()
         ReflectionTestUtils.setField(member, "id", memberId)
 
         whenever(memberRepository.getReferenceById(memberId)).thenReturn(member)
@@ -62,7 +66,7 @@ class PostTemplateServiceTest {
     fun getTemplateListByMemberSuccess() {
         // [Given]
         val memberId = 1L
-        val member = Member.builder().build()
+        val member = Member()
         ReflectionTestUtils.setField(member, "id", memberId)
 
         val pt = PostTemplate("이름", "제목", "내용", member)
@@ -85,7 +89,7 @@ class PostTemplateServiceTest {
         // [Given]
         val memberId = 1L
         val templateId = 100L
-        val member = Member.builder().build()
+        val member = Member()
         ReflectionTestUtils.setField(member, "id", memberId)
 
         val pt = PostTemplate("이름", "제목", "내용", member)
@@ -109,7 +113,7 @@ class PostTemplateServiceTest {
         val ownerId = 1L
         val otherMemberId = 2L
         val templateId = 100L
-        val owner = Member.builder().build()
+        val owner = Member()
         ReflectionTestUtils.setField(owner, "id", ownerId)
 
         val pt = PostTemplate("이름", "제목", "내용", owner)
@@ -127,7 +131,7 @@ class PostTemplateServiceTest {
         // [Given]
         val memberId = 1L
         val templateId = 100L
-        val member = Member.builder().build()
+        val member = Member()
         ReflectionTestUtils.setField(member, "id", memberId)
 
         val pt = PostTemplate("기존이름", "기존제목", "기존내용", member)
@@ -150,7 +154,7 @@ class PostTemplateServiceTest {
         // [Given]
         val memberId = 1L
         val templateId = 100L
-        val member = Member.builder().build()
+        val member = Member()
         ReflectionTestUtils.setField(member, "id", memberId)
 
         val pt = PostTemplate("이름", "제목", "내용", member)

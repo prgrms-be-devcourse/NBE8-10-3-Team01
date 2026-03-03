@@ -1,5 +1,6 @@
 package com.plog.domain.image.service
 
+import com.plog.domain.image.dto.ProfileImageUploadRes
 import com.plog.domain.image.entity.Image
 import com.plog.domain.image.repository.ImageRepository
 import com.plog.domain.member.entity.Member
@@ -7,110 +8,115 @@ import com.plog.domain.member.repository.MemberRepository
 import com.plog.global.exception.errorCode.ImageErrorCode
 import com.plog.global.exception.exceptions.ImageException
 import com.plog.global.minio.storage.ObjectStorage
-import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.*
+import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.*
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.util.ReflectionTestUtils
-import java.util.Optional
+import org.springframework.web.multipart.MultipartFile
+import java.util.*
 
+@ExtendWith(MockitoExtension::class)
 @ActiveProfiles("test")
 class ProfileImageServiceTest {
 
-    private lateinit var memberRepository: MemberRepository
-    private lateinit var imageRepository: ImageRepository
-    private lateinit var objectStorage: ObjectStorage
-    private lateinit var profileImageService: ProfileImageServiceImpl
+    @InjectMocks
+    lateinit var profileImageService: ProfileImageServiceImpl
 
-    @BeforeEach
-    fun setUp() {
-        memberRepository = mockk()
-        imageRepository = mockk()
-        objectStorage = mockk()
-        profileImageService = ProfileImageServiceImpl(memberRepository, imageRepository, objectStorage)
-    }
+    @Mock
+    lateinit var memberRepository: MemberRepository
+
+    @Mock
+    lateinit var imageRepository: ImageRepository
+
+    @Mock
+    lateinit var objectStorage: ObjectStorage
 
     @Test
     @DisplayName("프로필 이미지 업로드 시 기존 이미지가 없으면 바로 저장된다")
     fun uploadProfileImageSuccess_New() {
-        // given
+        // [Given]
         val memberId = 1L
         val member = createMember(memberId)
         val file = MockMultipartFile("file", "test.jpg", "image/jpeg", "data".toByteArray())
+        val mockUrl = "http://minio/profile.jpg"
 
-        every { memberRepository.findById(memberId) } returns Optional.of(member)
-        every { objectStorage.upload(any(), any()) } returns "http://minio/profile.jpg"
-        every { imageRepository.save(any()) } returns mockk()
+        whenever(memberRepository.findById(memberId)).thenReturn(Optional.of(member))
+        whenever(objectStorage.upload(any(), any())).thenReturn(mockUrl)
 
-        // when
+        // [When]
         val result = profileImageService.uploadProfileImage(memberId, file)
 
-        // then
+        // [Then]
         assertThat(result.memberId).isEqualTo(memberId)
-        assertThat(result.profileImageUrl).isEqualTo("http://minio/profile.jpg")
-        verify(exactly = 1) { imageRepository.save(any()) }
+        assertThat(result.profileImageUrl).isEqualTo(mockUrl)
+        verify(imageRepository, times(1)).save(any<Image>())
     }
 
     @Test
     @DisplayName("프로필 이미지 교체 시 기존 파일과 DB 데이터를 삭제하고 새 이미지를 저장한다")
     fun uploadProfileImageSuccess_Overwrite() {
-        // given
+        // [Given]
         val memberId = 1L
         val member = createMember(memberId)
-        val oldImage = Image(
-            originalName = "old.jpg",
-            storedName = "old/path.jpg",
-            accessUrl = "http://old-url",
-            uploader = member
-        )
+
+        // 기존 이미지 설정
+        val oldImage = Image(originalName = "old.jpg", storedName = "old/path.jpg", accessUrl = "url", uploader = member)
         member.updateProfileImage(oldImage)
+
         val newFile = MockMultipartFile("file", "new.jpg", "image/jpeg", "newdata".toByteArray())
 
-        every { memberRepository.findById(memberId) } returns Optional.of(member)
-        every { objectStorage.delete("old/path.jpg") } just Runs
-        every { imageRepository.delete(oldImage) } just Runs
-        every { objectStorage.upload(any(), any()) } returns "http://new-url"
-        every { imageRepository.save(any()) } returns mockk()
+        whenever(memberRepository.findById(memberId)).thenReturn(Optional.of(member))
+        whenever(objectStorage.upload(any(), any())).thenReturn("http://new-url")
 
-        // when
+        // [When]
         profileImageService.uploadProfileImage(memberId, newFile)
 
-        // then
-        verify { objectStorage.delete("old/path.jpg") }
-        verify { imageRepository.delete(oldImage) }
-        verify { objectStorage.upload(any(), any()) }
+        // [Then]
+        // 1. 기존 파일 삭제 호출 검증
+        verify(objectStorage).delete(eq("old/path.jpg"))
+        verify(imageRepository).delete(eq(oldImage))
+
+        // 2. 새 파일 업로드 호출 검증
+        verify(objectStorage).upload(any(), any())
     }
 
     @Test
     @DisplayName("프로필 이미지 저장 경로에 회원 ID가 포함되어야 한다")
     fun uploadProfileImage_CheckPath() {
-        // given
+        // [Given]
         val memberId = 99L
         val member = createMember(memberId)
         val file = MockMultipartFile("file", "avatar.png", "image/png", "data".toByteArray())
-        val pathSlot = slot<String>()
 
-        every { memberRepository.findById(memberId) } returns Optional.of(member)
-        every { objectStorage.upload(any(), capture(pathSlot)) } returns "url"
-        every { imageRepository.save(any()) } returns mockk()
+        whenever(memberRepository.findById(memberId)).thenReturn(Optional.of(member))
+        whenever(objectStorage.upload(any(), any())).thenReturn("url")
 
-        // when
+        // [When]
         profileImageService.uploadProfileImage(memberId, file)
 
-        // then
-        assertThat(pathSlot.captured).contains("profile/image/$memberId/")
-        assertThat(pathSlot.captured).endsWith(".png")
+        // [Then]
+        val pathCaptor = argumentCaptor<String>()
+        verify(objectStorage).upload(any(), pathCaptor.capture())
+
+        val capturedPath = pathCaptor.firstValue
+        assertThat(capturedPath).contains("profile/image/$memberId/")
+        assertThat(capturedPath).endsWith(".png")
     }
 
     @Test
     @DisplayName("지원하지 않는 확장자는 예외가 발생한다")
     fun uploadProfileImage_InvalidExtension() {
+        // [Given]
         val file = MockMultipartFile("file", "malware.exe", "application/x-msdownload", "data".toByteArray())
 
+        // [When & Then]
         assertThatThrownBy { profileImageService.uploadProfileImage(1L, file) }
             .isInstanceOf(ImageException::class.java)
             .hasFieldOrPropertyWithValue("errorCode", ImageErrorCode.INVALID_FILE_EXTENSION)
@@ -119,17 +125,28 @@ class ProfileImageServiceTest {
     @Test
     @DisplayName("프로필 이미지 삭제 시 이미지가 없으면 아무 동작도 하지 않는다 (멱등성)")
     fun deleteProfileImage_Idempotent() {
-        // given
+        // [Given]
         val memberId = 1L
-        val member = createMember(memberId)
-        every { memberRepository.findById(memberId) } returns Optional.of(member)
+        val member = createMember(memberId) // 이미지 없음 (null)
+        whenever(memberRepository.findById(memberId)).thenReturn(Optional.of(member))
 
-        // when
+        // [When]
         profileImageService.deleteProfileImage(memberId)
 
-        // then
-        verify(exactly = 0) { objectStorage.delete(any()) }
-        verify(exactly = 0) { imageRepository.delete(any()) }
+        // [Then]
+        verify(objectStorage, times(0)).delete(any())
+        verify(imageRepository, times(0)).delete(any<Image>())
+    }
+
+    // --- Helper ---
+    private fun createMember(id: Long): Member {
+        val member = Member(
+            email = "test@test.com",
+            nickname = "test",
+            password = "pw"
+        )
+        ReflectionTestUtils.setField(member, "id", id)
+        return member
     }
 
     @Test
@@ -138,22 +155,21 @@ class ProfileImageServiceTest {
         // given
         val memberId = 1L
         val file = MockMultipartFile("file", "test.jpg", "image/jpeg", "test data".toByteArray())
-        val member = createMember(memberId)
 
-        every { memberRepository.findById(memberId) } returns Optional.of(member)
-        every { objectStorage.upload(any(), any()) } returns "https://minio.url/test.jpg"
-        every { imageRepository.save(any()) } throws RuntimeException("DB Error")
+        val member = Member()
+        ReflectionTestUtils.setField(member, "id", memberId)
 
-        // when
-        runCatching { profileImageService.uploadProfileImage(memberId, file) }
+        whenever(memberRepository.findById(memberId)).thenReturn(Optional.of(member))
+        whenever(objectStorage.upload(any(), any())).thenReturn("https://minio.url/test.jpg")
 
-        // then
-        verify(exactly = 1) { objectStorage.upload(any(), any()) }
-    }
+        whenever(imageRepository.save(any<Image>())).thenThrow(RuntimeException("DB Error"))
 
-    private fun createMember(id: Long): Member {
-        val member = Member(email = "test@test.com", nickname = "test", password = "pw")
-        ReflectionTestUtils.setField(member, "id", id)
-        return member
+        try {
+            profileImageService.uploadProfileImage(memberId, file)
+        } catch (e: RuntimeException) {
+            // expected
+        }
+
+        verify(objectStorage, times(1)).upload(any(), any())
     }
 }

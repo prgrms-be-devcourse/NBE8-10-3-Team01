@@ -98,12 +98,12 @@ class PostControllerTest : WebMvcTestSupport() {
     @Throws(Exception::class)
     fun getPostSuccess() {
         // [Given]
-        val author = Member("email", "password", "nickname", null)
-        val mockPost = Post.builder()
-            .title("조회 제목")
-            .content("조회 본문")
-            .member(author)
-            .build()
+        val author = Member(email = "email", password = "password", nickname = "nickname")
+        val mockPost = Post(
+            title = "조회 제목",
+            content = "조회 본문",
+            member = author
+        )
 
         whenever(postService.getPostDetail(any(), any(), any())).thenReturn(PostInfoRes.from(mockPost))
 
@@ -125,10 +125,10 @@ class PostControllerTest : WebMvcTestSupport() {
     @Throws(Exception::class)
     fun getPostsSuccess() {
         // [Given]
-        val author = Member("email", "password", "nickname", null)
+        val author = Member(email = "email", password = "password", nickname = "nickname")
         val pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val post1 = Post.builder().title("제목1").content("내용1").member(author).build()
-        val post2 = Post.builder().title("제목2").content("내용2").member(author).build()
+        val post1 = Post(title = "제목1", content = "내용1", member = author)
+        val post2 = Post(title = "제목2", content = "내용2", member = author)
 
         val sliceResponse = SliceImpl(
             listOf(PostListRes.from(post2), PostListRes.from(post1)),
