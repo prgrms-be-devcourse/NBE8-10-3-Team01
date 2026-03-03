@@ -1,4 +1,4 @@
-package com.plog.global.security.oauth2
+package com.plog.global.security.oauth2.util
 
 import com.plog.domain.member.entity.Member
 import com.plog.domain.member.entity.SocialAuth
@@ -6,81 +6,65 @@ import com.plog.domain.member.entity.SocialAuthProvider
 import com.plog.domain.member.repository.MemberRepository
 import com.plog.domain.member.repository.SocialAuthRepository
 import com.plog.domain.member.util.RandomNicknameGenerator
-import com.plog.global.security.SecurityUser
-import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
-import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException
-import org.springframework.security.oauth2.core.user.OAuth2User
-import org.springframework.stereotype.Service
+import com.plog.global.security.oauth2.OAuth2Attributes
+import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.util.*
 
-/** TODO: 주석 채우기
- * 코드에 대한 전체적인 역할을 적습니다.
+/**
+ * 소셜 로그인(OAuth2, OIDC) 시 사용자 식별 및 회원 가입/연동 처리를 담당하는 헬퍼 컴포넌트입니다.
  * <p>
- * 코드에 대한 작동 원리 등을 적습니다.
+ * 다양한 소셜 제공자(Google, Kakao 등)로부터 넘어온 정보를 바탕으로 시스템 내의
+ * {@link Member} 엔티티와의 연결 고리를 생성하거나 신규 계정을 발급합니다.
  *
- * <p><b>상속 정보:</b><br>
- * 상속 정보를 적습니다.
+ * <p><b>작동 원리:</b><br>
+ * 1. <b>기존 연동 확인:</b> 제공자(Provider)와 고유 식별값(ProviderId)으로 이미 연결된 소셜 계정이 있는지 확인합니다.<br>
+ * 2. <b>계정 자동 연동:</b> 소셜 연결 정보는 없으나 시스템에 동일한 이메일의 회원이 존재할 경우, 해당 계정에 소셜 정보를 자동으로 연결합니다.<br>
+ * 3. <b>신규 가입:</b> 위 두 경우에 해당하지 않을 시, 랜덤 닉네임을 생성하여 신규 회원으로 등록하고 소셜 정보를 연결합니다.<br>
+ * 4. <b>닉네임 생성:</b> {@link RandomNicknameGenerator}를 이용하며, 중복 발생 시 UUID를 활용한 폴백(Fallback) 로직을 실행합니다.
  *
  * <p><b>주요 생성자:</b><br>
- * {@code ExampleClass(String example)}  <br>
- * 주요 생성자와 그 매개변수에 대한 설명을 적습니다. <br>
+ * {@code SocialAuthHelper(MemberRepository, SocialAuthRepository, RandomNicknameGenerator)}<br>
+ * 회원 관리 및 소셜 인증 관리를 위한 Repository와 닉네임 생성기를 주입받습니다.
  *
  * <p><b>빈 관리:</b><br>
- * 필요 시 빈 관리에 대한 내용을 적습니다.
+ * {@code @Component}로 선언되어 스프링 컨테이너에 의해 싱글톤 빈으로 관리됩니다.
  *
  * <p><b>외부 모듈:</b><br>
- * 필요 시 외부 모듈에 대한 내용을 적습니다.
+ * {@code java.util.UUID}를 사용하여 임시 비밀번호 및 중복 닉네임 방지 처리를 수행합니다.
  *
  * @author minhee
- * @since 2026-02-27
- * @see
+ * @since 2026-03-02
+ * @see Member
+ * @see SocialAuth
+ * @see OAuth2Attributes
  */
 
-@Service
-class CustomOAuth2UserService(
+@Component
+@Transactional(readOnly = true)
+class SocialAuthHelper(
     private val memberRepository: MemberRepository,
     private val socialAuthRepository: SocialAuthRepository,
     private val nicknameGenerator: RandomNicknameGenerator
-) : DefaultOAuth2UserService() {
-
+) {
+    /**
+     * OAuth2 로그인용 - OAuth2Attributes에서 provider, providerId 추출 후 위임
+     */
     @Transactional
-    override fun loadUser(userRequest: OAuth2UserRequest): OAuth2User {
-
-        val oAuth2User = super.loadUser(userRequest)
-
-        val registrationId = userRequest.clientRegistration.registrationId
-        val provider = SocialAuthProvider.valueOf(registrationId.uppercase())
-
-        val attributes = OAuth2Attributes.of(
-            provider = provider,
-            userNameAttributeName = userRequest.clientRegistration.providerDetails.userInfoEndpoint.userNameAttributeName,
-            attributes = oAuth2User.attributes
-        )
-
-        val email = attributes.getEmail()
-            ?: throw OAuth2AuthenticationException("소셜 계정에서 이메일 정보를 불러올 수 없습니다.")
-
-        val member = findOrCreateMember(attributes, email)
-
-        return SecurityUser(
-            id = member.id ?: throw IllegalStateException("회원 가입에 실패했습니다."),
-            email = member.email,
-            password = "",
-            nickname = member.nickname,
-            authorities = listOf(SimpleGrantedAuthority("ROLE_USER")),
-            attributes = attributes.attributes
+    fun findOrCreateMember(attributes: OAuth2Attributes, email: String): Member {
+        return findOrCreateMember(
+            email = email,
+            provider = attributes.getProvider(),
+            providerId = attributes.getProviderId()
         )
     }
 
     /**
+     * OAuth2, OIDC 양쪽에서 공통으로 사용
      * 유저의 소셜 연동 상태에 따라 적절한 Member를 반환하거나 생성합니다.
      */
-    private fun findOrCreateMember(attributes: OAuth2Attributes, email: String): Member {
-        val provider = attributes.getProvider()
-        val providerId = attributes.getProviderId()
+    @Transactional
+    fun findOrCreateMember(email: String, provider: SocialAuthProvider, providerId: String): Member {
 
         // 이미 해당 소셜로 연동된 계정이 있는 경우 (로그인)
         socialAuthRepository.findByProviderAndProviderId(provider, providerId)?.let {
@@ -102,7 +86,8 @@ class CustomOAuth2UserService(
     /**
      * 신규 회원 가입을 처리합니다.
      */
-    private fun createNewMember(email: String): Member {
+    @Transactional
+    fun createNewMember(email: String): Member {
         var nickname = ""
         var isSuccess = false
 
@@ -130,7 +115,8 @@ class CustomOAuth2UserService(
     /**
      * 특정 회원에게 소셜 인증 정보를 연결합니다.
      */
-    private fun createSocialLink(member: Member, provider: SocialAuthProvider, providerId: String) {
+    @Transactional
+    fun createSocialLink(member: Member, provider: SocialAuthProvider, providerId: String) {
         val socialAuth = SocialAuth(
             member = member,
             provider = provider,

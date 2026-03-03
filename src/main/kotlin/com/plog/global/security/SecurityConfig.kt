@@ -2,10 +2,11 @@
 package com.plog.global.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.plog.global.security.oauth2.CustomOAuth2UserService
-import com.plog.global.security.oauth2.handler.OAuth2SuccessHandler
 import com.plog.global.exception.errorCode.AuthErrorCode
 import com.plog.global.response.CommonResponse
+import com.plog.global.security.oauth2.handler.OAuth2SuccessHandler
+import com.plog.global.security.oauth2.service.CustomOAuth2UserService
+import com.plog.global.security.oauth2.service.CustomOidcUserService
 import jakarta.servlet.ServletException
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -62,6 +63,7 @@ class SecurityConfig(
     private val tokenResolver: TokenResolver,
     private val tokenStore: TokenStore,
     private val customOAuth2UserService: CustomOAuth2UserService,
+    private val customOidcUserService: CustomOidcUserService,
     private val oAuth2SuccessHandler: OAuth2SuccessHandler
 ) {
 
@@ -91,6 +93,7 @@ class SecurityConfig(
                 oauth2
                     .userInfoEndpoint { userInfo ->
                         userInfo.userService(customOAuth2UserService)
+                        userInfo.oidcUserService(customOidcUserService)
                     }
                     .successHandler(oAuth2SuccessHandler)
             }

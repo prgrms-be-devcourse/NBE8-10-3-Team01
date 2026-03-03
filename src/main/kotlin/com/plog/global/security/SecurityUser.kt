@@ -3,13 +3,18 @@ package com.plog.global.security
 
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.User
+import org.springframework.security.oauth2.core.oidc.OidcIdToken
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo
+import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.security.oauth2.core.user.OAuth2User
 
 /**
  * Spring Security의 인증 인터페이스를 구현한 사용자 정의 인증 객체입니다.
  *
- * 시스템 내에서 인증된 사용자의 정보를 세션이나 SecurityContext에 보관하며,
- * 사용자의 식별자(id), 이메일, 닉네임 등의 기본 정보를 제공합니다.
+ * OAuth2(Kakao, Naver)와 OIDC(Google) 로그인을 모두 처리할 수 있도록
+ * [OAuth2User]와 [OidcUser] 인터페이스를 동시에 구현합니다.
+ * OIDC 전용 필드([idToken], [oidcUserInfo])는 nullable로 선언되어,
+ * OAuth2 로그인 시에는 null로 유지됩니다.
  *
  * **상속 정보:**
  * [User] 클래스를 상속받아 구현되었습니다.
@@ -33,15 +38,17 @@ class SecurityUser(
     password: String = "",
     val nickname: String,
     authorities: Collection<GrantedAuthority>,
-    private val attributes: Map<String, Any> = emptyMap()
-) : User(email, password, authorities), OAuth2User {
-
-    /**
-     * 부모 클래스(User)의 username 필드(이메일)를 반환하는 getter
-     */
-    val email: String
-        get() = super.getUsername()
+    private val attributes: Map<String, Any> = emptyMap(),
+    private val idToken: OidcIdToken? = null,
+    private val oidcUserInfo: OidcUserInfo? = null
+) : User(email, password, authorities), OAuth2User, OidcUser {
 
     override fun getAttributes(): Map<String, Any> = attributes
     override fun getName(): String = email
+
+    // OidcUser
+    override fun getEmail(): String = super.getUsername()
+    override fun getClaims(): Map<String, Any> = idToken?.claims ?: attributes
+    override fun getUserInfo(): OidcUserInfo? = oidcUserInfo
+    override fun getIdToken(): OidcIdToken? = idToken
 }

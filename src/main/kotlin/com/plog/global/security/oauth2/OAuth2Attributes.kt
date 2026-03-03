@@ -1,7 +1,6 @@
 package com.plog.global.security.oauth2
 
 import com.plog.domain.member.entity.SocialAuthProvider
-import com.plog.global.security.oauth2.userinfo.GoogleUserInfo
 import com.plog.global.security.oauth2.userinfo.KakaoUserInfo
 import com.plog.global.security.oauth2.userinfo.NaverUserInfo
 import com.plog.global.security.oauth2.userinfo.OAuth2UserInfo
@@ -52,8 +51,10 @@ class OAuth2Attributes(
         ): OAuth2Attributes {
             return when(provider) {
                 SocialAuthProvider.KAKAO -> ofKakao(userNameAttributeName, attributes)
-                SocialAuthProvider.GOOGLE -> ofGoogle(userNameAttributeName, attributes)
                 SocialAuthProvider.NAVER -> ofNaver(userNameAttributeName, attributes)
+                SocialAuthProvider.GOOGLE -> throw IllegalStateException(
+                    "Google은 OIDC 흐름으로 처리됩니다. 이 경로로 진입하면 안 됩니다."
+                )
             }
         }
 
@@ -62,14 +63,6 @@ class OAuth2Attributes(
                 attributes = attributes,
                 nameAttributeKey = userNameAttributeName,
                 oAuth2UserInfo = KakaoUserInfo(attributes)
-            )
-        }
-
-        private fun ofGoogle(userNameAttributeName: String, attributes: Map<String, Any>): OAuth2Attributes {
-            return OAuth2Attributes(
-                attributes = attributes,
-                nameAttributeKey = userNameAttributeName,
-                oAuth2UserInfo = GoogleUserInfo(attributes)
             )
         }
 

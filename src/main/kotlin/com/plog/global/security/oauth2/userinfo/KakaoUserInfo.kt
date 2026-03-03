@@ -6,26 +6,24 @@ import com.plog.global.exception.exceptions.AuthException
 
 
 /**
- * 코드에 대한 전체적인 역할을 적습니다.
- * <p>
- * 코드에 대한 작동 원리 등을 적습니다.
+ * 카카오(Kakao) 소셜 공급자로부터 받은 사용자 정보를 파싱하여 서비스 표준 규격으로 변환하는 클래스입니다.
+ *
+ * <p>카카오 프로필 API 응답의 중첩된 JSON 구조에서 필요한 사용자 속성을 추출합니다.
  *
  * <p><b>상속 정보:</b><br>
- * 상속 정보를 적습니다.
+ * [OAuth2UserInfo] 인터페이스를 구현합니다.
  *
  * <p><b>주요 생성자:</b><br>
- * {@code ExampleClass(String example)}  <br>
- * 주요 생성자와 그 매개변수에 대한 설명을 적습니다. <br>
- *
- * <p><b>빈 관리:</b><br>
- * 필요 시 빈 관리에 대한 내용을 적습니다.
+ * {@code KakaoUserInfo(Map<String, Any> attributes)}<br>
+ * 카카오 리소스 서버로부터 수신한 원본 사용자 속성 맵을 주입받아 초기화합니다.
  *
  * <p><b>외부 모듈:</b><br>
- * 필요 시 외부 모듈에 대한 내용을 적습니다.
+ * 카카오 프로필 API(OAuth 2.0) 규격을 기반으로 동작합니다.
  *
  * @author minhee
  * @since 2026-02-25
- * @see
+ * @see OAuth2UserInfo
+ * @see com.plog.global.security.oauth2.OAuth2Attributes
  */
 
 class KakaoUserInfo(
@@ -46,4 +44,5 @@ class KakaoUserInfo(
 
     override fun getEmail(): String? = kakaoAccount?.get("email") as? String
     override fun getNickname(): String? = kakaoProfile?.get("nickname") as? String
+    override fun isEmailVerified(): Boolean = kakaoAccount?.get("is_email_verified") as? Boolean ?: false
 }
