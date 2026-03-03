@@ -4,13 +4,12 @@ import com.plog.domain.image.entity.Image
 import com.plog.domain.image.repository.ImageRepository
 import com.plog.domain.image.verifier.ImageUsageVerifier
 import com.plog.global.minio.storage.ObjectStorage
+import com.plog.global.util.TimeUtil
 import io.mockk.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import com.plog.global.util.TimeUtil
-import java.time.LocalDateTime
 import org.springframework.test.util.ReflectionTestUtils
-
+import java.time.LocalDateTime
 
 class ImageCleanupServiceTest {
 
@@ -155,15 +154,15 @@ class ImageCleanupServiceTest {
 
     private fun makeImage(id: Long, domain: String?, accessUrl: String): Image {
         val imageDomain = domain?.let { runCatching { Image.ImageDomain.valueOf(it) }.getOrNull() }
-        val image = Image.builder()
-            .originalName("test.jpg")
-            .storedName("post/image/$id/uuid.jpg")
-            .accessUrl(accessUrl)
-            .uploader(null)
-            .domain(imageDomain)
-            .status(Image.ImageStatus.USED)
-            .domainId(id)
-            .build()
+        val image = Image(
+            originalName = "test.jpg",
+            storedName = "post/image/$id/uuid.jpg",
+            accessUrl = accessUrl,
+            uploader = null,
+            domain = imageDomain,
+            status = Image.ImageStatus.USED,
+            domainId = id
+        )
         ReflectionTestUtils.setField(image, "id", id)
         return image
     }

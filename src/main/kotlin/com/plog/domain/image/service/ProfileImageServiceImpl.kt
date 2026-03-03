@@ -83,15 +83,15 @@ class ProfileImageServiceImpl(
         }
 
         // 5. DB 저장
-        val newImage = Image.builder()
-            .originalName(originalFilename)
-            .storedName(storedName)
-            .accessUrl(accessUrl)
-            .uploader(member)
-            .domain(ImageDomain.PROFILE)
-            .status(ImageStatus.USED)
-            .domainId(memberId)
-            .build()
+        val newImage = Image(
+            originalName = originalFilename,
+            storedName = storedName,
+            accessUrl = accessUrl,
+            uploader = member,
+            domain = ImageDomain.PROFILE,
+            status = ImageStatus.USED,
+            domainId = memberId
+        )
 
         imageRepository.save(newImage)
         member.updateProfileImage(newImage)

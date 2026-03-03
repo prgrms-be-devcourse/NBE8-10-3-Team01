@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import java.time.LocalDateTime
-import java.util.Optional
 
 /**
  * 이미지 엔티티의 영속성을 관리하는 저장소 인터페이스입니다.
@@ -31,7 +30,7 @@ import java.util.Optional
  */
 @Repository
 interface ImageRepository : JpaRepository<Image, Long> {
-    fun findByAccessUrl(accessUrl: String): Optional<Image>
+    fun findByAccessUrl(accessUrl: String): Image?
 
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Image i WHERE i.id IN :ids")

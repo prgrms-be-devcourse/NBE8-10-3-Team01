@@ -84,13 +84,13 @@ class PostImageVerifierTest {
         assertFalse(verifier.isInUse(image))
     }
 
-    private fun makeImage(domainId: Long?, accessUrl: String) = Image.builder()
-        .originalName("test.jpg")
-        .storedName("post/image/uuid.jpg")
-        .accessUrl(accessUrl)
-        .uploader(null)
-        .domain(Image.ImageDomain.POST)
-        .status(Image.ImageStatus.USED)
-        .domainId(domainId)
-        .build()
+    private fun makeImage(domainId: Long?, accessUrl: String) = Image(
+        originalName = "test.jpg",
+        storedName = "post/image/uuid.jpg",
+        accessUrl = accessUrl,
+        uploader = null,
+        domain = Image.ImageDomain.POST,
+        status = Image.ImageStatus.USED,
+        domainId = domainId
+    )
 }
