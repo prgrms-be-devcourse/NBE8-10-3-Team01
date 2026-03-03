@@ -1,13 +1,14 @@
 package com.plog.global.security.oauth2.service
 
 import com.plog.domain.member.entity.SocialAuthProvider
+import com.plog.global.exception.errorCode.AuthErrorCode
+import com.plog.global.exception.exceptions.AuthException
 import com.plog.global.security.SecurityUser
 import com.plog.global.security.oauth2.OAuth2Attributes
 import com.plog.global.security.oauth2.util.SocialAuthHelper
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
 
@@ -63,7 +64,19 @@ class CustomOAuth2UserService(
         )
 
         val email = attributes.getEmail()
-            ?: throw OAuth2AuthenticationException("소셜 계정에서 이메일 정보를 불러올 수 없습니다.")
+            ?: throw AuthException(
+                AuthErrorCode.OAUTH_DATA_ACCESS_FAIL,
+                "[CustomOAuth2UserService#loadUser] Email not found from provider: ${provider}",
+                "소셜 계정에서 이메일 정보를 불러올 수 없습니다."
+            )
+
+        if (!attributes.oAuth2UserInfo.isEmailVerified()) {
+            throw AuthException(
+                AuthErrorCode.SOCIAL_LOGIN_FAIL,
+                "[CustomOAuth2UserService#loadUser] Unverified email attempt: $email",
+                "인증되지 않은 이메일 계정으로는 소셜 로그인을 이용할 수 없습니다."
+            )
+        }
 
         val member = socialAuthHelper.findOrCreateMember(attributes, email)
 

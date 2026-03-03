@@ -33,4 +33,9 @@ interface OAuth2UserInfo {
      * 소셜 계정에 등록된 닉네임 정보를 반환합니다.
      */
     fun getNickname(): String? // 당장 사용하지는 않지만 제공받는 정보로서 정의
+
+    /**
+     * 이메일 인증 여부를 반환합니다.
+     */
+    fun isEmailVerified(): Boolean
 }
