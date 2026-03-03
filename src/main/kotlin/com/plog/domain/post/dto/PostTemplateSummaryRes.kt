@@ -12,42 +12,18 @@ import com.plog.domain.post.entity.PostTemplate
 data class PostTemplateSummaryRes(
     @get:JvmName("name")
     @JsonProperty("name")
-    val name: String,
+    val name: String = "",
     @get:JvmName("id")
     @JsonProperty("id")
-    val id: Long?
+    val id: Long? = null
 ) {
     companion object {
-        @JvmStatic
-        fun builder(): PostTemplateSummaryResBuilder {
-            return PostTemplateSummaryResBuilder()
-        }
-
         @JvmStatic
         fun to(postTemplate: PostTemplate): PostTemplateSummaryRes {
             return PostTemplateSummaryRes(
                 name = postTemplate.name,
                 id = postTemplate.id
             )
-        }
-    }
-
-    class PostTemplateSummaryResBuilder {
-        private var name: String? = null
-        private var id: Long? = null
-
-        fun name(name: String?): PostTemplateSummaryResBuilder {
-            this.name = name
-            return this
-        }
-
-        fun id(id: Long?): PostTemplateSummaryResBuilder {
-            this.id = id
-            return this
-        }
-
-        fun build(): PostTemplateSummaryRes {
-            return PostTemplateSummaryRes(name ?: "", id)
         }
     }
 }

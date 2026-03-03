@@ -11,9 +11,9 @@ import java.time.LocalDateTime
  * @since 2026-01-18
  */
 data class MemberInfoRes(
-    val id: Long,
-    val email: String,
-    val nickname: String,
+    val id: Long = 0L,
+    val email: String = "",
+    val nickname: String = "",
     val profileImageUrl: String? = null,
     val createDate: LocalDateTime? = null
 ) {
@@ -28,30 +28,5 @@ data class MemberInfoRes(
                 profileImageUrl = member.profileImage?.accessUrl
             )
         }
-        @JvmStatic
-        fun builder() = MemberInfoResBuilder()
-    }
-
-    // TODO: 전체 마이그레이션 완료 후 삭제
-    class MemberInfoResBuilder {
-        private var id: Long = 0L
-        private var email: String = ""
-        private var nickname: String = ""
-        private var profileImageUrl: String? = null
-        private var createDate: LocalDateTime = LocalDateTime.now()
-
-        fun id(id: Long) = apply { this.id = id }
-        fun email(email: String) = apply { this.email = email }
-        fun nickname(nickname: String) = apply { this.nickname = nickname }
-        fun profileImageUrl(profileImageUrl: String?) = apply { this.profileImageUrl = profileImageUrl }
-        fun createDate(createDate: LocalDateTime) = apply { this.createDate = createDate }
-
-        fun build() = MemberInfoRes(
-            id = id,
-            email = email,
-            nickname = nickname,
-            profileImageUrl = profileImageUrl,
-            createDate = createDate
-        )
     }
 }

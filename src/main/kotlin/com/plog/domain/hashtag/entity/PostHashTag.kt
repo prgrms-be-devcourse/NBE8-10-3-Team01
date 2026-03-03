@@ -10,34 +10,12 @@ class PostHashTag (
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
-    var post: Post,
+    var post: Post? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tag_id")
-    var hashTag: HashTag,
+    var hashTag: HashTag? = null,
 
-    var displayName: String
+    var displayName: String = ""
 
-): BaseEntity() {
-
-    companion object {
-        fun builder() = Builder()
-
-
-}
-    class Builder {
-        private var post: Post? = null
-        private var hashTag: HashTag? = null
-        private var displayName: String? = null
-
-        fun post(post: Post) = apply { this.post = post }
-        fun hashTag(hashTag: HashTag) = apply { this.hashTag = hashTag }
-        fun displayName(displayName: String) = apply { this.displayName = displayName }
-
-        fun build() = PostHashTag(
-            post = post!!,
-            hashTag = hashTag!!,
-            displayName = displayName ?: ""
-        )
-    }
-}
+): BaseEntity()

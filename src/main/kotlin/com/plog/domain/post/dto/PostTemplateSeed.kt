@@ -11,43 +11,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 data class PostTemplateSeed(
     @get:JvmName("name")
     @JsonProperty("name")
-    val name: String,
+    val name: String = "",
     @get:JvmName("title")
     @JsonProperty("title")
-    val title: String,
+    val title: String = "",
     @get:JvmName("content")
     @JsonProperty("content")
-    val content: String
-) {
-    companion object {
-        @JvmStatic
-        fun builder(): PostTemplateSeedBuilder {
-            return PostTemplateSeedBuilder()
-        }
-    }
-
-    class PostTemplateSeedBuilder {
-        private var name: String? = null
-        private var title: String? = null
-        private var content: String? = null
-
-        fun name(name: String?): PostTemplateSeedBuilder {
-            this.name = name
-            return this
-        }
-
-        fun title(title: String?): PostTemplateSeedBuilder {
-            this.title = title
-            return this
-        }
-
-        fun content(content: String?): PostTemplateSeedBuilder {
-            this.content = content
-            return this
-        }
-
-        fun build(): PostTemplateSeed {
-            return PostTemplateSeed(name ?: "", title ?: "", content ?: "")
-        }
-    }
-}
+    val content: String = ""
+)

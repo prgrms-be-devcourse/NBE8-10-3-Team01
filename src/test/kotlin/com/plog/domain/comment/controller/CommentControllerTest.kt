@@ -11,9 +11,7 @@ import com.plog.testUtil.WebMvcTestSupport
 import com.plog.testUtil.WithCustomMockUser
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.ArgumentMatchers.*
-import org.mockito.BDDMockito.given
-import org.mockito.BDDMockito.willDoNothing
+import org.mockito.kotlin.*
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
@@ -28,10 +26,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 
 /**
  * 댓글 관련 API(CommentController)에 대한 통합 슬라이싱 테스트.
- * Spring Security 컨텍스트를 Mocking 하여 권한 및 유효성 검증을 포함한 CRUD를 테스트한다.
- *
- * @author 노정원
- * @since 2026-02-24
  */
 @WebMvcTest(CommentController::class)
 @Import(SecurityTestConfig::class)
@@ -39,7 +33,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 @WithCustomMockUser
 class CommentControllerTest : WebMvcTestSupport() {
 
-    @MockitoBean private lateinit var commentService: CommentService
+    @MockitoBean lateinit var commentService: CommentService
 
     // 공통 테스트 데이터
     private val memberId = 1L
@@ -56,13 +50,10 @@ class CommentControllerTest : WebMvcTestSupport() {
     fun createComment_Success() {
         // 1. 준비
         val postId = 1L
-        val memberId = 1L // 테스트 클래스에 정의된 memberId 값을 명시적으로 확인
         val req = CommentCreateReq("테스트 댓글", null)
 
-        // 2. Mock 설정: Matcher(eq, any)를 완전히 제거합니다.
-        // 인자값이 Primitive Long일 경우 Matcher 없이 넣는 것이 Kotlin에서 가장 안전합니다.
-        given(commentService.createComment(postId, memberId, req))
-            .willReturn(100L)
+        whenever(commentService.createComment(eq(postId), eq(memberId), any()))
+            .thenReturn(100L)
 
         // 3. 실행 및 검증
         mockMvc.perform(
@@ -99,7 +90,7 @@ class CommentControllerTest : WebMvcTestSupport() {
         val commentId = 100L
         val req = CommentUpdateReq("수정된 댓글 내용입니다.")
 
-        willDoNothing().given(commentService).updateComment(eq(commentId), eq(memberId), anyString())
+        doNothing().whenever(commentService).updateComment(eq(commentId), eq(memberId), any())
 
         mockMvc.perform(
             put("/api/comments/$commentId")
@@ -116,7 +107,7 @@ class CommentControllerTest : WebMvcTestSupport() {
     fun deleteComment_Success() {
         val commentId = 100L
 
-        willDoNothing().given(commentService).deleteComment(eq(commentId), eq(memberId))
+        doNothing().whenever(commentService).deleteComment(eq(commentId), eq(memberId))
 
         mockMvc.perform(
             delete("/api/comments/$commentId")
@@ -134,8 +125,8 @@ class CommentControllerTest : WebMvcTestSupport() {
         val commentId = 999L
         val req = CommentUpdateReq("내용")
 
-        given(commentService.updateComment(eq(commentId), anyLong(), anyString()))
-            .willThrow(CommentException(CommentErrorCode.COMMENT_NOT_FOUND, "Not Found", "존재하지 않는 댓글입니다."))
+        whenever(commentService.updateComment(eq(commentId), any(), any()))
+            .thenThrow(CommentException(CommentErrorCode.COMMENT_NOT_FOUND, "Not Found", "존재하지 않는 댓글입니다."))
 
         mockMvc.perform(
             put("/api/comments/$commentId")
@@ -152,7 +143,6 @@ class CommentControllerTest : WebMvcTestSupport() {
     fun getReplies_Success() {
         val commentId = 1L
 
-        // Slice 결과는 모킹이 까다로우므로 호출 여부와 응답 코드 위주로 검증
         mockMvc.perform(
             get("/api/comments/$commentId/replies")
                 .param("offset", "0")

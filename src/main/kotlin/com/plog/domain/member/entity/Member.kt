@@ -8,43 +8,18 @@ import jakarta.persistence.*
 @Entity
 class Member(
     @Column(unique = true, nullable = false)
-    var email: String,
+    var email: String = "",
 
     @Column(nullable = false)
-    var password: String,
+    var password: String = "",
 
     @Column(unique = true, nullable = false)
-    var nickname: String,
+    var nickname: String = "",
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profile_image_id")
     var profileImage: Image? = null
 ) : BaseEntity() {
-
-    // TODO: 전체 마이그레이션 완료 후 삭제
-    companion object {
-        @JvmStatic
-        fun builder() = MemberBuilder()
-    }
-
-    class MemberBuilder {
-        private var email: String = ""
-        private var password: String = ""
-        private var nickname: String = ""
-        private var profileImage: Image? = null
-
-        fun email(email: String) = apply { this.email = email }
-        fun password(password: String) = apply { this.password = password }
-        fun nickname(nickname: String) = apply { this.nickname = nickname }
-        fun profileImage(profileImage: Image?) = apply { this.profileImage = profileImage }
-
-        fun build() = Member(
-            email = email,
-            password = password,
-            nickname = nickname,
-            profileImage = profileImage
-        )
-    }
 
     /**
      * 엔티티의 update 메서드입니다.

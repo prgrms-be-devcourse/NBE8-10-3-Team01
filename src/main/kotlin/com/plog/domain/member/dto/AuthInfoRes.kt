@@ -12,12 +12,12 @@ package com.plog.domain.member.dto
  * @property accessToken 이후 요청에 사용될 Bearer 인증 토큰
  */
 data class AuthInfoRes(
-    val id: Long,
-    val nickname: String,
-    val accessToken: String
+    val id: Long = 0L,
+    val nickname: String = "",
+    val accessToken: String = ""
 ) {
     companion object {
-        @JvmStatic // TODO: 전체 마이그레이션 후 전체 Dto에서 해당 어노테이션 제거
+        @JvmStatic
         fun from(res: AuthLoginResult): AuthInfoRes {
             return AuthInfoRes(
                 id = res.id,
@@ -25,24 +25,5 @@ data class AuthInfoRes(
                 accessToken = res.accessToken
             )
         }
-        @JvmStatic
-        fun builder() = AuthInfoResBuilder()
-    }
-
-    // TODO: 전체 마이그레이션 완료 후 삭제
-    class AuthInfoResBuilder {
-        private var id: Long = 0L
-        private var nickname: String = ""
-        private var accessToken: String = ""
-
-        fun id(id: Long) = apply { this.id = id }
-        fun nickname(nickname: String) = apply { this.nickname = nickname }
-        fun accessToken(accessToken: String) = apply { this.accessToken = accessToken }
-
-        fun build() = AuthInfoRes(
-            id = id,
-            nickname = nickname,
-            accessToken = accessToken
-        )
     }
 }

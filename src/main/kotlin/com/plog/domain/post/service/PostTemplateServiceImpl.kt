@@ -52,11 +52,11 @@ class PostTemplateServiceImpl(
                 val title = filename.removeSuffix(".md").replace("_", " ")
                 val context = resource.inputStream.use { it.readAllBytes().toString(StandardCharsets.UTF_8) }
 
-                PostTemplateSeed.builder()
-                    .title(title)
-                    .name(title)
-                    .content(context)
-                    .build()
+                PostTemplateSeed(
+                    title = title,
+                    name = title,
+                    content = context
+                )
             }
         } catch (e: IOException) {
             throw IllegalStateException(
@@ -69,12 +69,12 @@ class PostTemplateServiceImpl(
     override fun createPostTemplate(memberId: Long, dto: PostTemplateInfoDto): Long {
         val author = memberRepository.getReferenceById(memberId)
 
-        val postTemplate = PostTemplate.builder()
-            .name(dto.name)
-            .title(dto.title)
-            .content(dto.content)
-            .member(author)
-            .build()
+        val postTemplate = PostTemplate(
+            name = dto.name,
+            title = dto.title,
+            content = dto.content,
+            member = author
+        )
 
         val saved = postTemplateRepository.save(postTemplate)
         return saved.id ?: throw IllegalStateException("PostTemplate ID must not be null after save")
@@ -119,12 +119,12 @@ class PostTemplateServiceImpl(
     override fun initTemplateSeedOfUser(memberId: Long) {
         val member = memberRepository.getReferenceById(memberId)
         val templates = seeds.map { seed ->
-            PostTemplate.builder()
-                .member(member)
-                .name(seed.name)
-                .title(seed.title)
-                .content(seed.content)
-                .build()
+            PostTemplate(
+                member = member,
+                name = seed.name,
+                title = seed.title,
+                content = seed.content
+            )
         }
 
         postTemplateRepository.saveAll(templates)
@@ -141,10 +141,10 @@ class PostTemplateServiceImpl(
     }
 
     private fun validateOwner(memberId: Long, template: PostTemplate) {
-        if (template.member.id != memberId) {
+        if (template.member!!.id != memberId) {
             throw PostException(
                 PostErrorCode.POST_TEMPLATE_AUTH_FAIL,
-                "[PostTemplateServiceImpl#validateOwner] request user is $memberId , but actual owner is ${template.member.id}"
+                "[PostTemplateServiceImpl#validateOwner] request user is $memberId , but actual owner is ${template.member!!.id}"
             )
         }
     }

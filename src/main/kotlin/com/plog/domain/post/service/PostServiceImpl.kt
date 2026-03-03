@@ -73,14 +73,14 @@ class PostServiceImpl(
         val plainText = extractPlainText(req.content)
         val summary = extractSummary(plainText)
 
-        val post = Post.builder()
-            .title(req.title)
-            .content(req.content)
-            .summary(summary)
-            .member(member)
-            .status(PostStatus.PUBLISHED)
-            .thumbnail(req.thumbnail)
-            .build()
+        val post = Post(
+            title = req.title,
+            content = req.content,
+            summary = summary,
+            member = member,
+            status = PostStatus.PUBLISHED,
+            thumbnail = req.thumbnail
+        )
         val savedPost = postRepository.save(post)
 
         applyTags(savedPost, req.hashtags)
@@ -152,7 +152,7 @@ class PostServiceImpl(
                 )
             }
 
-        if (post.member.id != memberId) {
+        if (post.member!!.id != memberId) {
             throw AuthException(
                 AuthErrorCode.USER_AUTH_FAIL,
                 "[PostServiceImpl#updatePost] user $memberId is not the owner of post $postId",
@@ -184,7 +184,7 @@ class PostServiceImpl(
             }
 
         // 2. 작성자 본인 확인 (권한 체크)
-        if (post.member.id != memberId) {
+        if (post.member!!.id != memberId) {
             throw AuthException(
                 AuthErrorCode.USER_AUTH_FAIL,
                 "[PostServiceImpl#deletePost] user $memberId is not the owner of post $postId",
@@ -247,11 +247,11 @@ class PostServiceImpl(
             val hashTagId = hashTag.id ?: throw IllegalStateException("HashTag ID must not be null")
 
             if (!postHashTagRepository.existsByPostIdAndHashTagId(postId, hashTagId)) {
-                val postHashTag = PostHashTag.builder()
-                    .post(post)
-                    .hashTag(hashTag)
-                    .displayName(rawName)
-                    .build()
+                val postHashTag = PostHashTag(
+                    post = post,
+                    hashTag = hashTag,
+                    displayName = rawName
+                )
 
                 postHashTagRepository.save(postHashTag)
             }

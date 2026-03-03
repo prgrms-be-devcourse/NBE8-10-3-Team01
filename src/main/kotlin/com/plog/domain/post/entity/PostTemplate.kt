@@ -29,7 +29,7 @@ class PostTemplate(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    var member: Member
+    var member: Member? = null
 ) : BaseEntity() {
 
     fun update(name: String, title: String, content: String): PostTemplate {
@@ -37,29 +37,5 @@ class PostTemplate(
         this.title = title
         this.content = content
         return this
-    }
-
-    companion object {
-        @JvmStatic
-        fun builder() = PostTemplateBuilder()
-    }
-
-    class PostTemplateBuilder {
-        private var name: String = ""
-        private var title: String = ""
-        private var content: String = ""
-        private var member: Member? = null
-
-        fun name(name: String) = apply { this.name = name }
-        fun title(title: String) = apply { this.title = title }
-        fun content(content: String) = apply { this.content = content }
-        fun member(member: Member?) = apply { this.member = member }
-
-        fun build() = PostTemplate(
-            name = name,
-            title = title,
-            content = content,
-            member = member!!
-        )
     }
 }
