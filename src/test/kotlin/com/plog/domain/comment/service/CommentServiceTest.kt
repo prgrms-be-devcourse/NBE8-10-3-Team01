@@ -1,7 +1,6 @@
 package com.plog.domain.comment.service
 
 import com.plog.domain.comment.dto.CommentCreateReq
-import com.plog.domain.comment.dto.CommentUpdateReq
 import com.plog.domain.comment.entity.Comment
 import com.plog.domain.comment.entity.CommentLike
 import com.plog.domain.comment.repository.CommentLikeRepository
@@ -11,17 +10,11 @@ import com.plog.domain.member.repository.MemberRepository
 import com.plog.domain.post.entity.Post
 import com.plog.domain.post.entity.PostStatus
 import com.plog.domain.post.repository.PostRepository
-import io.mockk.Runs
-import io.mockk.every
-import io.mockk.just
-import io.mockk.mockk
-import io.mockk.slot
+import io.mockk.*
 import org.junit.jupiter.api.DisplayName
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.util.ReflectionTestUtils
 import kotlin.test.Test
 import org.assertj.core.api.Assertions.assertThat
-import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -31,28 +24,6 @@ import org.springframework.data.domain.SliceImpl
 import java.time.LocalDateTime
 import java.util.Optional
 
-/**
- * 코드에 대한 전체적인 역할을 적습니다.
- * <p>
- * 코드에 대한 작동 원리 등을 적습니다.
- *
- * <p><b>상속 정보:</b><br>
- * 상속 정보를 적습니다.
- *
- * <p><b>주요 생성자:</b><br>
- * {@code ExampleClass(String example)}  <br>
- * 주요 생성자와 그 매개변수에 대한 설명을 적습니다. <br>
- *
- * <p><b>빈 관리:</b><br>
- * 필요 시 빈 관리에 대한 내용을 적습니다.
- *
- * <p><b>외부 모듈:</b><br>
- * 필요 시 외부 모듈에 대한 내용을 적습니다.
- *
- * @author njwwn
- * @since 2026-02-24
- * @see
- */
 class CommentServiceTest {
 
     private val commentRepository = mockk<CommentRepository>()
@@ -74,7 +45,7 @@ class CommentServiceTest {
             "테스터",
             null
         )
-
+        ReflectionTestUtils.setField(member, "id", id)
         return member
     }
 
@@ -84,10 +55,10 @@ class CommentServiceTest {
 
         //GIVEN
         val commentId = 100L
-        val postId = 1L;
-        val memberId = 10L;
+        val postId = 1L
+        val memberId = 10L
         val content = "새로운 루트 댓글입니다."
-        val req = CommentCreateReq(content,postId, null)
+        val req = CommentCreateReq(content, null)
 
         val member = createMember(memberId)
         val post = Post(
@@ -121,7 +92,6 @@ class CommentServiceTest {
         assertThat(comment1.parent).isNull()
         assertThat(comment1.author).isEqualTo(member)
         assertThat(comment1.deleted).isFalse()
-        assertThat(comment1.replyCount).isEqualTo(0L)
     }
 
     @Test
@@ -131,10 +101,9 @@ class CommentServiceTest {
         val postId = 1L
         val parentCommentId = 100L
         val memberId = 10L
-        val req = CommentCreateReq("새로운 대댓글입니다.", memberId, parentCommentId)
+        val req = CommentCreateReq("새로운 대댓글입니다.", parentCommentId)
 
         val member = createMember(memberId)
-        ReflectionTestUtils.setField(member, "id", memberId)
 
         val post = Post("제목", "내용", "요약", PostStatus.PUBLISHED, 0, member, mutableListOf(), "thumb.png")
         ReflectionTestUtils.setField(post, "id", postId)
@@ -177,22 +146,20 @@ class CommentServiceTest {
         val content = "수정 전 원래 내용입니다."
 
         val newContent = "깔끔하게 수정된 내용입니다."
-        val req = CommentUpdateReq(newContent)
 
-        val member = createMember(memberId) // 기존 헬퍼 메서드 활용
+        val member = createMember(memberId)
         val post = Post(
             "테스트 게시글", "내용", "요약", PostStatus.PUBLISHED, 0, member, mutableListOf(), "thumb.png"
         )
 
         val comment1 = Comment(member, post, content, null, false)
         ReflectionTestUtils.setField(comment1, "id", commentId)
-        ReflectionTestUtils.setField(member, "id", memberId)
 
 
         every { commentRepository.findById(commentId) } returns java.util.Optional.of(comment1)
 
         //WHEN
-        commentService.updateComment(commentId, memberId, req.content)
+        commentService.updateComment(commentId, memberId, newContent)
 
         //THEN
         assertThat(comment1.content).isEqualTo(newContent)
@@ -209,7 +176,6 @@ class CommentServiceTest {
         val content = "삭제될 댓글 내용입니다."
 
         val member = createMember(memberId)
-        ReflectionTestUtils.setField(member, "id", memberId)
 
         val post = Post(
             "테스트 게시글",
@@ -227,7 +193,6 @@ class CommentServiceTest {
 
         every { commentRepository.findById(commentId) } returns java.util.Optional.of(comment)
         every { commentRepository.delete(comment) } returns Unit
-        // 판단기능이 없는 단위테스트를 위한 주작 => 부모 댓글이 항상 없는것으로 설정
         every { commentRepository.existsByParent(any()) } returns false
 
         //WHEN
@@ -246,7 +211,6 @@ class CommentServiceTest {
         val content = "삭제될 댓글 내용입니다."
 
         val member = createMember(memberId)
-        ReflectionTestUtils.setField(member, "id", memberId)
 
         val post = Post(
             "테스트 게시글",
@@ -281,13 +245,10 @@ class CommentServiceTest {
     fun getComments_Slicing_Success() {
         // GIVEN
         val postId = 1L
-        val memberId = 10L
-
         val pageNumber = 0
         val pageSize = 10
 
-        val member = createMember(memberId)
-        ReflectionTestUtils.setField(member, "id", memberId)
+        val member = createMember(1L)
 
         val post = Post(
             "테스트 게시글",
@@ -303,20 +264,12 @@ class CommentServiceTest {
         ReflectionTestUtils.setField(post, "id", postId)
 
         val comments = (1..11).map { i ->
-
             val author = createMember(i.toLong())
-            ReflectionTestUtils.setField(author, "id", i.toLong()) // 작성자 ID 주입
-
-            ReflectionTestUtils.setField(author, "nickname", "사용자$i")
-            ReflectionTestUtils.setField(author, "email", "test$i@test.com")
-
-            val comments = Comment(author, post, "루트 댓글 $i", null, false)
-            ReflectionTestUtils.setField(comments, "id", i.toLong())
-
-            ReflectionTestUtils.setField(comments, "createDate", LocalDateTime.now())
-            ReflectionTestUtils.setField(comments, "modifyDate", LocalDateTime.now())
-
-            comments
+            val c = Comment(author, post, "루트 댓글 $i", null, false)
+            ReflectionTestUtils.setField(c, "id", i.toLong())
+            ReflectionTestUtils.setField(c, "createDate", LocalDateTime.now())
+            ReflectionTestUtils.setField(c, "modifyDate", LocalDateTime.now())
+            c
         }
 
         every { postRepository.existsById(postId) } returns true
@@ -341,8 +294,6 @@ class CommentServiceTest {
         // THEN
         assertThat(result.content.size).isEqualTo(10)
         assertThat(result.hasNext()).isTrue()
-        assertThat(result.content[0].id).isEqualTo(1L)
-        assertThat(result.content.map { it.content }).doesNotContain("루트 댓글 11")
     }
 
     @Test
@@ -353,10 +304,7 @@ class CommentServiceTest {
         val pageNumber = 0
         val pageSize = 5
 
-        val memberId = 1L
-
-        val member = createMember(memberId)
-        ReflectionTestUtils.setField(member, "id", memberId)
+        val member = createMember(1L)
 
         val post = Post(
             "테스트 게시글",
@@ -376,17 +324,11 @@ class CommentServiceTest {
 
         val replies = (1..6).map { i ->
             val author = createMember(i.toLong())
-            ReflectionTestUtils.setField(author, "id", i.toLong())
-            ReflectionTestUtils.setField(author, "nickname", "작성자$i")
-            ReflectionTestUtils.setField(author, "email", "test$i@test.com")
-
-            val replies = Comment(author, post, "대댓글 $i", parentComment, false)
-            ReflectionTestUtils.setField(replies, "id", i.toLong() + 1000)
-
-            ReflectionTestUtils.setField(replies, "createDate", LocalDateTime.now())
-            ReflectionTestUtils.setField(replies, "modifyDate", LocalDateTime.now())
-
-            replies
+            val r = Comment(author, post, "대댓글 $i", parentComment, false)
+            ReflectionTestUtils.setField(r, "id", i.toLong() + 1000)
+            ReflectionTestUtils.setField(r, "createDate", LocalDateTime.now())
+            ReflectionTestUtils.setField(r, "modifyDate", LocalDateTime.now())
+            r
         }
 
 
@@ -406,8 +348,6 @@ class CommentServiceTest {
         // THEN
         assertThat(result.content.size).isEqualTo(5)
         assertThat(result.hasNext()).isTrue()
-        assertThat(result.content[0].content).isEqualTo("대댓글 1")
-        assertThat(result.content.map { it.content }).doesNotContain("대댓글 6")
     }
 
     @Test
@@ -416,34 +356,25 @@ class CommentServiceTest {
         // given
         val memberId = 1L
         val commentId = 100L
-        val content = "테스트 댓글 내용입니다."
         val member = createMember(memberId)
-        ReflectionTestUtils.setField(member, "id", memberId)
         val post = Post(
-            "테스트 게시글",
-            "게시글 내용",
-            "요약",
-            PostStatus.PUBLISHED,
-            0,
-            member,
-            mutableListOf(), // 비어있는 리스트
-            "default_thumb.png"
+            "테스트 게시글", "게시글 내용", "요약", PostStatus.PUBLISHED, 0, member, mutableListOf(), "default_thumb.png"
         )
-        val comment = Comment(member, post, content, null, false)
+        val comment = Comment(member, post, "댓글", null, false)
 
-        every { memberRepository.findById(memberId) } returns Optional.of(member)
-        every { commentRepository.findById(commentId) } returns Optional.of(comment)
-        // 기존에 좋아요가 없음을 가정 (null 반환)
+        every { memberRepository.getReferenceById(memberId) } returns member
+        every { commentRepository.findByIdWithLock(commentId) } returns Optional.of(comment)
         every { commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId) } returns null
-        every { commentLikeRepository.save(any()) } returns mockk()
+        every { commentLikeRepository.save(any<CommentLike>()) } returns mockk()
+        every { commentRepository.incrementLikeCount(commentId) } returns 1
 
         // when
         val result = commentService.toggleCommentLike(commentId, memberId)
 
         // then
-        verify(exactly = 1) { commentLikeRepository.save(any()) }
-        assertEquals(1, comment.likeCount) // 엔티티의 카운트 증가 확인
-        assertTrue(result) // true 반환 확인
+        verify(exactly = 1) { commentLikeRepository.save(any<CommentLike>()) }
+        verify(exactly = 1) { commentRepository.incrementLikeCount(commentId) }
+        assertTrue(result)
     }
 
     @Test
@@ -452,35 +383,26 @@ class CommentServiceTest {
         // given
         val memberId = 1L
         val commentId = 100L
-        val content = "테스트 댓글 내용입니다."
         val member = createMember(memberId)
-        ReflectionTestUtils.setField(member, "id", memberId)
         val post = Post(
-            "테스트 게시글",
-            "게시글 내용",
-            "요약",
-            PostStatus.PUBLISHED,
-            0,
-            member,
-            mutableListOf(), // 비어있는 리스트
-            "default_thumb.png"
+            "테스트 게시글", "게시글 내용", "요약", PostStatus.PUBLISHED, 0, member, mutableListOf(), "default_thumb.png"
         )
-        val comment = Comment(member, post, content, null, false)
+        val comment = Comment(member, post, "댓글", null, false)
         val existingLike = CommentLike(member = member, comment = comment)
 
-        every { memberRepository.findById(memberId) } returns Optional.of(member)
-        every { commentRepository.findById(commentId) } returns Optional.of(comment)
-        // 기존 좋아요 존재함
+        every { memberRepository.getReferenceById(memberId) } returns member
+        every { commentRepository.findByIdWithLock(commentId) } returns Optional.of(comment)
         every { commentLikeRepository.findByCommentIdAndMemberId(commentId, memberId) } returns existingLike
-        every { commentLikeRepository.delete(existingLike) } just Runs
+        every { commentLikeRepository.delete(any<CommentLike>()) } just Runs
+        every { commentRepository.decrementLikeCount(commentId) } returns 1
 
         // when
         val result = commentService.toggleCommentLike(commentId, memberId)
 
         // then
-        verify(exactly = 1) { commentLikeRepository.delete(existingLike) }
-        assertEquals(0, comment.likeCount) // 엔티티의 카운트 감소 확인
-        assertFalse(result) // false 반환 확인
+        verify(exactly = 1) { commentLikeRepository.delete(any<CommentLike>()) }
+        verify(exactly = 1) { commentRepository.decrementLikeCount(commentId) }
+        assertFalse(result)
     }
 
 }

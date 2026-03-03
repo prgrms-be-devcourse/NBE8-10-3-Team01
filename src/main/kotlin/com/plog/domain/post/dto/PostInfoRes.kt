@@ -75,7 +75,7 @@ data class PostInfoRes(
          */
         @JvmStatic
         fun from(post: Post, cachedCount: Long): PostInfoRes {
-            return from(post, cachedCount)
+            return from(post, null, cachedCount)
         }
 
         @JvmStatic
