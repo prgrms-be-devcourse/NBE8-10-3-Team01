@@ -58,15 +58,15 @@ class ImageServiceImpl(
         val storedFileName = createStoredFileName(originalFileName)
         val accessUrl = objectStorage.upload(file, storedFileName)
 
-        val image = Image.builder()
-            .originalName(originalFileName)
-            .storedName(storedFileName)
-            .accessUrl(accessUrl)
-            .uploader(uploader)
-            .domain(ImageDomain.POST)
-            .status(ImageStatus.PENDING)
-            .domainId(null)
-            .build()
+        val image = Image(
+            originalName = originalFileName,
+            storedName = storedFileName,
+            accessUrl = accessUrl,
+            uploader = uploader,
+            domain = ImageDomain.POST,
+            status = ImageStatus.PENDING,
+            domainId = null
+        )
 
         imageRepository.save(image)
         return ImageUploadRes(listOf(accessUrl), emptyList())
@@ -96,13 +96,11 @@ class ImageServiceImpl(
         if (imageUrl.isBlank()) return
 
         val image = imageRepository.findByAccessUrl(imageUrl)
-            .orElseThrow {
-                ImageException(
-                    ImageErrorCode.IMAGE_NOT_FOUND,
-                    "[ImageServiceImpl#deleteImage] image not found in DB. url=$imageUrl",
-                    "해당 이미지를 찾을 수 없습니다."
-                )
-            }
+            ?: throw ImageException(
+                ImageErrorCode.IMAGE_NOT_FOUND,
+                "[ImageServiceImpl#deleteImage] image not found in DB. url=$imageUrl",
+                "해당 이미지를 찾을 수 없습니다."
+            )
 
         if (image.uploader?.id != memberId) {
             throw AuthException(

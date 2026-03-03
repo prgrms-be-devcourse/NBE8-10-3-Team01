@@ -75,30 +75,4 @@ class Image protected constructor() : BaseEntity() {
         this.domainId = domainId
     }
 
-    companion object {
-        @JvmStatic
-        fun builder() = ImageBuilder()
-    }
-
-    class ImageBuilder {
-
-        private var originalName: String = ""
-        private var storedName: String = ""
-        private var accessUrl: String = ""
-        private var uploader: Member? = null
-        private var domain: ImageDomain? = null
-        private var status: ImageStatus = ImageStatus.PENDING
-        private var domainId: Long? = null
-
-        fun originalName(originalName: String) = apply { this.originalName = originalName }
-        fun storedName(storedName: String) = apply { this.storedName = storedName }
-        fun accessUrl(accessUrl: String) = apply { this.accessUrl = accessUrl }
-        fun uploader(uploader: Member?) = apply { this.uploader = uploader }
-        fun domain(domain: ImageDomain?) = apply { this.domain = domain }
-        fun status(status: ImageStatus) = apply { this.status = status }
-        fun domainId(domainId: Long?) = apply { this.domainId = domainId }
-
-        fun build() = Image(originalName, storedName, accessUrl, uploader,
-            domain, status, domainId)
-    }
 }
